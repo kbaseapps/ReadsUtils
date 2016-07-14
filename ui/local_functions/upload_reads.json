@@ -1,0 +1,17 @@
+{
+    "name" : "Upload a set of reads.",
+    "short_description" : "Upload a set of reads to KBase.",
+    "long_description" : "Uploads single end or paired end reads to the KBase data stores.",
+    "tags" : {
+        "categories" : ["upload", "FASTA", "FASTQ"],
+        "input": {
+            "file_types": ["shock"],
+            "kb_types": []
+        },
+        "output": {
+            "file_types": [],
+            "kb_types": ["KBaseFile.SingleEndLibrary",
+                         "KBaseFile.PairedEndLibrary"]
+        }
+    }
+}
