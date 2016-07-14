@@ -187,6 +187,24 @@ public class ReadsUtilsClient {
         return res.get(0);
     }
 
+    /**
+     * <p>Original spec-file function name: upload_reads</p>
+     * <pre>
+     * Loads a set of reads to KBase data stores.
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.readsutils.UploadReadsParams UploadReadsParams}
+     * @return   instance of type {@link us.kbase.readsutils.UploadReadsOutput UploadReadsOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public UploadReadsOutput uploadReads(UploadReadsParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<UploadReadsOutput>> retType = new TypeReference<List<UploadReadsOutput>>() {};
+        List<UploadReadsOutput> res = caller.jsonrpcCall("ReadsUtils.upload_reads", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
     public Map<String, Object> status(RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         TypeReference<List<Map<String, Object>>> retType = new TypeReference<List<Map<String, Object>>>() {};

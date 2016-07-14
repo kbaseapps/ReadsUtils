@@ -57,6 +57,99 @@ class ReadsUtils(object):
             'ReadsUtils.validateFASTQ',
             [file_path], self._service_ver, context)
 
+    def upload_reads(self, params, context=None):
+        """
+        Loads a set of reads to KBase data stores.
+        :param params: instance of type "UploadReadsParams" (Input to the
+           upload_reads function. Required parameters: fwd_id - the id of the
+           shock node containing the reads data file: either single end
+           reads, forward/left reads, or interleaved reads. One of: wsid -
+           the id of the workspace where the reads will be saved (preferred).
+           wsname - the name of the workspace where the reads will be saved.
+           One of: objid - the id of the workspace object to save over name -
+           the name to which the workspace object will be saved Optional
+           parameters: rev_id - the shock node id containing the
+           reverse/right reads for paired end, non-interleaved reads.
+           interleaved - specify that the fwd reads file is an interleaved
+           paired end reads file. Default true, ignored if rev is specified.
+           single_genome - whether the reads are from a single genome or a
+           metagenome. Default is single genome. read_orientation_outward -
+           whether the read orientation is outward from the set of primers.
+           Default is false and is ignored for single end reads.
+           sequencing_tech - the sequencing technology used to produce the
+           reads. strain - information about the organism strain that was
+           sequenced. source - information about the organism source.
+           insert_size_mean - the mean size of the genetic fragments. Ignored
+           for single end reads. insert_size_std_dev - the standard deviation
+           of the size of the genetic fragments. Ignored for single end
+           reads. read_count - the number of reads in the this dataset.
+           read_size - the total size of the reads, in bases. gc_content -
+           the GC content of the reads.) -> structure: parameter "fwd_id" of
+           String, parameter "wsid" of Long, parameter "wsname" of String,
+           parameter "objid" of Long, parameter "name" of String, parameter
+           "rev_id" of String, parameter "interleaved" of type "boolean" (A
+           boolean - 0 for false, 1 for true. @range (0, 1)), parameter
+           "single_genome" of type "boolean" (A boolean - 0 for false, 1 for
+           true. @range (0, 1)), parameter "read_orientation_outward" of type
+           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1)),
+           parameter "sequencing_tech" of String, parameter "strain" of type
+           "StrainInfo" (Information about a strain. genetic_code - the
+           genetic code of the strain. See
+           http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
+           genus - the genus of the strain species - the species of the
+           strain strain - the identifier for the strain source - information
+           about the source of the strain organelle - the organelle of
+           interest for the related data (e.g. mitochondria) ncbi_taxid - the
+           NCBI taxonomy ID of the strain location - the location from which
+           the strain was collected @optional genetic_code source ncbi_taxid
+           organelle location) -> structure: parameter "genetic_code" of
+           Long, parameter "genus" of String, parameter "species" of String,
+           parameter "strain" of String, parameter "organelle" of String,
+           parameter "source" of type "SourceInfo" (Information about the
+           source of a piece of data. source - the name of the source (e.g.
+           NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "ncbi_taxid" of Long, parameter "location" of
+           type "Location" (Information about a location. lat - latitude of
+           the site, recorded as a decimal number. North latitudes are
+           positive values and south latitudes are negative numbers. lon -
+           longitude of the site, recorded as a decimal number. West
+           longitudes are positive values and east longitudes are negative
+           numbers. elevation - elevation of the site, expressed in meters
+           above sea level. Negative values are allowed. date - date of an
+           event at this location (for example, sample collection), expressed
+           in the format YYYY-MM-DDThh:mm:ss.SSSZ description - a free text
+           description of the location and, if applicable, the associated
+           event. @optional date description) -> structure: parameter "lat"
+           of Double, parameter "lon" of Double, parameter "elevation" of
+           Double, parameter "date" of String, parameter "description" of
+           String, parameter "source" of type "SourceInfo" (Information about
+           the source of a piece of data. source - the name of the source
+           (e.g. NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "insert_size_mean" of Double, parameter
+           "insert_size_std_dev" of Double, parameter "read_count" of Long,
+           parameter "read_size" of Long, parameter "gc_content" of Double
+        :returns: instance of type "UploadReadsOutput" (The output of the
+           upload_reads function. obj_ref - a reference to the new Workspace
+           object in the form X/Y/Z, where X is the workspace ID, Y is the
+           object ID, and Z is the version.) -> structure: parameter
+           "obj_ref" of String
+        """
+        return self._client.call_method(
+            'ReadsUtils.upload_reads',
+            [params], self._service_ver, context)
+
     def status(self, context=None):
         return self._client.call_method('ReadsUtils.status',
             [], self._service_ver, context)

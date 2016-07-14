@@ -278,6 +278,172 @@ place to remove blank lines if any exist.
     }
 }
  
+
+
+=head2 upload_reads
+
+  $return = $obj->upload_reads($params)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$params is a ReadsUtils.UploadReadsParams
+$return is a ReadsUtils.UploadReadsOutput
+UploadReadsParams is a reference to a hash where the following keys are defined:
+	fwd_id has a value which is a string
+	wsid has a value which is an int
+	wsname has a value which is a string
+	objid has a value which is an int
+	name has a value which is a string
+	rev_id has a value which is a string
+	interleaved has a value which is a ReadsUtils.boolean
+	single_genome has a value which is a ReadsUtils.boolean
+	read_orientation_outward has a value which is a ReadsUtils.boolean
+	sequencing_tech has a value which is a string
+	strain has a value which is a KBaseCommon.StrainInfo
+	source has a value which is a KBaseCommon.SourceInfo
+	insert_size_mean has a value which is a float
+	insert_size_std_dev has a value which is a float
+	read_count has a value which is an int
+	read_size has a value which is an int
+	gc_content has a value which is a float
+boolean is an int
+StrainInfo is a reference to a hash where the following keys are defined:
+	genetic_code has a value which is an int
+	genus has a value which is a string
+	species has a value which is a string
+	strain has a value which is a string
+	organelle has a value which is a string
+	source has a value which is a KBaseCommon.SourceInfo
+	ncbi_taxid has a value which is an int
+	location has a value which is a KBaseCommon.Location
+SourceInfo is a reference to a hash where the following keys are defined:
+	source has a value which is a string
+	source_id has a value which is a KBaseCommon.source_id
+	project_id has a value which is a KBaseCommon.project_id
+source_id is a string
+project_id is a string
+Location is a reference to a hash where the following keys are defined:
+	lat has a value which is a float
+	lon has a value which is a float
+	elevation has a value which is a float
+	date has a value which is a string
+	description has a value which is a string
+UploadReadsOutput is a reference to a hash where the following keys are defined:
+	obj_ref has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$params is a ReadsUtils.UploadReadsParams
+$return is a ReadsUtils.UploadReadsOutput
+UploadReadsParams is a reference to a hash where the following keys are defined:
+	fwd_id has a value which is a string
+	wsid has a value which is an int
+	wsname has a value which is a string
+	objid has a value which is an int
+	name has a value which is a string
+	rev_id has a value which is a string
+	interleaved has a value which is a ReadsUtils.boolean
+	single_genome has a value which is a ReadsUtils.boolean
+	read_orientation_outward has a value which is a ReadsUtils.boolean
+	sequencing_tech has a value which is a string
+	strain has a value which is a KBaseCommon.StrainInfo
+	source has a value which is a KBaseCommon.SourceInfo
+	insert_size_mean has a value which is a float
+	insert_size_std_dev has a value which is a float
+	read_count has a value which is an int
+	read_size has a value which is an int
+	gc_content has a value which is a float
+boolean is an int
+StrainInfo is a reference to a hash where the following keys are defined:
+	genetic_code has a value which is an int
+	genus has a value which is a string
+	species has a value which is a string
+	strain has a value which is a string
+	organelle has a value which is a string
+	source has a value which is a KBaseCommon.SourceInfo
+	ncbi_taxid has a value which is an int
+	location has a value which is a KBaseCommon.Location
+SourceInfo is a reference to a hash where the following keys are defined:
+	source has a value which is a string
+	source_id has a value which is a KBaseCommon.source_id
+	project_id has a value which is a KBaseCommon.project_id
+source_id is a string
+project_id is a string
+Location is a reference to a hash where the following keys are defined:
+	lat has a value which is a float
+	lon has a value which is a float
+	elevation has a value which is a float
+	date has a value which is a string
+	description has a value which is a string
+UploadReadsOutput is a reference to a hash where the following keys are defined:
+	obj_ref has a value which is a string
+
+
+=end text
+
+=item Description
+
+Loads a set of reads to KBase data stores.
+
+=back
+
+=cut
+
+ sub upload_reads
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function upload_reads (received $n, expecting 1)");
+    }
+    {
+	my($params) = @args;
+
+	my @_bad_arguments;
+        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to upload_reads:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'upload_reads');
+	}
+    }
+
+    my $url = $self->{url};
+    my $result = $self->{client}->call($url, $self->{headers}, {
+	    method => "ReadsUtils.upload_reads",
+	    params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'upload_reads',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method upload_reads",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'upload_reads',
+				       );
+    }
+}
+ 
   
 sub status
 {
@@ -321,16 +487,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'validateFASTQ',
+                method_name => 'upload_reads',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method validateFASTQ",
+            error => "Error invoking method upload_reads",
             status_line => $self->{client}->status_line,
-            method_name => 'validateFASTQ',
+            method_name => 'upload_reads',
         );
     }
 }
@@ -392,6 +558,148 @@ an int
 =begin text
 
 an int
+
+=end text
+
+=back
+
+
+
+=head2 UploadReadsParams
+
+=over 4
+
+
+
+=item Description
+
+Input to the upload_reads function.
+
+Required parameters:
+fwd_id - the id of the shock node containing the reads data file:
+    either single end reads, forward/left reads, or interleaved reads.
+
+One of:
+wsid - the id of the workspace where the reads will be saved
+    (preferred).
+wsname - the name of the workspace where the reads will be saved.
+
+One of:
+objid - the id of the workspace object to save over
+name - the name to which the workspace object will be saved
+    
+Optional parameters:
+rev_id - the shock node id containing the reverse/right reads for
+    paired end, non-interleaved reads.
+interleaved - specify that the fwd reads file is an interleaved paired
+    end reads file. Default true, ignored if rev is specified.
+single_genome - whether the reads are from a single genome or a
+    metagenome. Default is single genome.
+read_orientation_outward - whether the read orientation is outward
+    from the set of primers. Default is false and is ignored for
+    single end reads.
+sequencing_tech - the sequencing technology used to produce the
+    reads.
+strain - information about the organism strain
+    that was sequenced.
+source - information about the organism source.
+insert_size_mean - the mean size of the genetic fragments. Ignored for
+    single end reads.
+insert_size_std_dev - the standard deviation of the size of the
+    genetic fragments. Ignored for single end reads.
+read_count - the number of reads in the this dataset.
+read_size - the total size of the reads, in bases.
+gc_content - the GC content of the reads.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+fwd_id has a value which is a string
+wsid has a value which is an int
+wsname has a value which is a string
+objid has a value which is an int
+name has a value which is a string
+rev_id has a value which is a string
+interleaved has a value which is a ReadsUtils.boolean
+single_genome has a value which is a ReadsUtils.boolean
+read_orientation_outward has a value which is a ReadsUtils.boolean
+sequencing_tech has a value which is a string
+strain has a value which is a KBaseCommon.StrainInfo
+source has a value which is a KBaseCommon.SourceInfo
+insert_size_mean has a value which is a float
+insert_size_std_dev has a value which is a float
+read_count has a value which is an int
+read_size has a value which is an int
+gc_content has a value which is a float
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+fwd_id has a value which is a string
+wsid has a value which is an int
+wsname has a value which is a string
+objid has a value which is an int
+name has a value which is a string
+rev_id has a value which is a string
+interleaved has a value which is a ReadsUtils.boolean
+single_genome has a value which is a ReadsUtils.boolean
+read_orientation_outward has a value which is a ReadsUtils.boolean
+sequencing_tech has a value which is a string
+strain has a value which is a KBaseCommon.StrainInfo
+source has a value which is a KBaseCommon.SourceInfo
+insert_size_mean has a value which is a float
+insert_size_std_dev has a value which is a float
+read_count has a value which is an int
+read_size has a value which is an int
+gc_content has a value which is a float
+
+
+=end text
+
+=back
+
+
+
+=head2 UploadReadsOutput
+
+=over 4
+
+
+
+=item Description
+
+The output of the upload_reads function.
+
+    obj_ref - a reference to the new Workspace object in the form X/Y/Z,
+        where X is the workspace ID, Y is the object ID, and Z is the
+        version.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+obj_ref has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+obj_ref has a value which is a string
+
 
 =end text
 
