@@ -1,11 +1,11 @@
 {
-    "name" : "Validate FASTA",
-    "short_description" : "Validates a FASTA file.",
-    "long_description" : "Validates that a given file is, indeed, a FASTA file.",
+    "name" : "Validate FASTQ",
+    "short_description" : "Validates a FASTQ file.",
+    "long_description" : "Validates that a given file is, indeed, a FASTQ file.",
     "tags" : {
-        "categories" : ["validation", "FASTA"],
+        "categories" : ["validation", "FASTQ"],
         "input": {
-            "file_types": ["FASTA"],
+            "file_types": ["FASTQ"],
             "kb_types": []
         },
         "output": {

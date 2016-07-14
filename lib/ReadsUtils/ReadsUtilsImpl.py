@@ -5,6 +5,7 @@ import os
 import re
 import tempfile
 import shutil
+from DataFileUtil.DataFileUtilClient import DataFileUtil
 #END_HEADER
 
 
@@ -67,6 +68,9 @@ class ReadsUtils:
                 lcount += 1
         return hcount == 2  # exactly 2 headers with same id = interleaved
 
+    def xor(self, a, b):
+        return bool(a) != bool(b)
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -74,6 +78,7 @@ class ReadsUtils:
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
         self.scratch = config['scratch']
+        self.callback_url = os.environ['SDK_CALLBACK_URL']
         #END_CONSTRUCTOR
         pass
     
@@ -275,7 +280,40 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
-        foo = 1
+        fwdid = params.get('fwd_id')
+        if not fwdid:
+            raise ValueError('At least one reads file must be provided')
+        wsid = params.get('wsid')
+        wsname = params.get('wsname')
+        if not self.xor(wsid, wsname):
+            raise ValueError(
+                'Exactly one of the workspace ID or name must be provided')
+        dfu = DataFileUtil(self.callback_url, token=ctx['token'])
+        if wsname:
+            wsid = dfu.ws_name_to_id(wsname)
+        objid = params.get('objid')
+        name = params.get('name')
+        if not self.xor(objid, name):
+            raise ValueError(
+                'Exactly one of the object ID or name must be provided')
+        r = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+        o = {'lib': {'file': r['handle'],
+                     'encoding': 'ascii',
+                     'size': 0,
+                     'type': 'fq'
+                     },
+             'sequencing_tech': 'unknown'
+             }
+        so = {'type': 'KBaseFile.SingleEndLibrary',
+              'data': o
+              }
+        if name:
+            so['name'] = name
+        else:
+            so['objid'] = objid
+        oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
+
+        returnVal = {'obj_ref': oi[6] + '/' + oi[0] + '/' + oi[4]}
         #END upload_reads
 
         # At some point might do deeper type checking...
