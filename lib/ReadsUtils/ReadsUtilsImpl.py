@@ -46,11 +46,11 @@ class ReadsUtils:
     # TODO add tests & improve
     # TODO later - merge with the line counter / remover if possible
     def check_interleavedPE(self, filename):
-        count = 0
 
         with open(filename, 'r') as infile:
-            first_line = infile.readline()  # should probably strip
-            header1 = None
+            first_line = infile.readline().strip()
+            hcount = 1
+            lcount = 1
 
             if self.SEP_ILLUMINA in first_line:
                 header1 = first_line.split(self.SEP_ILLUMINA)[0]
@@ -60,18 +60,13 @@ class ReadsUtils:
             else:
                 header1 = first_line
 
-            if header1:  # this can never be false unless the 1st line is empty
-                for line in infile:
-                    # only need to do this on headers
-                    if re.match(header1, line):  # compile this & anchor
-                        count = count + 1
-            infile.close()  # not needed, in with block
+            for line in infile:
+                lcount += 1
+#                 if lcount % 4 == 0:
+                if re.match(header1, line):  # compile this & anchor
+                        hcount = hcount + 1
 
-        stat = 0
-        if count == 1:
-            stat = 1
-
-        return stat  # just return count == 1
+        return hcount == 2  # exactly 2 headers with same id = interleaved
 
     #END_CLASS_HEADER
 
