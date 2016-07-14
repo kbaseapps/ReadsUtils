@@ -1,24 +1,9 @@
 /*
-Utilities for handling reads files.
+A KBase module: ReadsUtils
 */
 
 module ReadsUtils {
-
-    /* A boolean - 0 for false, 1 for true.
-       @range (0, 1)
+    /*
+        Insert your typespec information here.
     */
-    typedef int boolean;
-
-    /* Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
-        are accepted.
-    */
-    funcdef validateFASTA(string file_path) returns(boolean validated)
-        authentication required;
-    
-    /* Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
-        are accepted. Note that prior to validation the file will be altered in
-        place to remove blank lines if any exist.
-    */
-    funcdef validateFASTQ(string file_path) returns(boolean validated)
-        authentication required;
 };
