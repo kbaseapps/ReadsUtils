@@ -12,6 +12,7 @@ eval {
     $get_time = sub { Time::HiRes::gettimeofday() };
 };
 
+use Bio::KBase::AuthToken;
 
 # Client version should match Impl version
 # This is a Semantic Version number,
@@ -25,7 +26,7 @@ ReadsUtils::ReadsUtilsClient
 =head1 DESCRIPTION
 
 
-A KBase module: ReadsUtils
+Utilities for handling reads files.
 
 
 =cut
@@ -74,6 +75,28 @@ sub new
 	push(@{$self->{headers}}, 'Kbrpc-Errordest', $self->{kbrpc_error_dest});
     }
 
+    #
+    # This module requires authentication.
+    #
+    # We create an auth token, passing through the arguments that we were (hopefully) given.
+
+    {
+	my $token = Bio::KBase::AuthToken->new(@args);
+	
+	if (!$token->error_message)
+	{
+	    $self->{token} = $token->token;
+	    $self->{client}->{token} = $token->token;
+	}
+        else
+        {
+	    #
+	    # All methods in this module require authentication. In this case, if we
+	    # don't have a token, we can't continue.
+	    #
+	    die "Authentication failed: " . $token->error_message;
+	}
+    }
 
     my $ua = $self->{client}->ua;	 
     my $timeout = $ENV{CDMI_TIMEOUT} || (30 * 60);	 
@@ -84,12 +107,213 @@ sub new
 }
 
 
+
+
+=head2 validateFASTA
+
+  $validated = $obj->validateFASTA($file_path)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$file_path is a string
+$validated is a ReadsUtils.boolean
+boolean is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$file_path is a string
+$validated is a ReadsUtils.boolean
+boolean is an int
+
+
+=end text
+
+=item Description
+
+Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
+are accepted.
+
+=back
+
+=cut
+
+ sub validateFASTA
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function validateFASTA (received $n, expecting 1)");
+    }
+    {
+	my($file_path) = @args;
+
+	my @_bad_arguments;
+        (!ref($file_path)) or push(@_bad_arguments, "Invalid type for argument 1 \"file_path\" (value was \"$file_path\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to validateFASTA:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'validateFASTA');
+	}
+    }
+
+    my $url = $self->{url};
+    my $result = $self->{client}->call($url, $self->{headers}, {
+	    method => "ReadsUtils.validateFASTA",
+	    params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'validateFASTA',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method validateFASTA",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'validateFASTA',
+				       );
+    }
+}
+ 
+
+
+=head2 validateFASTQ
+
+  $validated = $obj->validateFASTQ($file_path)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$file_path is a string
+$validated is a ReadsUtils.boolean
+boolean is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$file_path is a string
+$validated is a ReadsUtils.boolean
+boolean is an int
+
+
+=end text
+
+=item Description
+
+Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
+are accepted. Note that prior to validation the file will be altered in
+place to remove blank lines if any exist.
+
+=back
+
+=cut
+
+ sub validateFASTQ
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function validateFASTQ (received $n, expecting 1)");
+    }
+    {
+	my($file_path) = @args;
+
+	my @_bad_arguments;
+        (!ref($file_path)) or push(@_bad_arguments, "Invalid type for argument 1 \"file_path\" (value was \"$file_path\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to validateFASTQ:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'validateFASTQ');
+	}
+    }
+
+    my $url = $self->{url};
+    my $result = $self->{client}->call($url, $self->{headers}, {
+	    method => "ReadsUtils.validateFASTQ",
+	    params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'validateFASTQ',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method validateFASTQ",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'validateFASTQ',
+				       );
+    }
+}
+ 
   
+sub status
+{
+    my($self, @args) = @_;
+    if ((my $n = @args) != 0) {
+        Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+                                   "Invalid argument count for function status (received $n, expecting 0)");
+    }
+    my $url = $self->{url};
+    my $result = $self->{client}->call($url, $self->{headers}, {
+        method => "ReadsUtils.status",
+        params => \@args,
+    });
+    if ($result) {
+        if ($result->is_error) {
+            Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+                           code => $result->content->{error}->{code},
+                           method_name => 'status',
+                           data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+                          );
+        } else {
+            return wantarray ? @{$result->result} : $result->result->[0];
+        }
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method status",
+                        status_line => $self->{client}->status_line,
+                        method_name => 'status',
+                       );
+    }
+}
+   
 
 sub version {
     my ($self) = @_;
     my $result = $self->{client}->call($self->{url}, $self->{headers}, {
-        method => "${last_module.module_name}.version",
+        method => "ReadsUtils.version",
         params => [],
     });
     if ($result) {
@@ -97,16 +321,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => '${last_method.name}',
+                method_name => 'validateFASTQ',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method ${last_method.name}",
+            error => "Error invoking method validateFASTQ",
             status_line => $self->{client}->status_line,
-            method_name => '${last_method.name}',
+            method_name => 'validateFASTQ',
         );
     }
 }
@@ -140,6 +364,38 @@ sub _validate_version {
 }
 
 =head1 TYPES
+
+
+
+=head2 boolean
+
+=over 4
+
+
+
+=item Description
+
+A boolean - 0 for false, 1 for true.
+@range (0, 1)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+an int
+</pre>
+
+=end html
+
+=begin text
+
+an int
+
+=end text
+
+=back
 
 
 

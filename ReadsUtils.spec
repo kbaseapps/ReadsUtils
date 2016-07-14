@@ -16,7 +16,8 @@ module ReadsUtils {
         authentication required;
     
     /* Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
-        are accepted.
+        are accepted. Note that prior to validation the file will be altered in
+        place to remove blank lines if any exist.
     */
     funcdef validateFASTQ(string file_path) returns(boolean validated)
         authentication required;

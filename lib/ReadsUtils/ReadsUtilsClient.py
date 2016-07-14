@@ -31,3 +31,32 @@ class ReadsUtils(object):
             token=token, ignore_authrc=ignore_authrc,
             trust_all_ssl_certificates=trust_all_ssl_certificates,
             auth_svc=auth_svc)
+
+    def validateFASTA(self, file_path, context=None):
+        """
+        Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
+        are accepted.
+        :param file_path: instance of String
+        :returns: instance of type "boolean" (A boolean - 0 for false, 1 for
+           true. @range (0, 1))
+        """
+        return self._client.call_method(
+            'ReadsUtils.validateFASTA',
+            [file_path], self._service_ver, context)
+
+    def validateFASTQ(self, file_path, context=None):
+        """
+        Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
+        are accepted. Note that prior to validation the file will be altered in
+        place to remove blank lines if any exist.
+        :param file_path: instance of String
+        :returns: instance of type "boolean" (A boolean - 0 for false, 1 for
+           true. @range (0, 1))
+        """
+        return self._client.call_method(
+            'ReadsUtils.validateFASTQ',
+            [file_path], self._service_ver, context)
+
+    def status(self, context=None):
+        return self._client.call_method('ReadsUtils.status',
+            [], self._service_ver, context)
