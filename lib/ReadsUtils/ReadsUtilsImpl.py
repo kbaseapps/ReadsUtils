@@ -275,6 +275,7 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
+        foo = 1
         #END upload_reads
 
         # At some point might do deeper type checking...
