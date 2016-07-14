@@ -43,8 +43,7 @@ class ReadsUtils:
     SEP_CASAVA_1 = ':Y:'
     SEP_CASAVA_2 = ':N:'
 
-    # TODO add tests & improve
-    # TODO later - merge with the line counter / remover if possible
+    # TODO later - merge with the 1st line counter if possible
     def check_interleavedPE(self, filename):
 
         with open(filename, 'r') as infile:
@@ -60,12 +59,12 @@ class ReadsUtils:
             else:
                 header1 = first_line
 
+            m = re.compile('^' + header1)
             for line in infile:
-                lcount += 1
-#                 if lcount % 4 == 0:
-                if re.match(header1, line):  # compile this & anchor
+                if lcount % 4 == 0:
+                    if m.match(line):
                         hcount = hcount + 1
-
+                lcount += 1
         return hcount == 2  # exactly 2 headers with same id = interleaved
 
     #END_CLASS_HEADER
