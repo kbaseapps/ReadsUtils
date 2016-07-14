@@ -1,0 +1,56 @@
+{
+  "ver" : "0.0.1",
+  "authors" : [ ],
+  "contact" : "help@kbase.us",
+  "visible" : true,
+  "categories" : [ "importers" ],
+  "widgets" : {
+    "input" : "kbaseNarrativeMethodInput"
+  },
+  "parameters" : [ {
+    "id" : "fastqFile",
+    "optional" : false,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "" ],
+    "field_type" : "file",
+    "text_options" : {
+      "valid_ws_types" : [ ]
+    }
+  }, {
+    "id" : "outputObject",
+    "optional" : false,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "" ],
+    "field_type" : "text",
+    "text_options" : {
+      "valid_ws_types" : [ "KBaseFile.SingleEndLibrary" ],
+      "is_output_name" : true
+    }
+  } ],
+  "behavior" : {
+    "service-mapping" : {
+      "url" : "",
+      "name" : "ReadsUtils",
+      "method" : "upload_reads",
+      "input_mapping" : [
+        {
+          "narrative_system_variable": "workspace",
+          "target_property": "wsname"
+        },
+        {
+          "input_parameter": "outputObject",
+          "target_property": "name"
+        },
+        {
+          "input_parameter": "fastqFile",
+          "target_property": "fwd_id"
+        }
+      ],
+      "output_mapping" : [
+      ]
+    }
+  },
+  "job_id_output_field": "docker"
+}
