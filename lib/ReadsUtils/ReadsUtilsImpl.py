@@ -71,6 +71,11 @@ class ReadsUtils:
     def xor(self, a, b):
         return bool(a) != bool(b)
 
+    def _add_field(self, obj, params, field):
+        f = params.get(field)
+        if f:
+            obj[field] = f
+
     def _proc_upload_reads_params(self, ctx, params):
         fwdid = params.get('fwd_id')
         if not fwdid:
@@ -104,12 +109,12 @@ class ReadsUtils:
 
         o = {'sequencing_tech': seqtype,
              'single_genome': 1 if params.get('single_genome') else 0,
-             'strain': params.get('strain'),
-             'source': params.get('source'),
              'read_count': params.get('read_count'),
              'read_size': params.get('read_size'),
              'gc_content': params.get('gc_content')
              }
+        self._add_field(o, params, 'strain')
+        self._add_field(o, params, 'source')
         # TODO tests
         if not single_end:
             o.update({'insert_size_mean': params.get('insert_size_mean'),
