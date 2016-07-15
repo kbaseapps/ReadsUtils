@@ -1,5 +1,5 @@
 {
-  "ver" : "1.0.0",
+  "ver" : "0.0.1",
   "authors" : [ ],
   "contact" : "help@kbase.us",
   "visble" : true,
@@ -57,8 +57,9 @@
     "field_type" : "text",
     "text_options" : {
       "validate_as": "int"
-    }
-  }, {
+      }
+    },
+   {
     "id": "readOrientationOutward",
     "optional":true,
     "advanced":true,
@@ -68,8 +69,56 @@
     "checkbox_options":{
       "checked_value": 1,
       "unchecked_value": 0
+      }
+    },
+   {
+    "id": "singleGenome",
+    "optional":false,
+    "advanced":false,
+    "allow_multiple":false,
+    "default_values":[1],
+    "field_type" : "checkbox",
+    "checkbox_options":{
+      "checked_value": 1,
+      "unchecked_value": 0
+      }
+    }, 
+   {"id": "seqTech",
+    "optional" : false,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "Illumina" ],
+    "field_type" : "dropdown",
+    "dropdown_options":{
+      "options": [
+        {
+          "value": "Illumina",
+          "display": "Illumina"
+        },
+        {
+          "value": "PacBio CLR",
+          "display": "PacBio CLR"
+        },
+        {
+          "value": "PacBio CCS",
+          "display": "PacBio CCS"
+        },
+        {
+          "value": "IonTorrent",
+          "display": "IonTorrent"
+        },
+        {
+          "value": "NanoPore",
+          "display": "NanoPore"
+        },
+        {
+          "value": "Unknown",
+          "display": "Unknown"
+        }
+      ]
+     }
     }
-  } ],
+  ],
   "behavior" : {
     "service-mapping": {
             "url": "",
@@ -85,27 +134,19 @@
                     "target_property": "name"
                 },
                 {
+                    "constant_value": 1,
+                    "target_property": "interleaved"
+                },
+                {
                     "input_parameter": "fastqFile1",
                     "target_property": "fwd_id"
+                },
+                {
+                    "input_parameter": "fastqFile2",
+                    "target_property": "rev_id"
                 }
             ],
             "output_mapping": [
-                {
-                    "narrative_system_variable": "workspace",
-                    "target_property": "workspace_name"
-                },
-                {
-                    "service_method_output_path": [0,"report_name"],
-                    "target_property": "report_name"
-                },
-                {
-                    "service_method_output_path": [0,"report_ref"],
-                    "target_property": "report_ref"
-                },
-                {
-                    "constant_value": "16",
-                    "target_property": "report_window_line_height"
-                }
             ]
         }
     },
