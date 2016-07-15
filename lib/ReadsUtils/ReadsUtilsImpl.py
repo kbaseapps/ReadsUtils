@@ -81,7 +81,6 @@ class ReadsUtils:
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         #END_CONSTRUCTOR
         pass
-    
 
     def validateFASTA(self, ctx, file_path):
         """
@@ -291,20 +290,71 @@ class ReadsUtils:
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
         if wsname:
             wsid = dfu.ws_name_to_id(wsname)
+            del wsname
         objid = params.get('objid')
         name = params.get('name')
         if not self.xor(objid, name):
             raise ValueError(
                 'Exactly one of the object ID or name must be provided')
-        r = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
-        o = {'lib': {'file': r['handle'],
-                     'encoding': 'ascii',
-                     'size': 0,
-                     'type': 'fq'
-                     },
-             'sequencing_tech': 'unknown'
+        fileinput = [{'shock_id': fwdid}]
+        revid = params.get('rev_id')
+        interleaved = 1 if params.get('interleaved') else 0
+        kbtype = 'KBaseFile.SingleEndLibrary'
+        single_end = True
+        if interleaved or revid:
+            kbtype = 'KBaseFile.PairedEndLibrary'
+            single_end = False
+        seqtype = params.get('sequencing_tech')
+        if not seqtype:
+            raise ValueError('The sequencing technology must be provided')
+        if revid:
+            interleaved = 0
+            fileinput.add({'shock_id': revid})
+        for f in fileinput:
+            f.update({'make_handle': 1, 'unpack': 'uncompress'})
+        files = dfu.shock_to_file_mass(fileinput)
+        for f, i in zip(files, fileinput):
+            if not self.validateFASTQ(ctx, f['file_path']):
+                raise ValueError('Invalid fasta file {} from Shock node {}'
+                                 .format(f['file_path'], i['shock_id']))
+        fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+        revr = None
+        if revid:
+            revr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+
+        o = {'sequencing_tech': seqtype,
+             'single_genome': 1 if params.get('single_genome') else 0,
+             'strain': params.get('strain'),
+             'source': params.get('source'),
+             'read_count': params.get('read_count'),
+             'read_size': params.get('read_size'),
+             'gc_content': params.get('gc_content')
              }
-        so = {'type': 'KBaseFile.SingleEndLibrary',
+        # TODO file size
+        # TODO tests
+        fwdfile = {'file': fwdr['handle'],
+                   'encoding': 'ascii',
+                   'size': 0,
+                   'type': 'fq'
+                   }
+        if single_end:
+            o['lib'] = fwdfile
+        else:
+            o.update({'lib1': fwdfile,
+                      'insert_size_mean': params.get('insert_size_mean'),
+                      'insert_size_std_dev': params.get('insert_size_std_dev'),
+                      'interleaved': interleaved,
+                      'read_orientation_outward': 1 if params.get(
+                            'read_orientation_outward') else 0
+                      })
+            if revr:
+                o['lib2'] = {'file': revr['handle'],
+                             'encoding': 'ascii',
+                             'size': 0,
+                             'type': 'fq'
+                             }
+
+        so = {'type': kbtype,
               'data': o
               }
         if name:
