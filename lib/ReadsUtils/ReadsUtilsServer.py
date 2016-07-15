@@ -335,6 +335,10 @@ class Application(object):
                              name='ReadsUtils.validateFASTQ',
                              types=[basestring])
         self.method_authentication['ReadsUtils.validateFASTQ'] = 'required'
+        self.rpc_service.add(impl_ReadsUtils.upload_reads,
+                             name='ReadsUtils.upload_reads',
+                             types=[dict])
+        self.method_authentication['ReadsUtils.upload_reads'] = 'required'
         self.rpc_service.add(impl_ReadsUtils.status,
                              name='ReadsUtils.status',
                              types=[dict])
