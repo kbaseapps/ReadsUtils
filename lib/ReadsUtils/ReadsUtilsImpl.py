@@ -330,11 +330,10 @@ class ReadsUtils:
              'read_size': params.get('read_size'),
              'gc_content': params.get('gc_content')
              }
-        # TODO file size
         # TODO tests
         fwdfile = {'file': fwdr['handle'],
                    'encoding': 'ascii',
-                   'size': 0,
+                   'size': fwdr['size'],
                    'type': 'fq'
                    }
         if single_end:
@@ -350,7 +349,7 @@ class ReadsUtils:
             if revr:
                 o['lib2'] = {'file': revr['handle'],
                              'encoding': 'ascii',
-                             'size': 0,
+                             'size': revr['size'],
                              'type': 'fq'
                              }
 
