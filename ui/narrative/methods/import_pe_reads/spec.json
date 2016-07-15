@@ -134,6 +134,14 @@
                     "target_property": "name"
                 },
                 {
+                  "input_parameter": "singleGenome",
+                  "target_property": "single_genome"
+                },
+                {
+                  "input_parameter": "seqTech",
+                  "target_property": "sequencing_tech"
+                },
+                {
                     "constant_value": 1,
                     "target_property": "interleaved"
                 },
