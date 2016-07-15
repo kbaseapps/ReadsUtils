@@ -146,6 +146,18 @@
                     "target_property": "interleaved"
                 },
                 {
+                    "input_parameter": "insertSizeMean",
+                    "target_property": "insert_size_mean"
+                },
+                {
+                  "input_parameter": "insertSizeStDev",
+                  "target_property": "insert_size_std_dev"
+                },
+                {
+                  "input_parameter": "readOrientationOutward",
+                  "target_property": "read_orientation_outward"
+                },
+                {
                     "input_parameter": "fastqFile1",
                     "target_property": "fwd_id"
                 },
