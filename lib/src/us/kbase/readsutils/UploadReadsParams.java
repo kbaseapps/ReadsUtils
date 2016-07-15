@@ -20,6 +20,8 @@ import us.kbase.kbasecommon.StrainInfo;
  * Required parameters:
  * fwd_id - the id of the shock node containing the reads data file:
  *     either single end reads, forward/left reads, or interleaved reads.
+ * sequencing_tech - the sequencing technology used to produce the
+ *     reads.
  * One of:
  * wsid - the id of the workspace where the reads will be saved
  *     (preferred).
@@ -32,14 +34,13 @@ import us.kbase.kbasecommon.StrainInfo;
  * rev_id - the shock node id containing the reverse/right reads for
  *     paired end, non-interleaved reads.
  * interleaved - specify that the fwd reads file is an interleaved paired
- *     end reads file. Default true, ignored if rev is specified.
+ *     end reads file as opposed to a single end reads file. Default true,
+ *     ignored if rev is specified.
  * single_genome - whether the reads are from a single genome or a
  *     metagenome. Default is single genome.
  * read_orientation_outward - whether the read orientation is outward
  *     from the set of primers. Default is false and is ignored for
  *     single end reads.
- * sequencing_tech - the sequencing technology used to produce the
- *     reads.
  * strain - information about the organism strain
  *     that was sequenced.
  * source - information about the organism source.

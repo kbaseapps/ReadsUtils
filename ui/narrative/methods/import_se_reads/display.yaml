@@ -1,4 +1,4 @@
-name     : SINGLE END READS
+name     : SDK SINGLE END READS
 subtitle : none
 tooltip  : Upload a Single End Library from a FASTQ file
 
@@ -28,6 +28,11 @@ parameters :
         ui-name : OBJECT NAME
         short-hint : Provide a name for the output object that will be created by this upload
         long-hint  : Provide a name for the output object that will be created by this upload
+
+    seqTech:
+        ui-name: SEQUENCING TECHNOLOGY
+        short-hint: The name of the sequencing technlogy used to create the reads file.
+        long-hint: The name of the sequencing technlogy used to create the reads file.
 
 description : none
 
