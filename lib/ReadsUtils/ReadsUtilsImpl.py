@@ -372,7 +372,8 @@ class ReadsUtils:
             so['objid'] = objid
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
 
-        returnVal = {'obj_ref': oi[6] + '/' + oi[0] + '/' + oi[4]}
+        returnVal = {'obj_ref': str(oi[6]) + '/' + str(oi[0]) + '/' +
+                     str(oi[4])}
         #END upload_reads
 
         # At some point might do deeper type checking...
