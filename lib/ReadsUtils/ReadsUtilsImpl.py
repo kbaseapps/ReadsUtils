@@ -332,10 +332,10 @@ class ReadsUtils:
         o, wsid, name, objid, kbtype, single_end, fwdid, revid = (
             self._proc_upload_reads_params(ctx, params))
         fileinput = [{'shock_id': fwdid,
-                      'file_path': self.scratch + '/fwd'}]
+                      'file_path': self.scratch + '/fwd/'}]
         if revid:
             fileinput.add({'shock_id': revid,
-                           'file_path': self.scratch + '/rev'})
+                           'file_path': self.scratch + '/rev/'})
         for f in fileinput:
             f.update({'make_handle': 1, 'unpack': 'uncompress'})
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
