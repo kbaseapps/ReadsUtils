@@ -127,7 +127,7 @@
             "input_mapping": [
                 {
                     "narrative_system_variable": "workspace",
-                    "target_property": "workspace_name"
+                    "target_property": "wsname"
                 },
                 {
                     "input_parameter": "outputObject",
