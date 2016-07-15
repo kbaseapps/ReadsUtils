@@ -352,7 +352,7 @@ class ReadsUtils:
         # TODO tests
         fwdfile = {'file': fwdr['handle'],
                    'encoding': 'ascii',
-                   'size': fwdr['size'],
+                   'size': files[0]['size'],
                    'type': 'fq'
                    }
         if single_end:
@@ -362,7 +362,7 @@ class ReadsUtils:
             if revr:
                 o['lib2'] = {'file': revr['handle'],
                              'encoding': 'ascii',
-                             'size': revr['size'],
+                             'size': files[1]['size'],
                              'type': 'fq'
                              }
 
