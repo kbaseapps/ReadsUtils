@@ -363,7 +363,7 @@ class ReadsUtils:
         if single_end:
             o['lib'] = fwdfile
         else:
-            o['lib1'] = fwdfile,
+            o['lib1'] = fwdfile
             if revr:
                 o['lib2'] = {'file': revr['handle'],
                              'encoding': 'ascii',
