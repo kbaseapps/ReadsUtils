@@ -7,7 +7,7 @@
   "widgets" : {
     "input" : "kbaseNarrativeMethodInput"
   },
-  "parameters" : [ {
+  "parameters" : [{
     "id" : "fastqFile",
     "optional" : false,
     "advanced" : false,
@@ -17,8 +17,8 @@
     "text_options" : {
       "valid_ws_types" : [ ]
     }
-  }, {
-    "id" : "outputObject",
+   },
+   {"id" : "outputObject",
     "optional" : false,
     "advanced" : false,
     "allow_multiple" : false,
@@ -27,6 +27,40 @@
     "text_options" : {
       "valid_ws_types" : [ "KBaseFile.SingleEndLibrary" ],
       "is_output_name" : true
+    },
+   {"id": "seqTech",
+    "optional" : false,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "Illumina" ],
+    "field_type" : "dropdown",
+    "dropdown_options":{
+      "options": [
+        {
+          "value": "Illumina",
+          "display": "Illumina"
+        },
+        {
+          "value": "PacBio CLR",
+          "display": "PacBio CLR"
+        },
+        {
+          "value": "PacBio CCS",
+          "display": "PacBio CCS"
+        },
+        {
+          "value": "IonTorrent",
+          "display": "IonTorrent"
+        },
+        {
+          "value": "NanoPore",
+          "display": "NanoPore"
+        },
+        {
+          "value": "Unknown",
+          "display": "Unknown"
+        }
+      ]
     }
   } ],
   "behavior" : {
@@ -42,6 +76,10 @@
         {
           "input_parameter": "outputObject",
           "target_property": "name"
+        },
+        {
+          "input_parameter": "seqTech",
+          "target_property": "sequencing_tech"
         },
         {
           "input_parameter": "fastqFile",
