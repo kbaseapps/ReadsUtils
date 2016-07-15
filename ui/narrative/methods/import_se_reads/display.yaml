@@ -28,6 +28,11 @@ parameters :
         ui-name : OBJECT NAME
         short-hint : Provide a name for the output object that will be created by this upload
         long-hint  : Provide a name for the output object that will be created by this upload
+    
+    singleGenome:
+        ui-name: SINGLE GENOME
+        short-hint: Whether the reads are from a single genome or a metagenome.
+        long-hint: Whether the reads are from a single genome or a metagenome.
 
     seqTech:
         ui-name: SEQUENCING TECHNOLOGY
