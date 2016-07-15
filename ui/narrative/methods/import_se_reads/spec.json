@@ -29,6 +29,18 @@
       "is_output_name" : true
       }
     },
+    {
+    "id": "singleGenome",
+    "optional":false,
+    "advanced":false,
+    "allow_multiple":false,
+    "default_values":[1],
+    "field_type" : "checkbox",
+    "checkbox_options":{
+      "checked_value": 1,
+      "unchecked_value": 0
+      }
+    }, 
    {"id": "seqTech",
     "optional" : false,
     "advanced" : false,
@@ -77,6 +89,10 @@
         {
           "input_parameter": "outputObject",
           "target_property": "name"
+        },
+        {
+          "input_parameter": "singleGenome",
+          "target_property": "single_genome"
         },
         {
           "input_parameter": "seqTech",
