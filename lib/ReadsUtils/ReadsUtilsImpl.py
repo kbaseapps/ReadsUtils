@@ -71,6 +71,55 @@ class ReadsUtils:
     def xor(self, a, b):
         return bool(a) != bool(b)
 
+    def _proc_upload_reads_params(self, ctx, params):
+        fwdid = params.get('fwd_id')
+        if not fwdid:
+            raise ValueError('At least one reads file must be provided')
+        wsid = params.get('wsid')
+        wsname = params.get('wsname')
+        if not self.xor(wsid, wsname):
+            raise ValueError(
+                'Exactly one of the workspace ID or name must be provided')
+        dfu = DataFileUtil(self.callback_url, token=ctx['token'])
+        if wsname:
+            wsid = dfu.ws_name_to_id(wsname)
+        del wsname
+        objid = params.get('objid')
+        name = params.get('name')
+        if not self.xor(objid, name):
+            raise ValueError(
+                'Exactly one of the object ID or name must be provided')
+        revid = params.get('rev_id')
+        interleaved = 1 if params.get('interleaved') else 0
+        kbtype = 'KBaseFile.SingleEndLibrary'
+        single_end = True
+        if interleaved or revid:
+            kbtype = 'KBaseFile.PairedEndLibrary'
+            single_end = False
+        if revid:
+            interleaved = 0
+        seqtype = params.get('sequencing_tech')
+        if not seqtype:
+            raise ValueError('The sequencing technology must be provided')
+
+        o = {'sequencing_tech': seqtype,
+             'single_genome': 1 if params.get('single_genome') else 0,
+             'strain': params.get('strain'),
+             'source': params.get('source'),
+             'read_count': params.get('read_count'),
+             'read_size': params.get('read_size'),
+             'gc_content': params.get('gc_content')
+             }
+        # TODO tests
+        if not single_end:
+            o.update({'insert_size_mean': params.get('insert_size_mean'),
+                      'insert_size_std_dev': params.get('insert_size_std_dev'),
+                      'interleaved': interleaved,
+                      'read_orientation_outward': 1 if params.get(
+                            'read_orientation_outward') else 0
+                      })
+        return o, wsid, name, objid, kbtype, single_end, fwdid, revid
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -81,7 +130,6 @@ class ReadsUtils:
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         #END_CONSTRUCTOR
         pass
-    
 
     def validateFASTA(self, ctx, file_path):
         """
@@ -280,31 +328,42 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
-        fwdid = params.get('fwd_id')
-        if not fwdid:
-            raise ValueError('At least one reads file must be provided')
-        wsid = params.get('wsid')
-        wsname = params.get('wsname')
-        if not self.xor(wsid, wsname):
-            raise ValueError(
-                'Exactly one of the workspace ID or name must be provided')
+        o, wsid, name, objid, kbtype, single_end, fwdid, revid = (
+            self._proc_upload_reads_params(ctx, params))
+        fileinput = [{'shock_id': fwdid}]
+        if revid:
+            fileinput.add({'shock_id': revid})
+        for f in fileinput:
+            f.update({'make_handle': 1, 'unpack': 'uncompress'})
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
-        if wsname:
-            wsid = dfu.ws_name_to_id(wsname)
-        objid = params.get('objid')
-        name = params.get('name')
-        if not self.xor(objid, name):
-            raise ValueError(
-                'Exactly one of the object ID or name must be provided')
-        r = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
-        o = {'lib': {'file': r['handle'],
-                     'encoding': 'ascii',
-                     'size': 0,
-                     'type': 'fq'
-                     },
-             'sequencing_tech': 'unknown'
-             }
-        so = {'type': 'KBaseFile.SingleEndLibrary',
+        files = dfu.shock_to_file_mass(fileinput)
+        for f, i in zip(files, fileinput):
+            if not self.validateFASTQ(ctx, f['file_path']):
+                raise ValueError('Invalid fasta file {} from Shock node {}'
+                                 .format(f['file_path'], i['shock_id']))
+        fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+        revr = None
+        if revid:
+            revr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+
+        # TODO tests
+        fwdfile = {'file': fwdr['handle'],
+                   'encoding': 'ascii',
+                   'size': fwdr['size'],
+                   'type': 'fq'
+                   }
+        if single_end:
+            o['lib'] = fwdfile
+        else:
+            o['lib1'] = fwdfile,
+            if revr:
+                o['lib2'] = {'file': revr['handle'],
+                             'encoding': 'ascii',
+                             'size': revr['size'],
+                             'type': 'fq'
+                             }
+
+        so = {'type': kbtype,
               'data': o
               }
         if name:
