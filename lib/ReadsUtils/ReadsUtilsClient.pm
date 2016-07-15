@@ -300,17 +300,14 @@ UploadReadsParams is a reference to a hash where the following keys are defined:
 	objid has a value which is an int
 	name has a value which is a string
 	rev_id has a value which is a string
-	interleaved has a value which is a ReadsUtils.boolean
-	single_genome has a value which is a ReadsUtils.boolean
-	read_orientation_outward has a value which is a ReadsUtils.boolean
 	sequencing_tech has a value which is a string
+	single_genome has a value which is a ReadsUtils.boolean
 	strain has a value which is a KBaseCommon.StrainInfo
 	source has a value which is a KBaseCommon.SourceInfo
+	interleaved has a value which is a ReadsUtils.boolean
+	read_orientation_outward has a value which is a ReadsUtils.boolean
 	insert_size_mean has a value which is a float
 	insert_size_std_dev has a value which is a float
-	read_count has a value which is an int
-	read_size has a value which is an int
-	gc_content has a value which is a float
 boolean is an int
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
@@ -351,17 +348,14 @@ UploadReadsParams is a reference to a hash where the following keys are defined:
 	objid has a value which is an int
 	name has a value which is a string
 	rev_id has a value which is a string
-	interleaved has a value which is a ReadsUtils.boolean
-	single_genome has a value which is a ReadsUtils.boolean
-	read_orientation_outward has a value which is a ReadsUtils.boolean
 	sequencing_tech has a value which is a string
+	single_genome has a value which is a ReadsUtils.boolean
 	strain has a value which is a KBaseCommon.StrainInfo
 	source has a value which is a KBaseCommon.SourceInfo
+	interleaved has a value which is a ReadsUtils.boolean
+	read_orientation_outward has a value which is a ReadsUtils.boolean
 	insert_size_mean has a value which is a float
 	insert_size_std_dev has a value which is a float
-	read_count has a value which is an int
-	read_size has a value which is an int
-	gc_content has a value which is a float
 boolean is an int
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
@@ -593,24 +587,21 @@ name - the name to which the workspace object will be saved
 Optional parameters:
 rev_id - the shock node id containing the reverse/right reads for
     paired end, non-interleaved reads.
-interleaved - specify that the fwd reads file is an interleaved paired
-    end reads file as opposed to a single end reads file. Default true,
-    ignored if rev is specified.
 single_genome - whether the reads are from a single genome or a
     metagenome. Default is single genome.
-read_orientation_outward - whether the read orientation is outward
-    from the set of primers. Default is false and is ignored for
-    single end reads.
 strain - information about the organism strain
     that was sequenced.
 source - information about the organism source.
+interleaved - specify that the fwd reads file is an interleaved paired
+    end reads file as opposed to a single end reads file. Default true,
+    ignored if rev is specified.
+read_orientation_outward - whether the read orientation is outward
+    from the set of primers. Default is false and is ignored for
+    single end reads.
 insert_size_mean - the mean size of the genetic fragments. Ignored for
     single end reads.
 insert_size_std_dev - the standard deviation of the size of the
     genetic fragments. Ignored for single end reads.
-read_count - the number of reads in the this dataset.
-read_size - the total size of the reads, in bases.
-gc_content - the GC content of the reads.
 
 
 =item Definition
@@ -625,17 +616,14 @@ wsname has a value which is a string
 objid has a value which is an int
 name has a value which is a string
 rev_id has a value which is a string
-interleaved has a value which is a ReadsUtils.boolean
-single_genome has a value which is a ReadsUtils.boolean
-read_orientation_outward has a value which is a ReadsUtils.boolean
 sequencing_tech has a value which is a string
+single_genome has a value which is a ReadsUtils.boolean
 strain has a value which is a KBaseCommon.StrainInfo
 source has a value which is a KBaseCommon.SourceInfo
+interleaved has a value which is a ReadsUtils.boolean
+read_orientation_outward has a value which is a ReadsUtils.boolean
 insert_size_mean has a value which is a float
 insert_size_std_dev has a value which is a float
-read_count has a value which is an int
-read_size has a value which is an int
-gc_content has a value which is a float
 
 </pre>
 
@@ -650,17 +638,14 @@ wsname has a value which is a string
 objid has a value which is an int
 name has a value which is a string
 rev_id has a value which is a string
-interleaved has a value which is a ReadsUtils.boolean
-single_genome has a value which is a ReadsUtils.boolean
-read_orientation_outward has a value which is a ReadsUtils.boolean
 sequencing_tech has a value which is a string
+single_genome has a value which is a ReadsUtils.boolean
 strain has a value which is a KBaseCommon.StrainInfo
 source has a value which is a KBaseCommon.SourceInfo
+interleaved has a value which is a ReadsUtils.boolean
+read_orientation_outward has a value which is a ReadsUtils.boolean
 insert_size_mean has a value which is a float
 insert_size_std_dev has a value which is a float
-read_count has a value which is an int
-read_size has a value which is an int
-gc_content has a value which is a float
 
 
 =end text

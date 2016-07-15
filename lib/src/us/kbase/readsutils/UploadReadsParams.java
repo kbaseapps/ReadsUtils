@@ -33,24 +33,21 @@ import us.kbase.kbasecommon.StrainInfo;
  * Optional parameters:
  * rev_id - the shock node id containing the reverse/right reads for
  *     paired end, non-interleaved reads.
- * interleaved - specify that the fwd reads file is an interleaved paired
- *     end reads file as opposed to a single end reads file. Default true,
- *     ignored if rev is specified.
  * single_genome - whether the reads are from a single genome or a
  *     metagenome. Default is single genome.
- * read_orientation_outward - whether the read orientation is outward
- *     from the set of primers. Default is false and is ignored for
- *     single end reads.
  * strain - information about the organism strain
  *     that was sequenced.
  * source - information about the organism source.
+ * interleaved - specify that the fwd reads file is an interleaved paired
+ *     end reads file as opposed to a single end reads file. Default true,
+ *     ignored if rev is specified.
+ * read_orientation_outward - whether the read orientation is outward
+ *     from the set of primers. Default is false and is ignored for
+ *     single end reads.
  * insert_size_mean - the mean size of the genetic fragments. Ignored for
  *     single end reads.
  * insert_size_std_dev - the standard deviation of the size of the
  *     genetic fragments. Ignored for single end reads.
- * read_count - the number of reads in the this dataset.
- * read_size - the total size of the reads, in bases.
- * gc_content - the GC content of the reads.
  * </pre>
  * 
  */
@@ -63,17 +60,14 @@ import us.kbase.kbasecommon.StrainInfo;
     "objid",
     "name",
     "rev_id",
-    "interleaved",
-    "single_genome",
-    "read_orientation_outward",
     "sequencing_tech",
+    "single_genome",
     "strain",
     "source",
+    "interleaved",
+    "read_orientation_outward",
     "insert_size_mean",
-    "insert_size_std_dev",
-    "read_count",
-    "read_size",
-    "gc_content"
+    "insert_size_std_dev"
 })
 public class UploadReadsParams {
 
@@ -89,14 +83,10 @@ public class UploadReadsParams {
     private String name;
     @JsonProperty("rev_id")
     private String revId;
-    @JsonProperty("interleaved")
-    private Long interleaved;
-    @JsonProperty("single_genome")
-    private Long singleGenome;
-    @JsonProperty("read_orientation_outward")
-    private Long readOrientationOutward;
     @JsonProperty("sequencing_tech")
     private String sequencingTech;
+    @JsonProperty("single_genome")
+    private Long singleGenome;
     /**
      * <p>Original spec-file type: StrainInfo</p>
      * <pre>
@@ -130,16 +120,14 @@ public class UploadReadsParams {
      */
     @JsonProperty("source")
     private SourceInfo source;
+    @JsonProperty("interleaved")
+    private Long interleaved;
+    @JsonProperty("read_orientation_outward")
+    private Long readOrientationOutward;
     @JsonProperty("insert_size_mean")
     private Double insertSizeMean;
     @JsonProperty("insert_size_std_dev")
     private Double insertSizeStdDev;
-    @JsonProperty("read_count")
-    private Long readCount;
-    @JsonProperty("read_size")
-    private Long readSize;
-    @JsonProperty("gc_content")
-    private Double gcContent;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     @JsonProperty("fwd_id")
@@ -232,18 +220,18 @@ public class UploadReadsParams {
         return this;
     }
 
-    @JsonProperty("interleaved")
-    public Long getInterleaved() {
-        return interleaved;
+    @JsonProperty("sequencing_tech")
+    public String getSequencingTech() {
+        return sequencingTech;
     }
 
-    @JsonProperty("interleaved")
-    public void setInterleaved(Long interleaved) {
-        this.interleaved = interleaved;
+    @JsonProperty("sequencing_tech")
+    public void setSequencingTech(String sequencingTech) {
+        this.sequencingTech = sequencingTech;
     }
 
-    public UploadReadsParams withInterleaved(Long interleaved) {
-        this.interleaved = interleaved;
+    public UploadReadsParams withSequencingTech(String sequencingTech) {
+        this.sequencingTech = sequencingTech;
         return this;
     }
 
@@ -259,36 +247,6 @@ public class UploadReadsParams {
 
     public UploadReadsParams withSingleGenome(Long singleGenome) {
         this.singleGenome = singleGenome;
-        return this;
-    }
-
-    @JsonProperty("read_orientation_outward")
-    public Long getReadOrientationOutward() {
-        return readOrientationOutward;
-    }
-
-    @JsonProperty("read_orientation_outward")
-    public void setReadOrientationOutward(Long readOrientationOutward) {
-        this.readOrientationOutward = readOrientationOutward;
-    }
-
-    public UploadReadsParams withReadOrientationOutward(Long readOrientationOutward) {
-        this.readOrientationOutward = readOrientationOutward;
-        return this;
-    }
-
-    @JsonProperty("sequencing_tech")
-    public String getSequencingTech() {
-        return sequencingTech;
-    }
-
-    @JsonProperty("sequencing_tech")
-    public void setSequencingTech(String sequencingTech) {
-        this.sequencingTech = sequencingTech;
-    }
-
-    public UploadReadsParams withSequencingTech(String sequencingTech) {
-        this.sequencingTech = sequencingTech;
         return this;
     }
 
@@ -380,6 +338,36 @@ public class UploadReadsParams {
         return this;
     }
 
+    @JsonProperty("interleaved")
+    public Long getInterleaved() {
+        return interleaved;
+    }
+
+    @JsonProperty("interleaved")
+    public void setInterleaved(Long interleaved) {
+        this.interleaved = interleaved;
+    }
+
+    public UploadReadsParams withInterleaved(Long interleaved) {
+        this.interleaved = interleaved;
+        return this;
+    }
+
+    @JsonProperty("read_orientation_outward")
+    public Long getReadOrientationOutward() {
+        return readOrientationOutward;
+    }
+
+    @JsonProperty("read_orientation_outward")
+    public void setReadOrientationOutward(Long readOrientationOutward) {
+        this.readOrientationOutward = readOrientationOutward;
+    }
+
+    public UploadReadsParams withReadOrientationOutward(Long readOrientationOutward) {
+        this.readOrientationOutward = readOrientationOutward;
+        return this;
+    }
+
     @JsonProperty("insert_size_mean")
     public Double getInsertSizeMean() {
         return insertSizeMean;
@@ -410,51 +398,6 @@ public class UploadReadsParams {
         return this;
     }
 
-    @JsonProperty("read_count")
-    public Long getReadCount() {
-        return readCount;
-    }
-
-    @JsonProperty("read_count")
-    public void setReadCount(Long readCount) {
-        this.readCount = readCount;
-    }
-
-    public UploadReadsParams withReadCount(Long readCount) {
-        this.readCount = readCount;
-        return this;
-    }
-
-    @JsonProperty("read_size")
-    public Long getReadSize() {
-        return readSize;
-    }
-
-    @JsonProperty("read_size")
-    public void setReadSize(Long readSize) {
-        this.readSize = readSize;
-    }
-
-    public UploadReadsParams withReadSize(Long readSize) {
-        this.readSize = readSize;
-        return this;
-    }
-
-    @JsonProperty("gc_content")
-    public Double getGcContent() {
-        return gcContent;
-    }
-
-    @JsonProperty("gc_content")
-    public void setGcContent(Double gcContent) {
-        this.gcContent = gcContent;
-    }
-
-    public UploadReadsParams withGcContent(Double gcContent) {
-        this.gcContent = gcContent;
-        return this;
-    }
-
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -467,7 +410,7 @@ public class UploadReadsParams {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", interleaved=")+ interleaved)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", sequencingTech=")+ sequencingTech)+", singleGenome=")+ singleGenome)+", strain=")+ strain)+", source=")+ source)+", interleaved=")+ interleaved)+", readOrientationOutward=")+ readOrientationOutward)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

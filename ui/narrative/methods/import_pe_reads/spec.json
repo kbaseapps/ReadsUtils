@@ -56,7 +56,7 @@
     "default_values" : [ "" ],
     "field_type" : "text",
     "text_options" : {
-      "validate_as": "int"
+      "validate_as": "float"
       }
     },
    {
@@ -142,12 +142,12 @@
                   "target_property": "sequencing_tech"
                 },
                 {
-                    "constant_value": 1,
-                    "target_property": "interleaved"
+                  "constant_value": 1,
+                  "target_property": "interleaved"
                 },
                 {
-                    "input_parameter": "insertSizeMean",
-                    "target_property": "insert_size_mean"
+                  "input_parameter": "insertSizeMean",
+                  "target_property": "insert_size_mean"
                 },
                 {
                   "input_parameter": "insertSizeStDev",
@@ -158,12 +158,12 @@
                   "target_property": "read_orientation_outward"
                 },
                 {
-                    "input_parameter": "fastqFile1",
-                    "target_property": "fwd_id"
+                  "input_parameter": "fastqFile1",
+                  "target_property": "fwd_id"
                 },
                 {
-                    "input_parameter": "fastqFile2",
-                    "target_property": "rev_id"
+                  "input_parameter": "fastqFile2",
+                  "target_property": "rev_id"
                 }
             ],
             "output_mapping": [
