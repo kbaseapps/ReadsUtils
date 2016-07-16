@@ -125,19 +125,7 @@ class ReadsUtils:
                       })
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid
 
-    #END_CLASS_HEADER
-
-    # config contains contents of config file in a hash or None if it couldn't
-    # be found
-    def __init__(self, config):
-        #BEGIN_CONSTRUCTOR
-        self.scratch = config['scratch']
-        self.callback_url = os.environ['SDK_CALLBACK_URL']
-        #END_CONSTRUCTOR
-        pass
-    
-
-    def validateFASTA(self, ctx, file_path):
+    def validateFASTA(self, ctx, params):
         """
         Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
         are accepted.
@@ -147,8 +135,9 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: validated
-        #BEGIN validateFASTA
+        # OLD BEGIN validateFASTA
         del ctx
+        file_path = params.get('file_path')
         if not file_path or not os.path.isfile(file_path):
             raise ValueError('No such file: ' + str(file_path))
         if os.path.splitext(file_path)[1] not in self.FASTA_EXT:
@@ -160,19 +149,33 @@ class ReadsUtils:
         # see https://github.com/jwaldman/FastaValidator/blob/master/src/demo/FVTester.java @IgnorePep8
         # note the version in jars returns non-zero error codes:
         # https://github.com/srividya22/FastaValidator/commit/67e2d860f1869b9a76033e71fb2aaff910b7c2e3 @IgnorePep8
+        # Better yet, move this to a Java SDK module, don't make a system
+        # call and expose useful options.
         retcode = subprocess.call(
             ['java', '-classpath', self.FASTA_JAR, 'FVTester', file_path])
         self.log('Validation return code: ' + str(retcode))
         validated = 1 if retcode == 0 else 0
         self.log('Validation ' + ('succeeded' if validated else 'failed'))
-        #END validateFASTA
+        out = {'valid': validated}
+        # OLD END validateFASTA
 
         # At some point might do deeper type checking...
-        if not isinstance(validated, int):
+        if not isinstance(out, dict):
             raise ValueError('Method validateFASTA return value ' +
-                             'validated is not type int as required.')
+                             'out is not type dict as required.')
         # return the results
-        return [validated]
+        return [out]
+
+    #END_CLASS_HEADER
+
+    # config contains contents of config file in a hash or None if it couldn't
+    # be found
+    def __init__(self, config):
+        #BEGIN_CONSTRUCTOR
+        self.scratch = config['scratch']
+        self.callback_url = os.environ['SDK_CALLBACK_URL']
+        #END_CONSTRUCTOR
+        pass
 
     def validateFASTQ(self, ctx, file_path):
         """
@@ -191,7 +194,7 @@ class ReadsUtils:
             raise ValueError('No such file: ' + str(file_path))
         if os.path.splitext(file_path)[1] not in self.FASTQ_EXT:
             raise ValueError('File {} is not a FASTQ file'.format(file_path))
-        self.log('Validating FASTA file ' + file_path)
+        self.log('Validating FASTQ file ' + file_path)
         self.log('Checking line count')
         c = 0
         blank = False
