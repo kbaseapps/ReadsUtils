@@ -71,30 +71,25 @@ class ReadsUtils(object):
            save over name - the name to which the workspace object will be
            saved Optional parameters: rev_id - the shock node id containing
            the reverse/right reads for paired end, non-interleaved reads.
-           interleaved - specify that the fwd reads file is an interleaved
-           paired end reads file as opposed to a single end reads file.
-           Default true, ignored if rev is specified. single_genome - whether
-           the reads are from a single genome or a metagenome. Default is
-           single genome. read_orientation_outward - whether the read
-           orientation is outward from the set of primers. Default is false
-           and is ignored for single end reads. strain - information about
+           single_genome - whether the reads are from a single genome or a
+           metagenome. Default is single genome. strain - information about
            the organism strain that was sequenced. source - information about
-           the organism source. insert_size_mean - the mean size of the
-           genetic fragments. Ignored for single end reads.
-           insert_size_std_dev - the standard deviation of the size of the
-           genetic fragments. Ignored for single end reads. read_count - the
-           number of reads in the this dataset. read_size - the total size of
-           the reads, in bases. gc_content - the GC content of the reads.) ->
-           structure: parameter "fwd_id" of String, parameter "wsid" of Long,
-           parameter "wsname" of String, parameter "objid" of Long, parameter
-           "name" of String, parameter "rev_id" of String, parameter
-           "interleaved" of type "boolean" (A boolean - 0 for false, 1 for
-           true. @range (0, 1)), parameter "single_genome" of type "boolean"
-           (A boolean - 0 for false, 1 for true. @range (0, 1)), parameter
-           "read_orientation_outward" of type "boolean" (A boolean - 0 for
-           false, 1 for true. @range (0, 1)), parameter "sequencing_tech" of
-           String, parameter "strain" of type "StrainInfo" (Information about
-           a strain. genetic_code - the genetic code of the strain. See
+           the organism source. interleaved - specify that the fwd reads file
+           is an interleaved paired end reads file as opposed to a single end
+           reads file. Default true, ignored if rev is specified.
+           read_orientation_outward - whether the read orientation is outward
+           from the set of primers. Default is false and is ignored for
+           single end reads. insert_size_mean - the mean size of the genetic
+           fragments. Ignored for single end reads. insert_size_std_dev - the
+           standard deviation of the size of the genetic fragments. Ignored
+           for single end reads.) -> structure: parameter "fwd_id" of String,
+           parameter "wsid" of Long, parameter "wsname" of String, parameter
+           "objid" of Long, parameter "name" of String, parameter "rev_id" of
+           String, parameter "sequencing_tech" of String, parameter
+           "single_genome" of type "boolean" (A boolean - 0 for false, 1 for
+           true. @range (0, 1)), parameter "strain" of type "StrainInfo"
+           (Information about a strain. genetic_code - the genetic code of
+           the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information
@@ -137,9 +132,11 @@ class ReadsUtils(object):
            "source_id" (An ID used for a piece of data at its source. @id
            external), parameter "project_id" of type "project_id" (An ID used
            for a project encompassing a piece of data at its source. @id
-           external), parameter "insert_size_mean" of Double, parameter
-           "insert_size_std_dev" of Double, parameter "read_count" of Long,
-           parameter "read_size" of Long, parameter "gc_content" of Double
+           external), parameter "interleaved" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1)), parameter
+           "read_orientation_outward" of type "boolean" (A boolean - 0 for
+           false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
+           Double, parameter "insert_size_std_dev" of Double
         :returns: instance of type "UploadReadsOutput" (The output of the
            upload_reads function. obj_ref - a reference to the new Workspace
            object in the form X/Y/Z, where X is the workspace ID, Y is the

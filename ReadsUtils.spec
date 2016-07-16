@@ -43,24 +43,21 @@ module ReadsUtils {
         Optional parameters:
         rev_id - the shock node id containing the reverse/right reads for
             paired end, non-interleaved reads.
-        interleaved - specify that the fwd reads file is an interleaved paired
-            end reads file as opposed to a single end reads file. Default true,
-            ignored if rev is specified.
         single_genome - whether the reads are from a single genome or a
             metagenome. Default is single genome.
-        read_orientation_outward - whether the read orientation is outward
-            from the set of primers. Default is false and is ignored for
-            single end reads.
         strain - information about the organism strain
             that was sequenced.
         source - information about the organism source.
+        interleaved - specify that the fwd reads file is an interleaved paired
+            end reads file as opposed to a single end reads file. Default true,
+            ignored if rev is specified.
+        read_orientation_outward - whether the read orientation is outward
+            from the set of primers. Default is false and is ignored for
+            single end reads.
         insert_size_mean - the mean size of the genetic fragments. Ignored for
             single end reads.
         insert_size_std_dev - the standard deviation of the size of the
             genetic fragments. Ignored for single end reads.
-        read_count - the number of reads in the this dataset.
-        read_size - the total size of the reads, in bases.
-        gc_content - the GC content of the reads.
     */
     typedef structure {
         string fwd_id;
@@ -69,17 +66,14 @@ module ReadsUtils {
         int objid;
         string name;
         string rev_id;
-        boolean interleaved;
-        boolean single_genome;
-        boolean read_orientation_outward;
         string sequencing_tech;
+        boolean single_genome;
         KBaseCommon.StrainInfo strain;
         KBaseCommon.SourceInfo source;
+        boolean interleaved;
+        boolean read_orientation_outward;
         float insert_size_mean;
         float insert_size_std_dev;
-        int read_count;
-        int read_size;
-        float gc_content;
     } UploadReadsParams;
     
     /* The output of the upload_reads function.
