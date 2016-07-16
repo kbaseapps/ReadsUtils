@@ -125,7 +125,7 @@ class ReadsUtils:
                       })
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid
 
-    def validateFASTA(self, ctx, file_path):
+    def validateFASTA(self, ctx, params):
         """
         Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
         are accepted.
@@ -137,6 +137,7 @@ class ReadsUtils:
         # return variables are: validated
         # OLD BEGIN validateFASTA
         del ctx
+        file_path = params.get('file_path')
         if not file_path or not os.path.isfile(file_path):
             raise ValueError('No such file: ' + str(file_path))
         if os.path.splitext(file_path)[1] not in self.FASTA_EXT:
@@ -155,14 +156,15 @@ class ReadsUtils:
         self.log('Validation return code: ' + str(retcode))
         validated = 1 if retcode == 0 else 0
         self.log('Validation ' + ('succeeded' if validated else 'failed'))
+        out = {'valid': validated}
         # OLD END validateFASTA
 
         # At some point might do deeper type checking...
-        if not isinstance(validated, int):
+        if not isinstance(out, dict):
             raise ValueError('Method validateFASTA return value ' +
-                             'validated is not type int as required.')
+                             'out is not type dict as required.')
         # return the results
-        return [validated]
+        return [out]
 
     #END_CLASS_HEADER
 

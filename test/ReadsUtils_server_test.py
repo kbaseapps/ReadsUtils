@@ -51,16 +51,16 @@ class ReadsUtilsTest(unittest.TestCase):
             print('Test workspace was deleted')
 
     def test_FASTA_validation(self):
-        self.assertEqual(self.impl.validateFASTA(
-                         self.ctx, 'data/sample.fa')[0], 1)
-        self.assertEqual(self.impl.validateFASTA(
-                         self.ctx, 'data/sample.fas')[0], 1)
-        self.assertEqual(self.impl.validateFASTA(
-                         self.ctx, 'data/sample.fna')[0], 1)
-        self.assertEqual(self.impl.validateFASTA(
-                         self.ctx, 'data/sample.fasta')[0], 1)
-        self.assertEqual(self.impl.validateFASTA(
-                         self.ctx, 'data/sample_missing_data.fa')[0], 0)
+        self.check_FASTA('data/sample.fa', 1)
+        self.check_FASTA('data/sample.fas', 1)
+        self.check_FASTA('data/sample.fna', 1)
+        self.check_FASTA('data/sample.fasta', 1)
+        self.check_FASTA('data/sample_missing_data.fa', 0)
+
+    def check_FASTA(self, filename, result):
+        self.assertEqual(
+            self.impl.validateFASTA(
+                self.ctx, {'file_path': filename})[0]['valid'], result)
 
     def test_FASTA_val_fail_no_file(self):
         self.fail_val_FASTA('nofile', 'No such file: nofile')
@@ -105,7 +105,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
     def fail_val_FASTA(self, filename, error, exception=ValueError):
         with self.assertRaises(exception) as context:
-            self.impl.validateFASTA(self.ctx, filename)
+            self.impl.validateFASTA(self.ctx, {'file_path': filename})
         self.assertEqual(error, str(context.exception.message))
 
     def fail_val_FASTQ(self, filename, error, exception=ValueError):
