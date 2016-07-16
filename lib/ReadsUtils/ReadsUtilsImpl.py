@@ -87,7 +87,9 @@ class ReadsUtils:
                 'Exactly one of the workspace ID or name must be provided')
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
         if wsname:
+            self.log('Translating workspace name to id')
             wsid = dfu.ws_name_to_id(wsname)
+            self.log('translation done')
         del wsname
         objid = params.get('objid')
         name = params.get('name')
@@ -190,6 +192,9 @@ class ReadsUtils:
         # return variables are: validated
         #BEGIN validateFASTQ
         del ctx
+        # TODO take a list of dicts as input and return a list of dicts
+        # TODO take interleaved as arg rather than checking file
+        # TODO try and parse the code output and return errors
         if not file_path or not os.path.isfile(file_path):
             raise ValueError('No such file: ' + str(file_path))
         if os.path.splitext(file_path)[1] not in self.FASTQ_EXT:
@@ -334,6 +339,7 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
+        self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid = (
             self._proc_upload_reads_params(ctx, params))
         fileinput = [{'shock_id': fwdid,
@@ -344,19 +350,25 @@ class ReadsUtils:
         for f in fileinput:
             f.update({'make_handle': 1, 'unpack': 'uncompress'})
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
+        self.log('downloading reads files from Shock')
         files = dfu.shock_to_file_mass(fileinput)
+        self.log('download complete, validating files')
         for f, i in zip(files, fileinput):
             if not self.validateFASTQ(ctx, f['file_path']):
                 raise ValueError('Invalid fasta file {} from Shock node {}'
                                  .format(f['file_path'], i['shock_id']))
+        self.log('file validation complete')
+        self.log('coercing forward reads node to my control, muhahahaha!')
         fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+        self.log('coercing complete, my evil schemes know no bounds')
         revr = None
         if revid:
+            self.log('coercing reverse reads node to my control, muhahahaha!')
             revr = dfu.own_shock_node({'shock_id': revid, 'make_handle': 1})
+            self.log('coercing complete. Will I stop at nothing?')
 
         # TODO calculate gc content, read size, read_count (find a program)
         # TODO tests
-        # TODO from file
         fwdfile = {'file': fwdr['handle'],
                    'encoding': 'ascii',
                    'size': files[0]['size'],
@@ -380,8 +392,10 @@ class ReadsUtils:
             so['name'] = name
         else:
             so['objid'] = objid
+        self.log('saving workspace object')
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
-
+        self.log('save complete')
+        
         returnVal = {'obj_ref': str(oi[6]) + '/' + str(oi[0]) + '/' +
                      str(oi[4])}
         #END upload_reads
