@@ -349,10 +349,11 @@ class ReadsUtils:
         fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
         revr = None
         if revid:
-            revr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+            revr = dfu.own_shock_node({'shock_id': revid, 'make_handle': 1})
 
         # TODO calculate gc content, read size, read_count (find a program)
         # TODO tests
+        # TODO from file
         fwdfile = {'file': fwdr['handle'],
                    'encoding': 'ascii',
                    'size': files[0]['size'],
