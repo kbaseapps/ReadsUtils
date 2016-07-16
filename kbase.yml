@@ -2,7 +2,8 @@ module-name:
     ReadsUtils
 
 module-description:
-    A KBase module
+    Utilities for validating, uploading, and downloading reads files.
+    Includes FASTA and FASTQ validators.
 
 service-language:
     python
