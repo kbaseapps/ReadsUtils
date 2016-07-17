@@ -11,7 +11,7 @@ try:
 except:
     from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
 
-from biokbase.workspace.client import Workspace  # @UnresolvedImport
+from Workspace.WorkspaceClient import Workspace  # @UnresolvedImport
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
 
@@ -245,7 +245,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                           'rev_id': ret2['id'],
                                           'sequencing_tech': 'seqtech-pr1',
                                           'wsname': self.ws_info[1],
-                                          'name': 'pairedreads1'})
+                                          'name': 'pairedreads1',
+                                          'interleaved': 1})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
         self.delete_shock_node(ret1['id'])
@@ -265,6 +266,36 @@ class ReadsUtilsTest(unittest.TestCase):
                        ret1['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
         self.check_lib(d['lib2'], 9648, 'Sample1.fastq',
                        ret2['id'], 'f118ee769a5e1b40ec44629994dfc3cd')
+
+    def test_interleaved_with_pe_inputs(self):
+        # paired end interlaced with the 4 pe input set
+        ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
+        self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
+                                          'sequencing_tech': 'seqtech-pr2',
+                                          'wsname': self.ws_info[1],
+                                          'name': 'pairedreads2',
+                                          'interleaved': 1,
+                                          'read_orientation_outward': 'a',
+                                          'insert_size_mean': 72.1,
+                                          'insert_size_std_dev': 84.0
+                                          })
+        obj = self.ws.get_objects2(
+            {'objects': [{'ref': self.ws_info[1] + '/pairedreads2'}]}
+            )['data'][0]
+        self.delete_shock_node(ret['id'])
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.PairedEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'seqtech-pr2')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.assertEqual(d['interleaved'], 1)
+        self.assertEqual(d['read_orientation_outward'], 1)
+        self.assertEqual(d['insert_size_mean'], 72.1)
+        self.assertEqual(d['insert_size_std_dev'], 84.0)
+        self.check_lib(d['lib1'], 2232, 'Sample5_interleaved.fastq',
+                       ret['id'], '971a5f445055c85fd45b17459e15e3ed')
 
     def check_lib(self, lib, size, filename, id_, md5):
         self.assertEqual(lib['size'], size)

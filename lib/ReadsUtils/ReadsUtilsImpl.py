@@ -6,6 +6,8 @@ import re
 import tempfile
 import shutil
 from DataFileUtil.DataFileUtilClient import DataFileUtil
+from numbers import Number
+import six
 #END_HEADER
 
 
@@ -76,6 +78,13 @@ class ReadsUtils:
         if f:
             obj[field] = f
 
+    def _check_pos(self, num, name):
+        if num is not None:
+            if not isinstance(num, Number):
+                raise ValueError(name + ' must be a number')
+            if num <= 0:
+                raise ValueError(name + ' must be > 0')
+
     def _proc_upload_reads_params(self, ctx, params):
         fwdid = params.get('fwd_id')
         if not fwdid:
@@ -88,6 +97,8 @@ class ReadsUtils:
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
         if wsname:
             self.log('Translating workspace name to id')
+            if not isinstance(wsname, six.string_types):
+                raise ValueError('wsname must be a string')
             wsid = dfu.ws_name_to_id(wsname)
             self.log('translation done')
         del wsname
@@ -120,10 +131,13 @@ class ReadsUtils:
              }
         self._add_field(o, params, 'strain')
         self._add_field(o, params, 'source')
-        # TODO tests
+        ism = params.get('insert_size_mean')
+        self._check_pos(ism, 'insert_size_mean')
+        issd = params.get('insert_size_std_dev')
+        self._check_pos(issd, 'insert_size_std_dev')
         if not single_end:
-            o.update({'insert_size_mean': params.get('insert_size_mean'),
-                      'insert_size_std_dev': params.get('insert_size_std_dev'),
+            o.update({'insert_size_mean': ism,
+                      'insert_size_std_dev': issd,
                       'interleaved': interleaved,
                       'read_orientation_outward': 1 if params.get(
                             'read_orientation_outward') else 0
