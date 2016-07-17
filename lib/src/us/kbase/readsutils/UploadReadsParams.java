@@ -40,7 +40,7 @@ import us.kbase.kbasecommon.StrainInfo;
  * source - information about the organism source.
  * interleaved - specify that the fwd reads file is an interleaved paired
  *     end reads file as opposed to a single end reads file. Default true,
- *     ignored if rev is specified.
+ *     ignored if rev_id is specified.
  * read_orientation_outward - whether the read orientation is outward
  *     from the set of primers. Default is false and is ignored for
  *     single end reads.

@@ -26,7 +26,7 @@ class ReadsUtils:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "7b7cf57862e445ab7811348b6d4e83c72b3b0b67"
+    GIT_COMMIT_HASH = "80e0fb02f14610c122b47a0b1ab7a7d0c866e14a"
     
     #BEGIN_CLASS_HEADER
 
@@ -269,7 +269,7 @@ class ReadsUtils:
            the organism strain that was sequenced. source - information about
            the organism source. interleaved - specify that the fwd reads file
            is an interleaved paired end reads file as opposed to a single end
-           reads file. Default true, ignored if rev is specified.
+           reads file. Default true, ignored if rev_id is specified.
            read_orientation_outward - whether the read orientation is outward
            from the set of primers. Default is false and is ignored for
            single end reads. insert_size_mean - the mean size of the genetic
