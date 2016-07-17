@@ -109,91 +109,6 @@ sub new
 
 
 
-=head2 validateFASTA
-
-  $validated = $obj->validateFASTA($file_path)
-
-=over 4
-
-=item Parameter and return types
-
-=begin html
-
-<pre>
-$file_path is a string
-$validated is a ReadsUtils.boolean
-boolean is an int
-
-</pre>
-
-=end html
-
-=begin text
-
-$file_path is a string
-$validated is a ReadsUtils.boolean
-boolean is an int
-
-
-=end text
-
-=item Description
-
-Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
-are accepted.
-
-=back
-
-=cut
-
- sub validateFASTA
-{
-    my($self, @args) = @_;
-
-# Authentication: required
-
-    if ((my $n = @args) != 1)
-    {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function validateFASTA (received $n, expecting 1)");
-    }
-    {
-	my($file_path) = @args;
-
-	my @_bad_arguments;
-        (!ref($file_path)) or push(@_bad_arguments, "Invalid type for argument 1 \"file_path\" (value was \"$file_path\")");
-        if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to validateFASTA:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'validateFASTA');
-	}
-    }
-
-    my $url = $self->{url};
-    my $result = $self->{client}->call($url, $self->{headers}, {
-	    method => "ReadsUtils.validateFASTA",
-	    params => \@args,
-    });
-    if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'validateFASTA',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
-	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
-	}
-    } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method validateFASTA",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'validateFASTA',
-				       );
-    }
-}
- 
-
-
 =head2 validateFASTQ
 
   $validated = $obj->validateFASTQ($file_path)
@@ -594,7 +509,7 @@ strain - information about the organism strain
 source - information about the organism source.
 interleaved - specify that the fwd reads file is an interleaved paired
     end reads file as opposed to a single end reads file. Default true,
-    ignored if rev is specified.
+    ignored if rev_id is specified.
 read_orientation_outward - whether the read orientation is outward
     from the set of primers. Default is false and is ignored for
     single end reads.

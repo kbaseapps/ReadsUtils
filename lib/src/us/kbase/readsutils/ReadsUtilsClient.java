@@ -149,25 +149,6 @@ public class ReadsUtilsClient {
     }
 
     /**
-     * <p>Original spec-file function name: validateFASTA</p>
-     * <pre>
-     * Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
-     * are accepted.
-     * </pre>
-     * @param   filePath   instance of String
-     * @return   parameter "validated" of original type "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1))
-     * @throws IOException if an IO exception occurs
-     * @throws JsonClientException if a JSON RPC exception occurs
-     */
-    public Long validateFASTA(String filePath, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
-        List<Object> args = new ArrayList<Object>();
-        args.add(filePath);
-        TypeReference<List<Long>> retType = new TypeReference<List<Long>>() {};
-        List<Long> res = caller.jsonrpcCall("ReadsUtils.validateFASTA", args, retType, true, true, jsonRpcContext, this.serviceVersion);
-        return res.get(0);
-    }
-
-    /**
      * <p>Original spec-file function name: validateFASTQ</p>
      * <pre>
      * Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq

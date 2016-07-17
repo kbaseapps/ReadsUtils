@@ -2,13 +2,13 @@
   "ver" : "0.0.1",
   "authors" : [ ],
   "contact" : "help@kbase.us",
-  "visble" : true,
+  "visible" : true,
   "categories" : [ "importers" ],
   "widgets" : {
     "input" : "kbaseNarrativeMethodInput"
   },
   "parameters" : [ {
-    "id" : "fastqFile1",
+    "id" : "fwd",
     "optional" : false,
     "advanced" : false,
     "allow_multiple" : false,
@@ -18,7 +18,7 @@
       "valid_ws_types" : [ ]
     }
   }, {
-    "id" : "fastqFile2",
+    "id" : "rev",
     "optional" : true,
     "advanced" : false,
     "allow_multiple" : false,
@@ -28,7 +28,7 @@
       "valid_ws_types" : [ ]
     }
   }, {
-    "id" : "outputObject",
+    "id" : "objname",
     "optional" : false,
     "advanced" : false,
     "allow_multiple" : false,
@@ -64,7 +64,7 @@
     "optional":true,
     "advanced":true,
     "allow_multiple":false,
-    "default_values":["0"],
+    "default_values":[0],
     "field_type" : "checkbox",
     "checkbox_options":{
       "checked_value": 1,
@@ -130,7 +130,7 @@
                     "target_property": "wsname"
                 },
                 {
-                    "input_parameter": "outputObject",
+                    "input_parameter": "objname",
                     "target_property": "name"
                 },
                 {
@@ -158,11 +158,11 @@
                   "target_property": "read_orientation_outward"
                 },
                 {
-                  "input_parameter": "fastqFile1",
+                  "input_parameter": "fwd",
                   "target_property": "fwd_id"
                 },
                 {
-                  "input_parameter": "fastqFile2",
+                  "input_parameter": "rev",
                   "target_property": "rev_id"
                 }
             ],

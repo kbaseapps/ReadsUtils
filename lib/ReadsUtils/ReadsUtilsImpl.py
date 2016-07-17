@@ -6,6 +6,8 @@ import re
 import tempfile
 import shutil
 from DataFileUtil.DataFileUtilClient import DataFileUtil
+from numbers import Number
+import six
 #END_HEADER
 
 
@@ -26,7 +28,7 @@ class ReadsUtils:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "7b7cf57862e445ab7811348b6d4e83c72b3b0b67"
+    GIT_COMMIT_HASH = "80e0fb02f14610c122b47a0b1ab7a7d0c866e14a"
     
     #BEGIN_CLASS_HEADER
 
@@ -76,10 +78,17 @@ class ReadsUtils:
         if f:
             obj[field] = f
 
+    def _check_pos(self, num, name):
+        if num is not None:
+            if not isinstance(num, Number):
+                raise ValueError(name + ' must be a number')
+            if num <= 0:
+                raise ValueError(name + ' must be > 0')
+
     def _proc_upload_reads_params(self, ctx, params):
         fwdid = params.get('fwd_id')
         if not fwdid:
-            raise ValueError('At least one reads file must be provided')
+            raise ValueError('No reads file provided')
         wsid = params.get('wsid')
         wsname = params.get('wsname')
         if not self.xor(wsid, wsname):
@@ -87,7 +96,11 @@ class ReadsUtils:
                 'Exactly one of the workspace ID or name must be provided')
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
         if wsname:
+            self.log('Translating workspace name to id')
+            if not isinstance(wsname, six.string_types):
+                raise ValueError('wsname must be a string')
             wsid = dfu.ws_name_to_id(wsname)
+            self.log('translation done')
         del wsname
         objid = params.get('objid')
         name = params.get('name')
@@ -107,18 +120,24 @@ class ReadsUtils:
         if not seqtype:
             raise ValueError('The sequencing technology must be provided')
 
+        sg = 1
+        if 'single_genome' in params and not params['single_genome']:
+            sg = 0
         o = {'sequencing_tech': seqtype,
-             'single_genome': 1 if params.get('single_genome') else 0,
+             'single_genome': sg,
              # 'read_count': params.get('read_count'),
              # 'read_size': params.get('read_size'),
              # 'gc_content': params.get('gc_content')
              }
         self._add_field(o, params, 'strain')
         self._add_field(o, params, 'source')
-        # TODO tests
+        ism = params.get('insert_size_mean')
+        self._check_pos(ism, 'insert_size_mean')
+        issd = params.get('insert_size_std_dev')
+        self._check_pos(issd, 'insert_size_std_dev')
         if not single_end:
-            o.update({'insert_size_mean': params.get('insert_size_mean'),
-                      'insert_size_std_dev': params.get('insert_size_std_dev'),
+            o.update({'insert_size_mean': ism,
+                      'insert_size_std_dev': issd,
                       'interleaved': interleaved,
                       'read_orientation_outward': 1 if params.get(
                             'read_orientation_outward') else 0
@@ -190,6 +209,9 @@ class ReadsUtils:
         # return variables are: validated
         #BEGIN validateFASTQ
         del ctx
+        # TODO take a list of dicts as input and return a list of dicts
+        # TODO take interleaved as arg rather than checking file
+        # TODO try and parse the code output and return errors
         if not file_path or not os.path.isfile(file_path):
             raise ValueError('No such file: ' + str(file_path))
         if os.path.splitext(file_path)[1] not in self.FASTQ_EXT:
@@ -264,7 +286,7 @@ class ReadsUtils:
            the organism strain that was sequenced. source - information about
            the organism source. interleaved - specify that the fwd reads file
            is an interleaved paired end reads file as opposed to a single end
-           reads file. Default true, ignored if rev is specified.
+           reads file. Default true, ignored if rev_id is specified.
            read_orientation_outward - whether the read orientation is outward
            from the set of primers. Default is false and is ignored for
            single end reads. insert_size_mean - the mean size of the genetic
@@ -334,29 +356,36 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
+        self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid = (
             self._proc_upload_reads_params(ctx, params))
         fileinput = [{'shock_id': fwdid,
-                      'file_path': self.scratch + '/fwd/'}]
+                      'file_path': self.scratch + '/fwd/',
+                      'unpack': 'uncompress'}]
         if revid:
             fileinput.append({'shock_id': revid,
-                              'file_path': self.scratch + '/rev/'})
-        for f in fileinput:
-            f.update({'make_handle': 1, 'unpack': 'uncompress'})
+                              'file_path': self.scratch + '/rev/',
+                              'unpack': 'uncompress'})
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
+        self.log('downloading reads files from Shock')
         files = dfu.shock_to_file_mass(fileinput)
+        self.log('download complete, validating files')
         for f, i in zip(files, fileinput):
-            if not self.validateFASTQ(ctx, f['file_path']):
+            if not self.validateFASTQ(ctx, f['file_path'])[0]:
                 raise ValueError('Invalid fasta file {} from Shock node {}'
                                  .format(f['file_path'], i['shock_id']))
+        self.log('file validation complete')
+        self.log('coercing forward reads node to my control, muhahahaha!')
         fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+        self.log('coercing complete, my evil schemes know no bounds')
         revr = None
         if revid:
+            self.log('coercing reverse reads node to my control, muhahahaha!')
             revr = dfu.own_shock_node({'shock_id': revid, 'make_handle': 1})
+            self.log('coercing complete. Will I stop at nothing?')
 
         # TODO calculate gc content, read size, read_count (find a program)
         # TODO tests
-        # TODO from file
         fwdfile = {'file': fwdr['handle'],
                    'encoding': 'ascii',
                    'size': files[0]['size'],
@@ -380,7 +409,9 @@ class ReadsUtils:
             so['name'] = name
         else:
             so['objid'] = objid
+        self.log('saving workspace object')
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
+        self.log('save complete')
 
         returnVal = {'obj_ref': str(oi[6]) + '/' + str(oi[0]) + '/' +
                      str(oi[4])}
