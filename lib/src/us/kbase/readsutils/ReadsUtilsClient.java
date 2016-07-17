@@ -149,41 +149,40 @@ public class ReadsUtilsClient {
     }
 
     /**
-     * <p>Original spec-file function name: validateFASTA</p>
-     * <pre>
-     * Validate a FASTA file. The file extensions .fa, .fas, .fna. and .fasta
-     * are accepted.
-     * </pre>
-     * @param   filePath   instance of String
-     * @return   parameter "validated" of original type "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1))
-     * @throws IOException if an IO exception occurs
-     * @throws JsonClientException if a JSON RPC exception occurs
-     */
-    public Long validateFASTA(String filePath, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
-        List<Object> args = new ArrayList<Object>();
-        args.add(filePath);
-        TypeReference<List<Long>> retType = new TypeReference<List<Long>>() {};
-        List<Long> res = caller.jsonrpcCall("ReadsUtils.validateFASTA", args, retType, true, true, jsonRpcContext, this.serviceVersion);
-        return res.get(0);
-    }
-
-    /**
      * <p>Original spec-file function name: validateFASTQ</p>
      * <pre>
      * Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
      * are accepted. Note that prior to validation the file will be altered in
      * place to remove blank lines if any exist.
      * </pre>
-     * @param   filePath   instance of String
-     * @return   parameter "validated" of original type "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1))
+     * @param   params   instance of list of type {@link us.kbase.readsutils.ValidateFASTQParams ValidateFASTQParams}
+     * @return   parameter "out" of list of type {@link us.kbase.readsutils.ValidateFASTQOutput ValidateFASTQOutput}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public Long validateFASTQ(String filePath, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public List<ValidateFASTQOutput> validateFASTQ(List<ValidateFASTQParams> params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
-        args.add(filePath);
-        TypeReference<List<Long>> retType = new TypeReference<List<Long>>() {};
-        List<Long> res = caller.jsonrpcCall("ReadsUtils.validateFASTQ", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        args.add(params);
+        TypeReference<List<List<ValidateFASTQOutput>>> retType = new TypeReference<List<List<ValidateFASTQOutput>>>() {};
+        List<List<ValidateFASTQOutput>> res = caller.jsonrpcCall("ReadsUtils.validateFASTQ", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
+    /**
+     * <p>Original spec-file function name: upload_reads</p>
+     * <pre>
+     * Loads a set of reads to KBase data stores.
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.readsutils.UploadReadsParams UploadReadsParams}
+     * @return   instance of type {@link us.kbase.readsutils.UploadReadsOutput UploadReadsOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public UploadReadsOutput uploadReads(UploadReadsParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<UploadReadsOutput>> retType = new TypeReference<List<UploadReadsOutput>>() {};
+        List<UploadReadsOutput> res = caller.jsonrpcCall("ReadsUtils.upload_reads", args, retType, true, true, jsonRpcContext, this.serviceVersion);
         return res.get(0);
     }
 

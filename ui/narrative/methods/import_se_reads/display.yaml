@@ -1,0 +1,45 @@
+name     : SINGLE END READS
+subtitle : none
+tooltip  : Upload a Single End Library from a FASTQ file
+
+screenshots :
+    []
+
+suggestions :
+    apps:
+        related :
+            []
+        next :
+            []
+    methods:
+        related :
+            []
+        next :
+            []
+
+parameters :
+    reads :
+        ui-name : READS FILE
+        short-hint : Short read file containing a single end library in FASTQ format
+        long-hint  : |
+            Valid file extensions for FASTQ: .fastq, .fnq, .fq. Gzipped or bzipped
+            files are acceptable.
+
+    objname :
+        ui-name : OBJECT NAME
+        short-hint : Provide a name for the output object that will be created by this upload
+        long-hint  : Provide a name for the output object that will be created by this upload
+    
+    singleGenome:
+        ui-name: SINGLE GENOME
+        short-hint: Whether the reads are from a single genome or a metagenome.
+        long-hint: Whether the reads are from a single genome or a metagenome.
+
+    seqTech:
+        ui-name: SEQUENCING TECHNOLOGY
+        short-hint: The name of the sequencing technology used to create the reads file.
+        long-hint: The name of the sequencing technology used to create the reads file.
+
+description : none
+
+technical-description : none

@@ -1,0 +1,65 @@
+name     : PAIRED END READS
+subtitle : none
+tooltip  : Upload a PairedEndLibrary from FASTQ file(s) into your Narrative.
+
+screenshots :
+    []
+
+suggestions :
+    apps:
+        related :
+            []
+        next :
+            []
+    methods:
+        related :
+            []
+        next :
+            []
+
+parameters :
+    fwd :
+        ui-name : READS FILE
+        short-hint : Short read file containing a paired end library in FASTQ format
+        long-hint  : |
+            Valid file extensions for FASTQ: .fastq, .fnq, .fq. Gzipped or bzipped
+            files are acceptable.
+
+    rev :
+        ui-name : READS FILE
+        short-hint : Optional second short read file containing a paired end library in FASTQ format.
+        long-hint  : Not needed in an interleaved library
+
+    singleGenome:
+        ui-name: SINGLE GENOME
+        short-hint: Whether the reads are from a single genome or a metagenome.
+        long-hint: Whether the reads are from a single genome or a metagenome.
+
+    seqTech:
+        ui-name: SEQUENCING TECHNOLOGY
+        short-hint: The name of the sequencing technology used to create the reads file.
+        long-hint: The name of the sequencing technology used to create the reads file.
+
+    insertSizeMean :
+        ui-name : MEAN INSERT SIZE
+        short-hint : Specify the mean (average) insert length
+        long-hint  : Specify the mean (average) insert length
+
+    insertSizeStDev :
+        ui-name : STDEV OF INSERT SIZE
+        short-hint : Specify the standard deviation of insert lengths
+        long-hint  : Specify the standard deviation of insert lengths
+
+    readOrientationOutward :
+        ui-name : READS ORIENTATION OUTWARD
+        short-hint : Reads in a pair point outward
+        long-hint  : Reads in a pair point outward
+
+    objname :
+        ui-name : OBJECT NAME
+        short-hint : Provide a name for the output object that will be created by this upload
+        long-hint  : Provide a name for the output object that will be created by this upload
+
+description : none
+
+technical-description : none

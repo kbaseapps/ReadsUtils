@@ -23,6 +23,7 @@ RUN cd /opt \
     && pip install pyopenssl ndg-httpsclient pyasn1 \
     && pip install requests --upgrade \
     && pip install 'requests[security]' --upgrade \
+    && pip install six \
     && pip install ipython \
     && apt-get install nano
 

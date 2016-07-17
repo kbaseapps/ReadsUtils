@@ -1,0 +1,174 @@
+{
+  "ver" : "0.0.1",
+  "authors" : [ ],
+  "contact" : "help@kbase.us",
+  "visible" : true,
+  "categories" : [ "importers" ],
+  "widgets" : {
+    "input" : "kbaseNarrativeMethodInput"
+  },
+  "parameters" : [ {
+    "id" : "fwd",
+    "optional" : false,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "" ],
+    "field_type" : "file",
+    "text_options" : {
+      "valid_ws_types" : [ ]
+    }
+  }, {
+    "id" : "rev",
+    "optional" : true,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "" ],
+    "field_type" : "file",
+    "text_options" : {
+      "valid_ws_types" : [ ]
+    }
+  }, {
+    "id" : "objname",
+    "optional" : false,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "" ],
+    "field_type" : "text",
+    "text_options" : {
+      "valid_ws_types" : [ "KBaseFile.PairedEndLibrary" ],
+      "is_output_name" : true
+    }
+  }, {
+    "id" : "insertSizeMean",
+    "optional" : true,
+    "advanced" : true,
+    "allow_multiple" : false,
+    "default_values" : [ "" ],
+    "field_type" : "text",
+    "text_options" : {
+      "validate_as": "float"
+    }
+  }, {
+    "id" : "insertSizeStDev",
+    "optional" : true,
+    "advanced" : true,
+    "allow_multiple" : false,
+    "default_values" : [ "" ],
+    "field_type" : "text",
+    "text_options" : {
+      "validate_as": "float"
+      }
+    },
+   {
+    "id": "readOrientationOutward",
+    "optional":true,
+    "advanced":true,
+    "allow_multiple":false,
+    "default_values":[0],
+    "field_type" : "checkbox",
+    "checkbox_options":{
+      "checked_value": 1,
+      "unchecked_value": 0
+      }
+    },
+   {
+    "id": "singleGenome",
+    "optional":false,
+    "advanced":false,
+    "allow_multiple":false,
+    "default_values":[1],
+    "field_type" : "checkbox",
+    "checkbox_options":{
+      "checked_value": 1,
+      "unchecked_value": 0
+      }
+    }, 
+   {"id": "seqTech",
+    "optional" : false,
+    "advanced" : false,
+    "allow_multiple" : false,
+    "default_values" : [ "Illumina" ],
+    "field_type" : "dropdown",
+    "dropdown_options":{
+      "options": [
+        {
+          "value": "Illumina",
+          "display": "Illumina"
+        },
+        {
+          "value": "PacBio CLR",
+          "display": "PacBio CLR"
+        },
+        {
+          "value": "PacBio CCS",
+          "display": "PacBio CCS"
+        },
+        {
+          "value": "IonTorrent",
+          "display": "IonTorrent"
+        },
+        {
+          "value": "NanoPore",
+          "display": "NanoPore"
+        },
+        {
+          "value": "Unknown",
+          "display": "Unknown"
+        }
+      ]
+     }
+    }
+  ],
+  "behavior" : {
+    "service-mapping": {
+            "url": "",
+            "name": "ReadsUtils",
+            "method": "upload_reads",
+            "input_mapping": [
+                {
+                    "narrative_system_variable": "workspace",
+                    "target_property": "wsname"
+                },
+                {
+                    "input_parameter": "objname",
+                    "target_property": "name"
+                },
+                {
+                  "input_parameter": "singleGenome",
+                  "target_property": "single_genome"
+                },
+                {
+                  "input_parameter": "seqTech",
+                  "target_property": "sequencing_tech"
+                },
+                {
+                  "constant_value": 1,
+                  "target_property": "interleaved"
+                },
+                {
+                  "input_parameter": "insertSizeMean",
+                  "target_property": "insert_size_mean"
+                },
+                {
+                  "input_parameter": "insertSizeStDev",
+                  "target_property": "insert_size_std_dev"
+                },
+                {
+                  "input_parameter": "readOrientationOutward",
+                  "target_property": "read_orientation_outward"
+                },
+                {
+                  "input_parameter": "fwd",
+                  "target_property": "fwd_id"
+                },
+                {
+                  "input_parameter": "rev",
+                  "target_property": "rev_id"
+                }
+            ],
+            "output_mapping": [
+            ]
+        }
+    },
+  "job_id_output_field": "docker"
+}

@@ -327,14 +327,14 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_ReadsUtils.validateFASTA,
-                             name='ReadsUtils.validateFASTA',
-                             types=[basestring])
-        self.method_authentication['ReadsUtils.validateFASTA'] = 'required'
         self.rpc_service.add(impl_ReadsUtils.validateFASTQ,
                              name='ReadsUtils.validateFASTQ',
-                             types=[basestring])
+                             types=[list])
         self.method_authentication['ReadsUtils.validateFASTQ'] = 'required'
+        self.rpc_service.add(impl_ReadsUtils.upload_reads,
+                             name='ReadsUtils.upload_reads',
+                             types=[dict])
+        self.method_authentication['ReadsUtils.upload_reads'] = 'required'
         self.rpc_service.add(impl_ReadsUtils.status,
                              name='ReadsUtils.status',
                              types=[dict])
