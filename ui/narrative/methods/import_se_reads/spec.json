@@ -8,7 +8,7 @@
     "input" : "kbaseNarrativeMethodInput"
   },
   "parameters" : [{
-    "id" : "fastqFile",
+    "id" : "reads",
     "optional" : false,
     "advanced" : false,
     "allow_multiple" : false,
@@ -18,7 +18,7 @@
       "valid_ws_types" : [ ]
     }
    },
-   {"id" : "outputObject",
+   {"id" : "objname",
     "optional" : false,
     "advanced" : false,
     "allow_multiple" : false,
@@ -87,7 +87,7 @@
           "target_property": "wsname"
         },
         {
-          "input_parameter": "outputObject",
+          "input_parameter": "objname",
           "target_property": "name"
         },
         {
@@ -99,7 +99,7 @@
           "target_property": "sequencing_tech"
         },
         {
-          "input_parameter": "fastqFile",
+          "input_parameter": "reads",
           "target_property": "fwd_id"
         }
       ],

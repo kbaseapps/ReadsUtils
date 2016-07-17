@@ -18,13 +18,14 @@ suggestions :
             []
 
 parameters :
-    fastqFile :
+    reads :
         ui-name : READS FILE
         short-hint : Short read file containing a single end library in FASTQ format
         long-hint  : |
-            Valid file extensions for FASTQ: .fastq, .fnq, .fq
+            Valid file extensions for FASTQ: .fastq, .fnq, .fq. Gzipped or bzipped
+            files are acceptable.
 
-    outputObject :
+    objname :
         ui-name : OBJECT NAME
         short-hint : Provide a name for the output object that will be created by this upload
         long-hint  : Provide a name for the output object that will be created by this upload
@@ -36,8 +37,8 @@ parameters :
 
     seqTech:
         ui-name: SEQUENCING TECHNOLOGY
-        short-hint: The name of the sequencing technlogy used to create the reads file.
-        long-hint: The name of the sequencing technlogy used to create the reads file.
+        short-hint: The name of the sequencing technology used to create the reads file.
+        long-hint: The name of the sequencing technology used to create the reads file.
 
 description : none
 

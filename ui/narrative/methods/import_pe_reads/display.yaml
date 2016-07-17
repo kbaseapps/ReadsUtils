@@ -18,15 +18,16 @@ suggestions :
             []
 
 parameters :
-    fastqFile1 :
+    fwd :
         ui-name : READS FILE
         short-hint : Short read file containing a paired end library in FASTQ format
         long-hint  : |
-            Valid file extensions for FASTQ: .fastq, .fnq, .fq
+            Valid file extensions for FASTQ: .fastq, .fnq, .fq. Gzipped or bzipped
+            files are acceptable.
 
-    fastqFile2 :
+    rev :
         ui-name : READS FILE
-        short-hint : Optional second short read file containing a paired end library in FASTA/FASTQ format.
+        short-hint : Optional second short read file containing a paired end library in FASTQ format.
         long-hint  : Not needed in an interleaved library
 
     singleGenome:
@@ -36,8 +37,8 @@ parameters :
 
     seqTech:
         ui-name: SEQUENCING TECHNOLOGY
-        short-hint: The name of the sequencing technlogy used to create the reads file.
-        long-hint: The name of the sequencing technlogy used to create the reads file.
+        short-hint: The name of the sequencing technology used to create the reads file.
+        long-hint: The name of the sequencing technology used to create the reads file.
 
     insertSizeMean :
         ui-name : MEAN INSERT SIZE
@@ -54,7 +55,7 @@ parameters :
         short-hint : Reads in a pair point outward
         long-hint  : Reads in a pair point outward
 
-    outputObject :
+    objname :
         ui-name : OBJECT NAME
         short-hint : Provide a name for the output object that will be created by this upload
         long-hint  : Provide a name for the output object that will be created by this upload
