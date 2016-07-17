@@ -163,8 +163,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_lib(d['lib'], 2847, 'Sample1.fastq.gz', ret['id'],
                        '48efea6945c4382c68f5eac485c177c2')
 
-    def test_single_end_reads_metagenome(self):
-        # single genome = 0
+    def test_single_end_reads_metagenome_objid(self):
+        # single genome = 0, test saving to an object id
         ret = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
         self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
                                           'sequencing_tech': 'seqtech2',
@@ -174,15 +174,31 @@ class ReadsUtilsTest(unittest.TestCase):
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads2']})['data'][0]
         # TODO paired end params
-        # TODO test with obj id
         # TODO unhappy cases
         # TODO read code for coverage
-        self.delete_shock_node(ret['id'])
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'seqtech2')
         self.assertEqual(d['single_genome'], 0)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 1116, 'Sample5_noninterleaved.1.fastq',
+                       ret['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
+
+        # test saving with IDs only
+        self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
+                                          'sequencing_tech': 'seqtech2-1',
+                                          'wsid': self.ws_info[0],
+                                          'objid': obj['info'][0]})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/singlereads2/2']})['data'][0]
+        self.delete_shock_node(ret['id'])
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'seqtech2-1')
+        self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
         self.check_lib(d['lib'], 1116, 'Sample5_noninterleaved.1.fastq',
