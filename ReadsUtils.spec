@@ -10,12 +10,34 @@ module ReadsUtils {
     */
     typedef int boolean;
 
+    /* Input to the validateFASTQ function.
+    
+        Required parameters:
+        file_path - the path to the file to validate.
+        
+        Optional parameters:
+        interleaved - whether the file is interleaved or not. Setting this to
+            true disables sequence ID checks.
+    */
+    typedef structure {
+        string file_path;
+        boolean interleaved;
+    } ValidateFASTQParams;
+    
+    /* The output of the validateFASTQ function.
+        
+        validated - whether the file validated successfully or not.
+    */
+    typedef structure {
+        boolean validated;
+    } ValidateFASTQOutput;
+
     /* Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
         are accepted. Note that prior to validation the file will be altered in
         place to remove blank lines if any exist.
     */
-    funcdef validateFASTQ(string file_path) returns(boolean validated)
-        authentication required;
+    funcdef validateFASTQ(list<ValidateFASTQParams> params)
+        returns(list<ValidateFASTQOutput> out) authentication required;
     
     /* Input to the upload_reads function.
         

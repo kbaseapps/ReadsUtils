@@ -2,7 +2,6 @@
 import time
 import subprocess
 import os
-import re
 import tempfile
 import shutil
 from DataFileUtil.DataFileUtilClient import DataFileUtil
@@ -28,7 +27,7 @@ class ReadsUtils:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "80e0fb02f14610c122b47a0b1ab7a7d0c866e14a"
+    GIT_COMMIT_HASH = "356d1eeae8663b59c9e0bee0b113e0b05c7c80df"
     
     #BEGIN_CLASS_HEADER
 
@@ -41,34 +40,6 @@ class ReadsUtils:
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') +
               str(time.time()) + ': ' + message)
-
-    SEP_ILLUMINA = '/'
-    SEP_CASAVA_1 = ':Y:'
-    SEP_CASAVA_2 = ':N:'
-
-    # TODO later - merge with the 1st line counter if possible
-    def check_interleavedPE(self, filename):
-
-        with open(filename, 'r') as infile:
-            first_line = infile.readline().strip()
-            hcount = 1
-            lcount = 1
-
-            if self.SEP_ILLUMINA in first_line:
-                header1 = first_line.split(self.SEP_ILLUMINA)[0]
-            elif (self.SEP_CASAVA_1 in first_line or
-                  self.SEP_CASAVA_2 in first_line):
-                header1 = re.split('[1,2]:[Y,N]:', first_line)[0]
-            else:
-                header1 = first_line
-
-            m = re.compile('^' + header1)
-            for line in infile:
-                if lcount % 4 == 0:
-                    if m.match(line):
-                        hcount = hcount + 1
-                lcount += 1
-        return hcount == 2  # exactly 2 headers with same id = interleaved
 
     def xor(self, a, b):
         return bool(a) != bool(b)
@@ -196,76 +167,89 @@ class ReadsUtils:
         #END_CONSTRUCTOR
         pass
 
-    def validateFASTQ(self, ctx, file_path):
+    def validateFASTQ(self, ctx, params):
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
         are accepted. Note that prior to validation the file will be altered in
         place to remove blank lines if any exist.
-        :param file_path: instance of String
-        :returns: instance of type "boolean" (A boolean - 0 for false, 1 for
+        :param params: instance of list of type "ValidateFASTQParams" (Input
+           to the validateFASTQ function. Required parameters: file_path -
+           the path to the file to validate. Optional parameters: interleaved
+           - whether the file is interleaved or not. Setting this to true
+           disables sequence ID checks.) -> structure: parameter "file_path"
+           of String, parameter "interleaved" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1))
+        :returns: instance of list of type "ValidateFASTQOutput" (The output
+           of the validateFASTQ function. validated - whether the file
+           validated successfully or not.) -> structure: parameter
+           "validated" of type "boolean" (A boolean - 0 for false, 1 for
            true. @range (0, 1))
         """
         # ctx is the context object
-        # return variables are: validated
+        # return variables are: out
         #BEGIN validateFASTQ
         del ctx
-        # TODO take a list of dicts as input and return a list of dicts
-        # TODO take interleaved as arg rather than checking file
-        # TODO try and parse the code output and return errors
-        if not file_path or not os.path.isfile(file_path):
-            raise ValueError('No such file: ' + str(file_path))
-        if os.path.splitext(file_path)[1] not in self.FASTQ_EXT:
-            raise ValueError('File {} is not a FASTQ file'.format(file_path))
-        self.log('Validating FASTQ file ' + file_path)
-        self.log('Checking line count')
-        c = 0
-        blank = False
-        # open assumes ascii, which is ok for reads
-        with open(file_path) as f:  # run & count until we hit a blank line
-            for l in f:
-                if not l.strip():
-                    blank = True
-                    break
-                c += 1
-        if blank:
+        # TODO try and parse the validator output and return errors
+        out = []
+        for p in params:
+            file_path = p.get('file_path')
+            if not file_path or not os.path.isfile(file_path):
+                raise ValueError('No such file: ' + str(file_path))
+            if os.path.splitext(file_path)[1] not in self.FASTQ_EXT:
+                raise ValueError('File {} is not a FASTQ file'
+                                 .format(file_path))
+            self.log('Validating FASTQ file ' + file_path)
+            self.log('Checking line count')
             c = 0
-            self.log('Removing blank lines')
-            with open(file_path) as s, tempfile.NamedTemporaryFile(
-                    mode='w', dir=self.scratch) as t:
-                for l in s:
-                    l = l.strip()
-                    if l:
-                        t.write(l + '\n')
-                        c += 1
-                s.close()
-                t.flush()
-                shutil.copy2(t.name, file_path)
-        validated = 1
-        if c % 4 != 0:
-            err = ('Invalid FASTQ file, expected multiple of 4 lines, got ' +
-                   str(c))
-            self.log(err)
-            validated = 0
-        else:
-            self.log(str(c) + ' lines in file')
+            blank = False
+            # open assumes ascii, which is ok for reads
+            with open(file_path) as f:  # run & count until we hit a blank line
+                for l in f:
+                    if not l.strip():
+                        blank = True
+                        break
+                    c += 1
+            if blank:
+                c = 0
+                self.log('Removing blank lines')
+                with open(file_path) as s, tempfile.NamedTemporaryFile(
+                        mode='w', dir=self.scratch) as t:
+                    for l in s:
+                        l = l.strip()
+                        if l:
+                            t.write(l + '\n')
+                            c += 1
+                    s.close()
+                    t.flush()
+                    shutil.copy2(t.name, file_path)
+            validated = 1
+            if c % 4 != 0:
+                err = ('Invalid FASTQ file, expected multiple of 4 lines, ' +
+                       'got ' + str(c))
+                self.log(err)
+                validated = 0
+            else:
+                self.log(str(c) + ' lines in file')
 
-        if validated:
-            arguments = [self.FASTQ_EXE, '--file', file_path,
-                         '--maxErrors', '10']
-            if self.check_interleavedPE(file_path):
-                arguments.append('--disableSeqIDCheck')
-            retcode = subprocess.call(arguments)
-            self.log('Validation return code: ' + str(retcode))
-            validated = 1 if retcode == 0 else 0
-            self.log('Validation ' + ('succeeded' if validated else 'failed'))
+            if validated:
+                arguments = [self.FASTQ_EXE, '--file', file_path,
+                             '--maxErrors', '10']
+                if p.get('interleaved'):
+                    arguments.append('--disableSeqIDCheck')
+                retcode = subprocess.call(arguments)
+                self.log('Validation return code: ' + str(retcode))
+                validated = 1 if retcode == 0 else 0
+                self.log('Validation ' +
+                         ('succeeded' if validated else 'failed'))
+            out.append({'validated': validated})
         #END validateFASTQ
 
         # At some point might do deeper type checking...
-        if not isinstance(validated, int):
+        if not isinstance(out, list):
             raise ValueError('Method validateFASTQ return value ' +
-                             'validated is not type int as required.')
+                             'out is not type list as required.')
         # return the results
-        return [validated]
+        return [out]
 
     def upload_reads(self, ctx, params):
         """
@@ -359,6 +343,7 @@ class ReadsUtils:
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid = (
             self._proc_upload_reads_params(ctx, params))
+        interleaved = 1 if (not single_end and not revid) else 0
         fileinput = [{'shock_id': fwdid,
                       'file_path': self.scratch + '/fwd/',
                       'unpack': 'uncompress'}]
@@ -371,7 +356,10 @@ class ReadsUtils:
         files = dfu.shock_to_file_mass(fileinput)
         self.log('download complete, validating files')
         for f, i in zip(files, fileinput):
-            if not self.validateFASTQ(ctx, f['file_path'])[0]:
+            if not self.validateFASTQ(
+                    ctx, [{'file_path': f['file_path'],
+                           'interleaved': interleaved
+                           }])[0][0]['validated']:
                 raise ValueError('Invalid fasta file {} from Shock node {}'
                                  .format(f['file_path'], i['shock_id']))
         self.log('file validation complete')
@@ -385,7 +373,6 @@ class ReadsUtils:
             self.log('coercing complete. Will I stop at nothing?')
 
         # TODO calculate gc content, read size, read_count (find a program)
-        # TODO tests
         fwdfile = {'file': fwdr['handle'],
                    'encoding': 'ascii',
                    'size': files[0]['size'],
