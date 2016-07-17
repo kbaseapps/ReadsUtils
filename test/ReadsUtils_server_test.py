@@ -11,7 +11,8 @@ try:
 except:
     from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
 
-from Workspace.WorkspaceClient import Workspace  # @UnresolvedImport
+from Workspace.WorkspaceClient import Workspace
+from DataFileUtil.baseclient import ServerError as DFUError
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
 
@@ -90,6 +91,9 @@ class ReadsUtilsTest(unittest.TestCase):
         else:
             return result["data"]
 
+    def make_ref(self, objinfo):
+        return str(objinfo[6]) + '/' + str(objinfo[0]) + '/' + str(objinfo[4])
+
     def test_FASTA_validation(self):
         self.check_FASTA('data/sample.fa', 1)
         self.check_FASTA('data/sample.fas', 1)
@@ -146,13 +150,14 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_single_end_reads_gzip(self):
         # gzip, minimum inputs
         ret = self.upload_file_to_shock('data/Sample1.fastq.gz')
-        self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
-                                          'sequencing_tech': 'seqtech',
-                                          'wsname': self.ws_info[1],
-                                          'name': 'singlereads1'})
+        ref = self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
+                                                'sequencing_tech': 'seqtech',
+                                                'wsname': self.ws_info[1],
+                                                'name': 'singlereads1'})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads1']})['data'][0]
         self.delete_shock_node(ret['id'])
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
@@ -166,16 +171,14 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_single_end_reads_metagenome_objid(self):
         # single genome = 0, test saving to an object id
         ret = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
-        self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
-                                          'sequencing_tech': 'seqtech2',
-                                          'wsname': self.ws_info[1],
-                                          'name': 'singlereads2',
-                                          'single_genome': 0})
+        ref = self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
+                                                'sequencing_tech': 'seqtech2',
+                                                'wsname': self.ws_info[1],
+                                                'name': 'singlereads2',
+                                                'single_genome': 0})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads2']})['data'][0]
-        # TODO paired end params
-        # TODO unhappy cases
-        # TODO read code for coverage
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
@@ -187,13 +190,15 @@ class ReadsUtilsTest(unittest.TestCase):
                        ret['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
 
         # test saving with IDs only
-        self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
-                                          'sequencing_tech': 'seqtech2-1',
-                                          'wsid': self.ws_info[0],
-                                          'objid': obj['info'][0]})
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_id': ret['id'],
+                       'sequencing_tech': 'seqtech2-1',
+                       'wsid': self.ws_info[0],
+                       'objid': obj['info'][0]})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads2/2']})['data'][0]
         self.delete_shock_node(ret['id'])
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
@@ -212,7 +217,7 @@ class ReadsUtilsTest(unittest.TestCase):
                   'strain': 'happypants'
                   }
         source = {'source': 'my pants'}
-        self.impl.upload_reads(
+        ref = self.impl.upload_reads(
             self.ctx,
             {'fwd_id': ret['id'],
              'sequencing_tech': 'seqtech3',
@@ -227,6 +232,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/singlereads3']})['data'][0]
 
         self.delete_shock_node(ret['id'])
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
@@ -240,17 +246,19 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_paired_end_reads(self):
         # paired end non interlaced, minimum inputs
         ret1 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
-        ret2 = self.upload_file_to_shock('data/Sample1.fastq')
-        self.impl.upload_reads(self.ctx, {'fwd_id': ret1['id'],
-                                          'rev_id': ret2['id'],
-                                          'sequencing_tech': 'seqtech-pr1',
-                                          'wsname': self.ws_info[1],
-                                          'name': 'pairedreads1',
-                                          'interleaved': 1})
+        ret2 = self.upload_file_to_shock('data/Sample1.fastq.gz')
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_id': ret1['id'],
+                       'rev_id': ret2['id'],
+                       'sequencing_tech': 'seqtech-pr1',
+                       'wsname': self.ws_info[1],
+                       'name': 'pairedreads1',
+                       'interleaved': 1})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
         self.delete_shock_node(ret1['id'])
         self.delete_shock_node(ret2['id'])
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
@@ -264,25 +272,27 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['insert_size_std_dev'], None)
         self.check_lib(d['lib1'], 1116, 'Sample5_noninterleaved.1.fastq',
                        ret1['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
-        self.check_lib(d['lib2'], 9648, 'Sample1.fastq',
-                       ret2['id'], 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib2'], 2847, 'Sample1.fastq.gz',
+                       ret2['id'], '48efea6945c4382c68f5eac485c177c2')
 
     def test_interleaved_with_pe_inputs(self):
         # paired end interlaced with the 4 pe input set
         ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
-        self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
-                                          'sequencing_tech': 'seqtech-pr2',
-                                          'wsname': self.ws_info[1],
-                                          'name': 'pairedreads2',
-                                          'interleaved': 1,
-                                          'read_orientation_outward': 'a',
-                                          'insert_size_mean': 72.1,
-                                          'insert_size_std_dev': 84.0
-                                          })
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_id': ret['id'],
+                       'sequencing_tech': 'seqtech-pr2',
+                       'wsname': self.ws_info[1],
+                       'name': 'pairedreads2',
+                       'interleaved': 1,
+                       'read_orientation_outward': 'a',
+                       'insert_size_mean': 72.1,
+                       'insert_size_std_dev': 84.0
+                       })
         obj = self.ws.get_objects2(
             {'objects': [{'ref': self.ws_info[1] + '/pairedreads2'}]}
             )['data'][0]
         self.delete_shock_node(ret['id'])
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
@@ -308,6 +318,137 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(libfile['remote_md5'], md5)
         self.assertEqual(libfile['type'], 'shock')
         self.assertEqual(libfile['url'], self.shockURL)
+
+    def fail_upload_reads(self, params, error, exception=ValueError):
+        with self.assertRaises(exception) as context:
+            self.impl.upload_reads(self.ctx, params)
+        self.assertEqual(error, str(context.exception.message))
+
+    def test_upload_fail_no_reads(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo'
+             },
+            'No reads file provided')
+
+    def test_upload_fail_no_seqtech(self):
+        self.fail_upload_reads(
+            {'fwd_id': 'foo',
+             'wsname': self.ws_info[1],
+             'name': 'foo'
+             },
+            'The sequencing technology must be provided')
+
+    def test_upload_fail_no_ws(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'fwd_id': 'bar',
+             'name': 'foo'
+             },
+            'Exactly one of the workspace ID or name must be provided')
+
+    def test_upload_fail_no_obj_id(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'fwd_id': 'bar',
+             'wsname': self.ws_info[1],
+             },
+            'Exactly one of the object ID or name must be provided')
+
+    def test_upload_fail_non_existant_objid(self):
+        ret = self.upload_file_to_shock('data/Sample1.fastq')
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': ret['id'],
+             'objid': 1000000
+             },
+            'There is no object with id 1000000', exception=DFUError)
+        self.delete_shock_node(ret['id'])
+
+    def test_upload_fail_non_existant_shockid(self):
+        ret = self.upload_file_to_shock('data/Sample1.fastq')
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': 'foo',
+             'name': 'bar'
+             },
+            'Error downloading file from shock node foo: Node not found',
+            exception=DFUError)
+        self.delete_shock_node(ret['id'])
+
+    def test_upload_fail_non_string_wsname(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': 1,
+             'fwd_id': 'bar',
+             'name': 'foo'
+             },
+            'wsname must be a string')
+
+    def test_upload_fail_bad_wsname(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': '&bad',
+             'fwd_id': 'bar',
+             'name': 'foo'
+             },
+            'Illegal character in workspace name &bad: &', exception=DFUError)
+
+    def test_upload_fail_non_num_mean(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': 'bar',
+             'name': 'foo',
+             'insert_size_mean': 'foo'
+             },
+            'insert_size_mean must be a number')
+
+    def test_upload_fail_non_num_std(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': 'bar',
+             'name': 'foo',
+             'insert_size_std_dev': 'foo'
+             },
+            'insert_size_std_dev must be a number')
+
+    def test_upload_fail_neg_mean(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': 'bar',
+             'name': 'foo',
+             'insert_size_mean': 0
+             },
+            'insert_size_mean must be > 0')
+
+    def test_upload_fail_neg_std(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': 'bar',
+             'name': 'foo',
+             'insert_size_std_dev': 0
+             },
+            'insert_size_std_dev must be > 0')
+
+    def test_upload_fail_bad_fasta(self):
+        print('*** upload_fail_bad_fasta ***')
+        ret = self.upload_file_to_shock('data/Sample1_invalid.fastq')
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': ret['id'],
+             'name': 'bar'
+             },
+            'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid' +
+            '.fastq from Shock node ' + ret['id'])
+        self.delete_shock_node(ret['id'])
 
     def fail_val_FASTA(self, filename, error, exception=ValueError):
         with self.assertRaises(exception) as context:

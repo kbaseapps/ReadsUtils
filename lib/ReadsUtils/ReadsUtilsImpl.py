@@ -88,7 +88,7 @@ class ReadsUtils:
     def _proc_upload_reads_params(self, ctx, params):
         fwdid = params.get('fwd_id')
         if not fwdid:
-            raise ValueError('At least one reads file must be provided')
+            raise ValueError('No reads file provided')
         wsid = params.get('wsid')
         wsname = params.get('wsname')
         if not self.xor(wsid, wsname):
@@ -360,18 +360,18 @@ class ReadsUtils:
         o, wsid, name, objid, kbtype, single_end, fwdid, revid = (
             self._proc_upload_reads_params(ctx, params))
         fileinput = [{'shock_id': fwdid,
-                      'file_path': self.scratch + '/fwd/'}]
+                      'file_path': self.scratch + '/fwd/',
+                      'unpack': 'uncompress'}]
         if revid:
             fileinput.append({'shock_id': revid,
-                              'file_path': self.scratch + '/rev/'})
-        for f in fileinput:
-            f.update({'make_handle': 1, 'unpack': 'uncompress'})
+                              'file_path': self.scratch + '/rev/',
+                              'unpack': 'uncompress'})
         dfu = DataFileUtil(self.callback_url, token=ctx['token'])
         self.log('downloading reads files from Shock')
         files = dfu.shock_to_file_mass(fileinput)
         self.log('download complete, validating files')
         for f, i in zip(files, fileinput):
-            if not self.validateFASTQ(ctx, f['file_path']):
+            if not self.validateFASTQ(ctx, f['file_path'])[0]:
                 raise ValueError('Invalid fasta file {} from Shock node {}'
                                  .format(f['file_path'], i['shock_id']))
         self.log('file validation complete')
