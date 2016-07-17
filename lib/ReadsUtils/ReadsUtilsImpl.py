@@ -109,8 +109,11 @@ class ReadsUtils:
         if not seqtype:
             raise ValueError('The sequencing technology must be provided')
 
+        sg = 1
+        if 'single_genome' in params and not params['single_genome']:
+            sg = 0
         o = {'sequencing_tech': seqtype,
-             'single_genome': 1 if params.get('single_genome') else 0,
+             'single_genome': sg,
              # 'read_count': params.get('read_count'),
              # 'read_size': params.get('read_size'),
              # 'gc_content': params.get('gc_content')
@@ -395,7 +398,7 @@ class ReadsUtils:
         self.log('saving workspace object')
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
         self.log('save complete')
-        
+
         returnVal = {'obj_ref': str(oi[6]) + '/' + str(oi[0]) + '/' +
                      str(oi[4])}
         #END upload_reads
