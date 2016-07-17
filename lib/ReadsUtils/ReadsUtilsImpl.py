@@ -28,7 +28,7 @@ class ReadsUtils:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "80e0fb02f14610c122b47a0b1ab7a7d0c866e14a"
+    GIT_COMMIT_HASH = "17037250d473cc1bd1452fd5d6bfc1e04a85e629"
     
     #BEGIN_CLASS_HEADER
 
@@ -196,17 +196,25 @@ class ReadsUtils:
         #END_CONSTRUCTOR
         pass
 
-    def validateFASTQ(self, ctx, file_path):
+    def validateFASTQ(self, ctx, params):
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
         are accepted. Note that prior to validation the file will be altered in
         place to remove blank lines if any exist.
-        :param file_path: instance of String
-        :returns: instance of type "boolean" (A boolean - 0 for false, 1 for
-           true. @range (0, 1))
+        :param params: instance of list of type "ValidateFASTQParams" (Input
+           to the validateFASTQ function. Required parameters: file_path -
+           the path to the file to validate. Optional parameters: interleaved
+           - whether the file is interleaved or not. Setting this to true
+           disables sequence ID checks.) -> structure: parameter "file_path"
+           of String, parameter "interleaved" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1))
+        :returns: instance of type "ValidateFASTQOutput" (The output of the
+           validateFASTQ function. validated - whether the file validated
+           successfully or not.) -> structure: parameter "validated" of type
+           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1))
         """
         # ctx is the context object
-        # return variables are: validated
+        # return variables are: out
         #BEGIN validateFASTQ
         del ctx
         # TODO take a list of dicts as input and return a list of dicts
@@ -261,11 +269,11 @@ class ReadsUtils:
         #END validateFASTQ
 
         # At some point might do deeper type checking...
-        if not isinstance(validated, int):
+        if not isinstance(out, dict):
             raise ValueError('Method validateFASTQ return value ' +
-                             'validated is not type int as required.')
+                             'out is not type dict as required.')
         # return the results
-        return [validated]
+        return [out]
 
     def upload_reads(self, ctx, params):
         """
@@ -385,7 +393,6 @@ class ReadsUtils:
             self.log('coercing complete. Will I stop at nothing?')
 
         # TODO calculate gc content, read size, read_count (find a program)
-        # TODO tests
         fwdfile = {'file': fwdr['handle'],
                    'encoding': 'ascii',
                    'size': files[0]['size'],

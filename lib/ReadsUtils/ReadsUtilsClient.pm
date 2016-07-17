@@ -111,7 +111,7 @@ sub new
 
 =head2 validateFASTQ
 
-  $validated = $obj->validateFASTQ($file_path)
+  $out = $obj->validateFASTQ($params)
 
 =over 4
 
@@ -120,9 +120,14 @@ sub new
 =begin html
 
 <pre>
-$file_path is a string
-$validated is a ReadsUtils.boolean
+$params is a reference to a list where each element is a ReadsUtils.ValidateFASTQParams
+$out is a ReadsUtils.ValidateFASTQOutput
+ValidateFASTQParams is a reference to a hash where the following keys are defined:
+	file_path has a value which is a string
+	interleaved has a value which is a ReadsUtils.boolean
 boolean is an int
+ValidateFASTQOutput is a reference to a hash where the following keys are defined:
+	validated has a value which is a ReadsUtils.boolean
 
 </pre>
 
@@ -130,9 +135,14 @@ boolean is an int
 
 =begin text
 
-$file_path is a string
-$validated is a ReadsUtils.boolean
+$params is a reference to a list where each element is a ReadsUtils.ValidateFASTQParams
+$out is a ReadsUtils.ValidateFASTQOutput
+ValidateFASTQParams is a reference to a hash where the following keys are defined:
+	file_path has a value which is a string
+	interleaved has a value which is a ReadsUtils.boolean
 boolean is an int
+ValidateFASTQOutput is a reference to a hash where the following keys are defined:
+	validated has a value which is a ReadsUtils.boolean
 
 
 =end text
@@ -159,10 +169,10 @@ place to remove blank lines if any exist.
 							       "Invalid argument count for function validateFASTQ (received $n, expecting 1)");
     }
     {
-	my($file_path) = @args;
+	my($params) = @args;
 
 	my @_bad_arguments;
-        (!ref($file_path)) or push(@_bad_arguments, "Invalid type for argument 1 \"file_path\" (value was \"$file_path\")");
+        (ref($params) eq 'ARRAY') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to validateFASTQ:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -467,6 +477,87 @@ an int
 =begin text
 
 an int
+
+=end text
+
+=back
+
+
+
+=head2 ValidateFASTQParams
+
+=over 4
+
+
+
+=item Description
+
+Input to the validateFASTQ function.
+
+    Required parameters:
+    file_path - the path to the file to validate.
+    
+    Optional parameters:
+    interleaved - whether the file is interleaved or not. Setting this to
+        true disables sequence ID checks.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+file_path has a value which is a string
+interleaved has a value which is a ReadsUtils.boolean
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+file_path has a value which is a string
+interleaved has a value which is a ReadsUtils.boolean
+
+
+=end text
+
+=back
+
+
+
+=head2 ValidateFASTQOutput
+
+=over 4
+
+
+
+=item Description
+
+The output of the validateFASTQ function.
+
+validated - whether the file validated successfully or not.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+validated has a value which is a ReadsUtils.boolean
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+validated has a value which is a ReadsUtils.boolean
+
 
 =end text
 

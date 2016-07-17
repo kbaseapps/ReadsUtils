@@ -32,18 +32,26 @@ class ReadsUtils(object):
             trust_all_ssl_certificates=trust_all_ssl_certificates,
             auth_svc=auth_svc)
 
-    def validateFASTQ(self, file_path, context=None):
+    def validateFASTQ(self, params, context=None):
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
         are accepted. Note that prior to validation the file will be altered in
         place to remove blank lines if any exist.
-        :param file_path: instance of String
-        :returns: instance of type "boolean" (A boolean - 0 for false, 1 for
-           true. @range (0, 1))
+        :param params: instance of list of type "ValidateFASTQParams" (Input
+           to the validateFASTQ function. Required parameters: file_path -
+           the path to the file to validate. Optional parameters: interleaved
+           - whether the file is interleaved or not. Setting this to true
+           disables sequence ID checks.) -> structure: parameter "file_path"
+           of String, parameter "interleaved" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1))
+        :returns: instance of type "ValidateFASTQOutput" (The output of the
+           validateFASTQ function. validated - whether the file validated
+           successfully or not.) -> structure: parameter "validated" of type
+           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1))
         """
         return self._client.call_method(
             'ReadsUtils.validateFASTQ',
-            [file_path], self._service_ver, context)
+            [params], self._service_ver, context)
 
     def upload_reads(self, params, context=None):
         """
