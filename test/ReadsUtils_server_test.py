@@ -152,9 +152,6 @@ class ReadsUtilsTest(unittest.TestCase):
                                           'name': 'singlereads1'})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads1']})['data'][0]
-        # TODO strain and source
-        # TODO single genome specified as true and false
-        # TODO paired end params
         self.delete_shock_node(ret['id'])
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
@@ -166,8 +163,33 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_lib(d['lib'], 2847, 'Sample1.fastq.gz', ret['id'],
                        '48efea6945c4382c68f5eac485c177c2')
 
+    def test_single_end_reads_metagenome(self):
+        # single genome = 0
+        ret = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
+        self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
+                                          'sequencing_tech': 'seqtech2',
+                                          'wsname': self.ws_info[1],
+                                          'name': 'singlereads2',
+                                          'single_genome': 0})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/singlereads2']})['data'][0]
+        # TODO paired end params
+        # TODO test with obj id
+        # TODO unhappy cases
+        # TODO read code for coverage
+        self.delete_shock_node(ret['id'])
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'seqtech2')
+        self.assertEqual(d['single_genome'], 0)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 1116, 'Sample5_noninterleaved.1.fastq',
+                       ret['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
+
     def test_single_end_reads_genome_source_strain(self):
-        # gzip, minimum inputs
+        # specify single genome, source, strain, use workspace id
         ret = self.upload_file_to_shock('data/Sample1.fastq')
         strain = {'genus': 'Yersinia',
                   'species': 'pestis',
@@ -177,24 +199,21 @@ class ReadsUtilsTest(unittest.TestCase):
         self.impl.upload_reads(
             self.ctx,
             {'fwd_id': ret['id'],
-             'sequencing_tech': 'seqtech2',
+             'sequencing_tech': 'seqtech3',
              'wsid': self.ws_info[0],
-             'name': 'singlereads1',
+             'name': 'singlereads3',
              'single_genome': 1,
              'strain': strain,
              'source': source,
              })
         obj = self.dfu.get_objects(
-            {'object_refs': [self.ws_info[1] + '/singlereads1']})['data'][0]
-        # TODO single genome specified as true and false
-        # TODO paired end params
-        # TODO unhappy cases
-        # TODO read code for coverage
+            {'object_refs': [self.ws_info[1] + '/singlereads3']})['data'][0]
+
         self.delete_shock_node(ret['id'])
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
-        self.assertEqual(d['sequencing_tech'], 'seqtech2')
+        self.assertEqual(d['sequencing_tech'], 'seqtech3')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual(d['source'], source)
         self.assertEqual(d['strain'], strain)
