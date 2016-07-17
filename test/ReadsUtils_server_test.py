@@ -221,6 +221,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'single_genome': 1,
              'strain': strain,
              'source': source,
+             'interleaved': 0
              })
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads3']})['data'][0]
@@ -235,6 +236,35 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['strain'], strain)
         self.check_lib(d['lib'], 9648, 'Sample1.fastq', ret['id'],
                        'f118ee769a5e1b40ec44629994dfc3cd')
+
+    def test_paired_end_reads(self):
+        # paired end non interlaced, minimum inputs
+        ret1 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
+        ret2 = self.upload_file_to_shock('data/Sample1.fastq')
+        self.impl.upload_reads(self.ctx, {'fwd_id': ret1['id'],
+                                          'rev_id': ret2['id'],
+                                          'sequencing_tech': 'seqtech-pr1',
+                                          'wsname': self.ws_info[1],
+                                          'name': 'pairedreads1'})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
+        self.delete_shock_node(ret1['id'])
+        self.delete_shock_node(ret2['id'])
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.PairedEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.assertEqual(d['interleaved'], 0)
+        self.assertEqual(d['read_orientation_outward'], 0)
+        self.assertEqual(d['insert_size_mean'], None)
+        self.assertEqual(d['insert_size_std_dev'], None)
+        self.check_lib(d['lib1'], 1116, 'Sample5_noninterleaved.1.fastq',
+                       ret1['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
+        self.check_lib(d['lib2'], 9648, 'Sample1.fastq',
+                       ret2['id'], 'f118ee769a5e1b40ec44629994dfc3cd')
 
     def check_lib(self, lib, size, filename, id_, md5):
         self.assertEqual(lib['size'], size)
