@@ -116,35 +116,52 @@ class ReadsUtilsTest(unittest.TestCase):
                             'File data/sample.txt is not a FASTA file')
 
     def test_FASTQ_validation(self):
-        self.check_fq('data/Sample1.fastq', 1)
-        self.check_fq('data/Sample1.fastq', 1)
-        self.check_fq('data/Sample2_interleaved_illumina.fnq', 1)
-        self.check_fq('data/Sample3_interleaved_casava1.8.fq', 1)
-        self.check_fq('data/Sample4_interleaved_NCBI_SRA.fastq', 1)
-        self.check_fq('data/Sample5_interleaved.fastq', 1)
-        self.check_fq('data/Sample5_interleaved_blank_lines.fastq', 1)
-        self.check_fq('data/Sample5_noninterleaved.1.fastq', 1)
-        self.check_fq('data/Sample5_noninterleaved.2.fastq', 1)
-        self.check_fq('data/Sample1_invalid.fastq', 0)
-        self.check_fq('data/Sample4_interleaved_NCBI_SRA_duplicate_IDs.fastq',
-                      0)
-        self.check_fq('data/Sample5_interleaved_missing_line.fastq', 0)
+        self.check_fq('data/Sample1.fastq', 0, 1)
+        self.check_fq('data/Sample2_interleaved_illumina.fnq', 1, 1)
+        # fail on interleaved file specified as non-interleaved
+        self.check_fq('data/Sample2_interleaved_illumina.fnq', 0, 0)
+        self.check_fq('data/Sample3_interleaved_casava1.8.fq', 1, 1)
+        self.check_fq('data/Sample4_interleaved_NCBI_SRA.fastq', 1, 1)
+        self.check_fq('data/Sample5_interleaved.fastq', 1, 1)
+        self.check_fq('data/Sample5_interleaved_blank_lines.fastq', 1, 1)
+        self.check_fq('data/Sample5_noninterleaved.1.fastq', 0, 1)
+        self.check_fq('data/Sample5_noninterleaved.2.fastq', 0, 1)
+        self.check_fq('data/Sample1_invalid.fastq', 0, 0)
+        self.check_fq('data/Sample5_interleaved_missing_line.fastq', 1, 0)
 
-    def check_fq(self, filepath, ok):
+    def test_FASTQ_multiple(self):
+        f1 = 'data/Sample1.fastq'
+        f2 = 'data/Sample4_interleaved_NCBI_SRA.fastq'
+        fn1 = os.path.basename(f1)
+        fn2 = os.path.basename(f2)
+        nfn1 = self.cfg['scratch'] + '/' + fn1
+        nfn2 = self.cfg['scratch'] + '/' + fn2
+        shutil.copyfile(f1, nfn1)
+        shutil.copyfile(f2, nfn2)
+        self.assertEqual(self.impl.validateFASTQ(
+            self.ctx, [{'file_path': nfn1,
+                       'interleaved': 0},
+                       {'file_path': nfn2,
+                       'interleaved': 1}
+                       ])[0], [{'validated': 1}, {'validated': 1}])
+
+    def check_fq(self, filepath, interleaved, ok):
         fn = os.path.basename(filepath)
         newfn = self.cfg['scratch'] + '/' + fn
-        shutil.copyfile(filepath, self.cfg['scratch'] + '/' + fn)
-        self.assertEqual(self.impl.validateFASTQ(self.ctx, newfn)[0], ok)
+        shutil.copyfile(filepath, newfn)
+        self.assertEqual(self.impl.validateFASTQ(
+            self.ctx, [{'file_path': newfn,
+                       'interleaved': interleaved}])[0][0]['validated'], ok)
         for l in open(newfn):
             self.assertNotEqual(l, '')
 
     def test_FASTQ_val_fail_no_file(self):
-        self.fail_val_FASTQ('nofile', 'No such file: nofile')
-        self.fail_val_FASTQ(None, 'No such file: None')
-        self.fail_val_FASTQ('', 'No such file: ')
+        self.fail_val_FASTQ([{'file_path': 'nofile'}], 'No such file: nofile')
+        self.fail_val_FASTQ([{'file_path': None}], 'No such file: None')
+        self.fail_val_FASTQ([{'file_path': ''}], 'No such file: ')
 
     def test_FASTQ_val_fail_bad_ext(self):
-        self.fail_val_FASTQ('data/sample.txt',
+        self.fail_val_FASTQ([{'file_path': 'data/sample.txt'}],
                             'File data/sample.txt is not a FASTQ file')
 
     def test_single_end_reads_gzip(self):
@@ -450,12 +467,39 @@ class ReadsUtilsTest(unittest.TestCase):
             '.fastq from Shock node ' + ret['id'])
         self.delete_shock_node(ret['id'])
 
+    def test_upload_fail_interleaved_for_single(self):
+        ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': ret['id'],
+             'name': 'bar'
+             },
+            'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved' +
+            '.fastq from Shock node ' + ret['id'])
+        self.delete_shock_node(ret['id'])
+
+    def test_upload_fail_interleaved_for_paired(self):
+        ret1 = self.upload_file_to_shock('data/Sample1.fastq')
+        ret2 = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': ret1['id'],
+             'rev_id': ret2['id'],
+             'name': 'bar'
+             },
+            'Invalid fasta file /kb/module/work/tmp/rev/Sample5_interleaved' +
+            '.fastq from Shock node ' + ret2['id'])
+        self.delete_shock_node(ret1['id'])
+        self.delete_shock_node(ret2['id'])
+
     def fail_val_FASTA(self, filename, error, exception=ValueError):
         with self.assertRaises(exception) as context:
             self.impl.validateFASTA(self.ctx, {'file_path': filename})
         self.assertEqual(error, str(context.exception.message))
 
-    def fail_val_FASTQ(self, filename, error, exception=ValueError):
+    def fail_val_FASTQ(self, params, error, exception=ValueError):
         with self.assertRaises(exception) as context:
-            self.impl.validateFASTQ(self.ctx, filename)
+            self.impl.validateFASTQ(self.ctx, params)
         self.assertEqual(error, str(context.exception.message))

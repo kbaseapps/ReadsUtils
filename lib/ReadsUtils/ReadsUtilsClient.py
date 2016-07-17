@@ -44,10 +44,11 @@ class ReadsUtils(object):
            disables sequence ID checks.) -> structure: parameter "file_path"
            of String, parameter "interleaved" of type "boolean" (A boolean -
            0 for false, 1 for true. @range (0, 1))
-        :returns: instance of type "ValidateFASTQOutput" (The output of the
-           validateFASTQ function. validated - whether the file validated
-           successfully or not.) -> structure: parameter "validated" of type
-           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1))
+        :returns: instance of list of type "ValidateFASTQOutput" (The output
+           of the validateFASTQ function. validated - whether the file
+           validated successfully or not.) -> structure: parameter
+           "validated" of type "boolean" (A boolean - 0 for false, 1 for
+           true. @range (0, 1))
         """
         return self._client.call_method(
             'ReadsUtils.validateFASTQ',

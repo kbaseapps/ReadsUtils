@@ -121,7 +121,7 @@ sub new
 
 <pre>
 $params is a reference to a list where each element is a ReadsUtils.ValidateFASTQParams
-$out is a ReadsUtils.ValidateFASTQOutput
+$out is a reference to a list where each element is a ReadsUtils.ValidateFASTQOutput
 ValidateFASTQParams is a reference to a hash where the following keys are defined:
 	file_path has a value which is a string
 	interleaved has a value which is a ReadsUtils.boolean
@@ -136,7 +136,7 @@ ValidateFASTQOutput is a reference to a hash where the following keys are define
 =begin text
 
 $params is a reference to a list where each element is a ReadsUtils.ValidateFASTQParams
-$out is a ReadsUtils.ValidateFASTQOutput
+$out is a reference to a list where each element is a ReadsUtils.ValidateFASTQOutput
 ValidateFASTQParams is a reference to a hash where the following keys are defined:
 	file_path has a value which is a string
 	interleaved has a value which is a ReadsUtils.boolean

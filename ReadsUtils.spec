@@ -37,7 +37,7 @@ module ReadsUtils {
         place to remove blank lines if any exist.
     */
     funcdef validateFASTQ(list<ValidateFASTQParams> params)
-        returns(ValidateFASTQOutput out) authentication required;
+        returns(list<ValidateFASTQOutput> out) authentication required;
     
     /* Input to the upload_reads function.
         

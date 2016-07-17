@@ -156,15 +156,15 @@ public class ReadsUtilsClient {
      * place to remove blank lines if any exist.
      * </pre>
      * @param   params   instance of list of type {@link us.kbase.readsutils.ValidateFASTQParams ValidateFASTQParams}
-     * @return   parameter "out" of type {@link us.kbase.readsutils.ValidateFASTQOutput ValidateFASTQOutput}
+     * @return   parameter "out" of list of type {@link us.kbase.readsutils.ValidateFASTQOutput ValidateFASTQOutput}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public ValidateFASTQOutput validateFASTQ(List<ValidateFASTQParams> params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public List<ValidateFASTQOutput> validateFASTQ(List<ValidateFASTQParams> params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         args.add(params);
-        TypeReference<List<ValidateFASTQOutput>> retType = new TypeReference<List<ValidateFASTQOutput>>() {};
-        List<ValidateFASTQOutput> res = caller.jsonrpcCall("ReadsUtils.validateFASTQ", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        TypeReference<List<List<ValidateFASTQOutput>>> retType = new TypeReference<List<List<ValidateFASTQOutput>>>() {};
+        List<List<ValidateFASTQOutput>> res = caller.jsonrpcCall("ReadsUtils.validateFASTQ", args, retType, true, true, jsonRpcContext, this.serviceVersion);
         return res.get(0);
     }
 
