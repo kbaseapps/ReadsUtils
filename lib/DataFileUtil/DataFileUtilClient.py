@@ -58,13 +58,25 @@ class DataFileUtil(object):
            archive files if necessary). If 'uncompress' is specified and an
            archive file is encountered, an error will be thrown. If the file
            is an archive, it will be unbundled into the directory containing
-           the original output file.) -> structure: parameter "shock_id" of
+           the original output file. Note that if the file name (either as
+           provided by the user or by Shock) without the a decompression
+           extension (e.g. .gz, .zip or .tgz -> .tar) points to an existing
+           file and unpack is specified, that file will be overwritten by the
+           decompressed Shock file.) -> structure: parameter "shock_id" of
            String, parameter "file_path" of String, parameter "unpack" of
            String
         :returns: instance of type "ShockToFileOutput" (Output from the
            shock_to_file function. node_file_name - the filename of the file
-           stored in Shock. attributes - the file attributes, if any, stored
-           in Shock.) -> structure: parameter "node_file_name" of String,
+           as stored in Shock. file_path - the path to the downloaded file.
+           If a directory was specified in the input, this will be the
+           directory appended with the shock file name. If a file was
+           specified, it will be that file path. In either case, if the file
+           is uncompressed any compression file extensions will be removed
+           (e.g. .gz) and or altered (e.g. .tgz -> .tar) as appropriate. size
+           - the size of the file in bytes as stored in Shock, prior to
+           unpacking. attributes - the file attributes, if any, stored in
+           Shock.) -> structure: parameter "node_file_name" of String,
+           parameter "file_path" of String, parameter "size" of Long,
            parameter "attributes" of mapping from String to unspecified object
         """
         job_id = self._shock_to_file_submit(params, context)
@@ -93,15 +105,26 @@ class DataFileUtil(object):
            gzipped or bzipped archive files if necessary). If 'uncompress' is
            specified and an archive file is encountered, an error will be
            thrown. If the file is an archive, it will be unbundled into the
-           directory containing the original output file.) -> structure:
+           directory containing the original output file. Note that if the
+           file name (either as provided by the user or by Shock) without the
+           a decompression extension (e.g. .gz, .zip or .tgz -> .tar) points
+           to an existing file and unpack is specified, that file will be
+           overwritten by the decompressed Shock file.) -> structure:
            parameter "shock_id" of String, parameter "file_path" of String,
            parameter "unpack" of String
         :returns: instance of list of type "ShockToFileOutput" (Output from
            the shock_to_file function. node_file_name - the filename of the
-           file stored in Shock. attributes - the file attributes, if any,
-           stored in Shock.) -> structure: parameter "node_file_name" of
-           String, parameter "attributes" of mapping from String to
-           unspecified object
+           file as stored in Shock. file_path - the path to the downloaded
+           file. If a directory was specified in the input, this will be the
+           directory appended with the shock file name. If a file was
+           specified, it will be that file path. In either case, if the file
+           is uncompressed any compression file extensions will be removed
+           (e.g. .gz) and or altered (e.g. .tgz -> .tar) as appropriate. size
+           - the size of the file in bytes as stored in Shock, prior to
+           unpacking. attributes - the file attributes, if any, stored in
+           Shock.) -> structure: parameter "node_file_name" of String,
+           parameter "file_path" of String, parameter "size" of Long,
+           parameter "attributes" of mapping from String to unspecified object
         """
         job_id = self._shock_to_file_mass_submit(params, context)
         while True:
@@ -120,32 +143,81 @@ class DataFileUtil(object):
         Load a file to Shock.
         :param params: instance of type "FileToShockParams" (Input for the
            file_to_shock function. Required parameters: file_path - the
-           location of the file to load to Shock. Optional parameters:
-           attributes - user-specified attributes to save to the Shock node
-           along with the file. make_handle - make a Handle Service handle
-           for the shock node. Default false. gzip - gzip the file before
-           loading it to Shock. This will create a file_path.gz file prior to
-           upload. Default false.) -> structure: parameter "file_path" of
+           location of the file (or directory if using the pack parameter) to
+           load to Shock. Optional parameters: attributes - user-specified
+           attributes to save to the Shock node along with the file.
+           make_handle - make a Handle Service handle for the shock node.
+           Default false. pack - compress a file or archive a directory
+           before loading to Shock. The file_path argument will be appended
+           with the appropriate file extension prior to writing. For gzips
+           only, if the file extension denotes that the file is already
+           compressed, it will be skipped. If file_path is a directory and
+           tarring or zipping is specified, the created file name will be set
+           to the directory name, possibly overwriting an existing file.
+           Attempting to pack the root directory is an error. The allowed
+           values are: gzip - gzip the file given by file_path. targz - tar
+           and gzip the directory specified by the directory portion of the
+           file_path into the file specified by the file_path. zip - as targz
+           but zip the directory.) -> structure: parameter "file_path" of
            String, parameter "attributes" of mapping from String to
            unspecified object, parameter "make_handle" of type "boolean" (A
            boolean - 0 for false, 1 for true. @range (0, 1)), parameter
-           "gzip" of type "boolean" (A boolean - 0 for false, 1 for true.
-           @range (0, 1))
+           "pack" of String
         :returns: instance of type "FileToShockOutput" (Output of the
            file_to_shock function. shock_id - the ID of the new Shock node.
-           handle - the new handle, if created. Null otherwise.) ->
-           structure: parameter "shock_id" of String, parameter "handle" of
-           type "Handle" (A handle for a file stored in Shock. hid - the id
-           of the handle in the Handle Service that references this shock
-           node id - the id for the shock node url - the url of the shock
-           server type - the type of the handle. This should always be shock.
-           file_name - the name of the file remote_md5 - the md5 digest of
-           the file.) -> structure: parameter "hid" of String, parameter
-           "file_name" of String, parameter "id" of String, parameter "url"
-           of String, parameter "type" of String, parameter "remote_md5" of
-           String
+           handle - the new handle, if created. Null otherwise.
+           node_file_name - the name of the file stored in Shock. size - the
+           size of the file stored in shock.) -> structure: parameter
+           "shock_id" of String, parameter "handle" of type "Handle" (A
+           handle for a file stored in Shock. hid - the id of the handle in
+           the Handle Service that references this shock node id - the id for
+           the shock node url - the url of the shock server type - the type
+           of the handle. This should always be shock. file_name - the name
+           of the file remote_md5 - the md5 digest of the file.) ->
+           structure: parameter "hid" of String, parameter "file_name" of
+           String, parameter "id" of String, parameter "url" of String,
+           parameter "type" of String, parameter "remote_md5" of String,
+           parameter "node_file_name" of String, parameter "size" of String
         """
         job_id = self._file_to_shock_submit(params, context)
+        while True:
+            time.sleep(self._client.async_job_check_time)
+            job_state = self._check_job(job_id)
+            if job_state['finished']:
+                return job_state['result'][0]
+
+    def _package_for_download_submit(self, params, context=None):
+        return self._client._submit_job(
+             'DataFileUtil.package_for_download', [params],
+             self._service_ver, context)
+
+    def package_for_download(self, params, context=None):
+        """
+        :param params: instance of type "PackageForDownloadParams" (Input for
+           the package_for_download function. Required parameters: file_path
+           - the location of the directory to compress as zip archive before
+           loading to Shock. This argument will be appended with the '.zip'
+           file extension prior to writing. If it is a directory, file name
+           of the created archive will be set to the directory name followed
+           by '.zip', possibly overwriting an existing file. Attempting to
+           pack the root directory is an error. ws_ref - list of references
+           to workspace objects which will be used to produce info-files in
+           JSON format containing workspace metadata and provenane structures
+           each. It produces new files in folder pointed by file_path (or
+           folder containing file pointed by file_path if it's not folder).
+           Optional parameters: attributes - user-specified attributes to
+           save to the Shock node along with the file.) -> structure:
+           parameter "file_path" of String, parameter "attributes" of mapping
+           from String to unspecified object, parameter "ws_refs" of list of
+           String
+        :returns: instance of type "PackageForDownloadOutput" (Output of the
+           package_for_download function. shock_id - the ID of the new Shock
+           node. node_file_name - the name of the file stored in Shock. size
+           - the size of the file stored in shock.) -> structure: parameter
+           "shock_id" of String, parameter "node_file_name" of String,
+           parameter "size" of String
+        """
+        job_id = self._package_for_download_submit(params, context)
         while True:
             time.sleep(self._client.async_job_check_time)
             job_state = self._check_job(job_id)
@@ -162,30 +234,41 @@ class DataFileUtil(object):
         Load multiple files to Shock.
         :param params: instance of list of type "FileToShockParams" (Input
            for the file_to_shock function. Required parameters: file_path -
-           the location of the file to load to Shock. Optional parameters:
-           attributes - user-specified attributes to save to the Shock node
-           along with the file. make_handle - make a Handle Service handle
-           for the shock node. Default false. gzip - gzip the file before
-           loading it to Shock. This will create a file_path.gz file prior to
-           upload. Default false.) -> structure: parameter "file_path" of
+           the location of the file (or directory if using the pack
+           parameter) to load to Shock. Optional parameters: attributes -
+           user-specified attributes to save to the Shock node along with the
+           file. make_handle - make a Handle Service handle for the shock
+           node. Default false. pack - compress a file or archive a directory
+           before loading to Shock. The file_path argument will be appended
+           with the appropriate file extension prior to writing. For gzips
+           only, if the file extension denotes that the file is already
+           compressed, it will be skipped. If file_path is a directory and
+           tarring or zipping is specified, the created file name will be set
+           to the directory name, possibly overwriting an existing file.
+           Attempting to pack the root directory is an error. The allowed
+           values are: gzip - gzip the file given by file_path. targz - tar
+           and gzip the directory specified by the directory portion of the
+           file_path into the file specified by the file_path. zip - as targz
+           but zip the directory.) -> structure: parameter "file_path" of
            String, parameter "attributes" of mapping from String to
            unspecified object, parameter "make_handle" of type "boolean" (A
            boolean - 0 for false, 1 for true. @range (0, 1)), parameter
-           "gzip" of type "boolean" (A boolean - 0 for false, 1 for true.
-           @range (0, 1))
+           "pack" of String
         :returns: instance of list of type "FileToShockOutput" (Output of the
            file_to_shock function. shock_id - the ID of the new Shock node.
-           handle - the new handle, if created. Null otherwise.) ->
-           structure: parameter "shock_id" of String, parameter "handle" of
-           type "Handle" (A handle for a file stored in Shock. hid - the id
-           of the handle in the Handle Service that references this shock
-           node id - the id for the shock node url - the url of the shock
-           server type - the type of the handle. This should always be shock.
-           file_name - the name of the file remote_md5 - the md5 digest of
-           the file.) -> structure: parameter "hid" of String, parameter
-           "file_name" of String, parameter "id" of String, parameter "url"
-           of String, parameter "type" of String, parameter "remote_md5" of
-           String
+           handle - the new handle, if created. Null otherwise.
+           node_file_name - the name of the file stored in Shock. size - the
+           size of the file stored in shock.) -> structure: parameter
+           "shock_id" of String, parameter "handle" of type "Handle" (A
+           handle for a file stored in Shock. hid - the id of the handle in
+           the Handle Service that references this shock node id - the id for
+           the shock node url - the url of the shock server type - the type
+           of the handle. This should always be shock. file_name - the name
+           of the file remote_md5 - the md5 digest of the file.) ->
+           structure: parameter "hid" of String, parameter "file_name" of
+           String, parameter "id" of String, parameter "url" of String,
+           parameter "type" of String, parameter "remote_md5" of String,
+           parameter "node_file_name" of String, parameter "size" of String
         """
         job_id = self._file_to_shock_mass_submit(params, context)
         while True:
@@ -413,12 +496,3 @@ class DataFileUtil(object):
             job_state = self._check_job(job_id)
             if job_state['finished']:
                 return job_state['result']
-
-    def status(self, context=None):
-        job_id = self._client._submit_job('DataFileUtil.status', 
-            [], self._service_ver, context)
-        while True:
-            time.sleep(self._client.async_job_check_time)
-            job_state = self._check_job(job_id)
-            if job_state['finished']:
-                return job_state['result'][0]
