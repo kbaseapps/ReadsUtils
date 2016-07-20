@@ -7,10 +7,16 @@ from ConfigParser import ConfigParser
 from pprint import pprint
 
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
-from kb_read_library_to_file.kb_read_library_to_fileImpl import kb_read_library_to_file  # @IgnorePep8
 from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport @IgnorePep8
-from kb_read_library_to_file.kb_read_library_to_fileImpl import ShockError
-from kb_read_library_to_file.kb_read_library_to_fileImpl import InvalidFileError  # @IgnorePep8
+
+from ReadsUtils.ReadsUtilsImpl import ReadsUtils as kb_read_library_to_file # @IgnorePep8
+#from kb_read_library_to_file.kb_read_library_to_fileImpl import kb_read_library_to_file  # @IgnorePep8
+
+from ReadsUtils.ReadsUtilsImpl import ShockError as ShockError
+from ReadsUtils.ReadsUtilsImpl import InvalidFileError as InvalidFileError # @IgnorePep8
+#from kb_read_library_to_file.kb_read_library_to_fileImpl import ShockError
+#from kb_read_library_to_file.kb_read_library_to_fileImpl import InvalidFileError  # @IgnorePep8
+
 from biokbase.workspace.client import ServerError as WorkspaceError  # @UnresolvedImport @IgnorePep8
 import shutil
 import requests
@@ -41,7 +47,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         cls.cfg = {}
         config = ConfigParser()
         config.read(config_file)
-        for nameval in config.items('kb_read_library_to_file'):
+        for nameval in config.items('ReadsUtils'):
             cls.cfg[nameval[0]] = nameval[1]
         cls.wsURL = cls.cfg['workspace-url']
         cls.shockURL = cls.cfg['shock-url']
