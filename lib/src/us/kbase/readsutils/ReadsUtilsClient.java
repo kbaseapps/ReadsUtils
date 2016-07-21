@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.JsonClientCaller;
 import us.kbase.common.service.JsonClientException;
@@ -186,10 +185,40 @@ public class ReadsUtilsClient {
         return res.get(0);
     }
 
-    public Map<String, Object> status(RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    /**
+     * <p>Original spec-file function name: convert_read_library_to_file</p>
+     * <pre>
+     * Convert read libraries to files
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.readsutils.ConvertReadLibraryParams ConvertReadLibraryParams}
+     * @return   parameter "output" of type {@link us.kbase.readsutils.ConvertReadLibraryOutput ConvertReadLibraryOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public ConvertReadLibraryOutput convertReadLibraryToFile(ConvertReadLibraryParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
-        TypeReference<List<Map<String, Object>>> retType = new TypeReference<List<Map<String, Object>>>() {};
-        List<Map<String, Object>> res = caller.jsonrpcCall("ReadsUtils.status", args, retType, true, false, jsonRpcContext, this.serviceVersion);
+        args.add(params);
+        TypeReference<List<ConvertReadLibraryOutput>> retType = new TypeReference<List<ConvertReadLibraryOutput>>() {};
+        List<ConvertReadLibraryOutput> res = caller.jsonrpcCall("ReadsUtils.convert_read_library_to_file", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
+    /**
+     * <p>Original spec-file function name: export_reads</p>
+     * <pre>
+     * Using the convert_read_library_to_file function, this prepares a standard
+     * KBase download package, zips it, and uploads to shock.
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.readsutils.ExportParams ExportParams}
+     * @return   parameter "output" of type {@link us.kbase.readsutils.ExportOutput ExportOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public ExportOutput exportReads(ExportParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<ExportOutput>> retType = new TypeReference<List<ExportOutput>>() {};
+        List<ExportOutput> res = caller.jsonrpcCall("ReadsUtils.export_reads", args, retType, true, true, jsonRpcContext, this.serviceVersion);
         return res.get(0);
     }
 }
