@@ -120,8 +120,10 @@ class ReadsUtilsTest(unittest.TestCase):
         #pprint(info)
 
         # try to download it
-        download_package = self.impl.export_reads(self.ctx, {'input_ref': ref[0]['obj_ref'] })
+        download_package = self.impl.export_reads(self.ctx, {'input_ref': ref[0]['obj_ref'] })[0]
         pprint(download_package)
 
+        self.assertTrue('shock_id' in download_package)
+        self.assertTrue(download_package['shock_id'] is not None)
 
 
