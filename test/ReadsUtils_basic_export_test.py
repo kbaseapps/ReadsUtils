@@ -48,6 +48,7 @@ class ReadsUtilsTest(unittest.TestCase):
         suffix = int(time.time() * 1000)
         wsName = "test_ReadsUtils_" + str(suffix)
         cls.ws_info = cls.ws.create_workspace({'workspace': wsName})
+        print('====created ws:'+cls.ws_info[1])
         cls.dfu = DataFileUtil(os.environ['SDK_CALLBACK_URL'], token=cls.token)
 
     @classmethod
@@ -98,8 +99,9 @@ class ReadsUtilsTest(unittest.TestCase):
 
     def test_export(self):
         # paired end non interlaced, minimum inputs, upload it
-        ret1 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
-        ret2 = self.upload_file_to_shock('data/Sample1.fastq.gz')
+        print('========uploading test data to shock========')
+        ret1 = self.upload_file_to_shock('data/small.forward.fq')
+        ret2 = self.upload_file_to_shock('data/small.reverse.fq')
         ref = self.impl.upload_reads(
             self.ctx, {'fwd_id': ret1['id'],
                        'rev_id': ret2['id'],
@@ -107,12 +109,18 @@ class ReadsUtilsTest(unittest.TestCase):
                        'wsname': self.ws_info[1],
                        'name': 'pairedreads1',
                        'interleaved': 1})
-        obj = self.dfu.get_objects(
-            {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
-        info = obj['info']
+        print('reference to new obj:')
+        pprint(ref)
+
+        print('========checking what we got========')
+        pprint(self.ws.get_object_info_new({'objects':[{'ref':ref[0]['obj_ref']}]}))
+        #obj = self.dfu.get_objects(
+        #    {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
+        #info = obj['info']
+        #pprint(info)
 
         # try to download it
-        download_package = self.impl.export_reads(self.ctx, {'input_ref': str(info[6]) + '/' + info[1]})
+        download_package = self.impl.export_reads(self.ctx, {'input_ref': ref[0]['obj_ref'] })
         pprint(download_package)
 
 

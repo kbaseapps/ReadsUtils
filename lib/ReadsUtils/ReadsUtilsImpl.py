@@ -15,7 +15,7 @@ import re
 import json
 import requests
 import time
-from pprint import pformat
+from pprint import pformat, pprint
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
 from biokbase.workspace.client import ServerError as WorkspaceException  # @UnresolvedImport @IgnorePep8
 import errno
@@ -54,7 +54,7 @@ class ReadsUtils:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "git@github.com:msneddon/ReadsUtils"
-    GIT_COMMIT_HASH = "e0ede46cb40096a259148a48ed9c531e75b504cd"
+    GIT_COMMIT_HASH = "6f7468b6bc2efdda27d18466f406386b3c6652e2"
     
     #BEGIN_CLASS_HEADER
 
@@ -1082,6 +1082,13 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: output
         #BEGIN export_reads
+        print('running export_reads')
+        pprint(params)
+
+        # for some reason, in tests this doesn't happen, or something cleans out the shock
+        # temp directory.  So make sure the temp space exists.
+        self.shock_temp = os.path.join(self.scratch, self.SHOCK_TEMP)
+        self.mkdir_p(self.shock_temp)
 
          # validate parameters
         if 'input_ref' not in params:
@@ -1093,14 +1100,36 @@ class ReadsUtils:
 
         # export to a file, don't set any conversion parameters
         read_libraries = [ params['input_ref'] ]
-        files = self.convert_read_library_to_file(ctx, { 
+        read_lib_info = self.convert_read_library_to_file(ctx, { 
                               'read_libraries': read_libraries
-                            })[0]
+                            })[0]['files']
+        pprint(read_lib_info)
 
         # create the output directory and move the file there
-        export_package_dir = os.path.join(self.sharedFolder, info[1])
+        export_package_dir = os.path.join(self.scratch, info[1])
         os.makedirs(export_package_dir)
-        shutil.move(file['path'], os.path.join(export_package_dir, os.path.basename(file['path'])))
+        for r in read_lib_info:
+            lib = read_lib_info[r]
+
+            if 'fwd' in lib['files'] and lib['files']['fwd'] is not None and lib['files']['fwd'] is not '':
+                f_name = lib['files']['fwd']
+                print('packaging fwd reads file: '+f_name)
+                shutil.move(f_name, os.path.join(export_package_dir, os.path.basename(f_name)))
+
+            if 'rev' in lib['files'] and lib['files']['rev'] is not None and lib['files']['rev'] is not '':
+                print('packaging rev reads file: '+f_name)
+                f_name = lib['files']['rev']
+                shutil.move(f_name, os.path.join(export_package_dir, os.path.basename(f_name)))
+
+            if 'inter' in lib['files'] and lib['files']['inter'] is not None and lib['files']['inter'] is not '':
+                print('packaging interleaved reads file: '+f_name)
+                f_name = lib['files']['inter']
+                shutil.move(f_name, os.path.join(export_package_dir, os.path.basename(f_name)))
+
+            if 'sing' in lib['files'] and lib['files']['sing'] is not None and lib['files']['sing'] is not '':
+                print('packaging single end reads file: '+f_name)
+                f_name = lib['files']['sing']
+                shutil.move(f_name, os.path.join(export_package_dir, os.path.basename(f_name)))   
 
         # package it up and be done
         dfUtil = DataFileUtil(self.callback_url)

@@ -1,0 +1,34 @@
+
+<p>Example python usage:</p>
+
+<pre>
+    from kb_read_library_to_file.kb_read_library_to_fileClient import kb_read_library_to_file
+    from kb_read_library_to_file.baseclient import ServerError
+
+    def __init__(self, config):
+        #BEGIN_CONSTRUCTOR
+        self.callbackURL = os.environ['SDK_CALLBACK_URL']
+        ...
+
+    def my_method(self, ctx, params):
+
+        ...
+        readcli = kb_read_library_to_file(self.callbackURL, token=ctx['token'],
+                                          service_ver='dev')
+        reads_params = {'read_libraries': ['256/24/1', '256/26/2'],
+                        'gzip': 'false',
+                        'interleaved': None}
+
+        try:
+            reads = readcli.convert_read_library_to_file(reads_params)
+        except ServerError as se:
+            self.log('logging stacktrace from reads client error')
+            self.log(se.data)
+            raise
+        ...
+</pre>
+
+<p> The reads object will contain filepaths for the reads files and the
+available data from the workspace objects for those files as per the method
+specification.<p>
+
