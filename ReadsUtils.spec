@@ -105,4 +105,129 @@ module ReadsUtils {
     /* Loads a set of reads to KBase data stores. */
     funcdef upload_reads(UploadReadsParams params) returns(UploadReadsOutput)
         authentication required;
+
+    /* A boolean. Allowed values are 'false' or 'true'. Any other value is
+        invalid. */
+    typedef string sbool;
+
+    /* A ternary. Allowed values are 'false', 'true', or null. Any other
+        value is invalid.
+     */
+     typedef string tern;
+    
+    /* A reference to a read library stored in the workspace service, whether
+        of the KBaseAssembly or KBaseFile type. Usage of absolute references
+        (e.g. 256/3/6) is strongly encouraged to avoid race conditions,
+        although any valid reference is allowed.
+    */
+    typedef string read_lib;
+    
+    /* Input parameters for converting libraries to files.
+        list<read_lib> read_libraries - the names of the workspace read library
+            objects to convert.
+        tern gzip - if true, gzip any unzipped files. If false, gunzip any
+            zipped files. If null or missing, leave files as is unless
+            unzipping is required for interleaving or deinterleaving, in which
+            case the files will be left unzipped.
+        tern interleaved - if true, provide the files in interleaved format if
+            they are not already. If false, provide forward and reverse reads
+            files. If null or missing, leave files as is.
+    */
+    typedef structure {
+        list<read_lib> read_libraries;
+        tern gzip;
+        tern interleaved;
+    } ConvertReadLibraryParams;
+    
+    /* Reads file locations and gzip status.
+        Only the relevant fields will be present in the structure.
+        string fwd - the path to the forward / left reads.
+        string rev - the path to the reverse / right reads.
+        string inter - the path to the interleaved reads.
+        string sing - the path to the single end reads.
+        bool fwd_gz - whether the forward / left reads are gzipped.
+        bool rev_gz - whether the reverse / right reads are gzipped.
+        bool inter_gz - whether the interleaved reads are gzipped.
+        bool sing_gz - whether the single reads are gzipped.
+     */
+    typedef structure {
+        string fwd;
+        string rev;
+        string inter;
+        string sing;
+        sbool fwd_gz;
+        sbool rev_gz;
+        sbool inter_gz;
+        sbool sing_gz;
+    } ReadsFiles;
+    
+    /* Information about each set of reads.
+        ReadsFiles files - the reads files.
+        string ref - the absolute workspace reference of the reads file, e.g
+            workspace_id/object_id/version.
+        tern single_genome - whether the reads are from a single genome or a
+            metagenome. null if unknown.
+        tern read_orientation_outward - whether the read orientation is outward
+            from the set of primers. null if unknown or single ended reads.
+        string sequencing_tech - the sequencing technology used to produce the
+            reads. null if unknown.
+        KBaseCommon.StrainInfo strain - information about the organism strain
+            that was sequenced. null if unavailable.
+        KBaseCommon.SourceInfo source - information about the organism source.
+            null if unavailable.
+        float insert_size_mean - the mean size of the genetic fragments. null
+            if unavailable or single end reads.
+        float insert_size_std_dev - the standard deviation of the size of the
+            genetic fragments. null if unavailable or single end reads.
+        int read_count - the number of reads in the this dataset. null if
+            unavailable.
+        int read_size - the total size of the reads, in bases. null if
+            unavailable.
+        float gc_content - the GC content of the reads. null if
+            unavailable.
+     */
+    typedef structure {
+        ReadsFiles files;
+        string ref;
+        tern single_genome;
+        tern read_orientation_outward;
+        string sequencing_tech;
+        KBaseCommon.StrainInfo strain;
+        KBaseCommon.SourceInfo source;
+        float insert_size_mean;
+        float insert_size_std_dev;
+        int read_count;
+        int read_size;
+        float gc_content;
+    } ConvertedReadLibrary;
+
+    /* The output of the convert method.
+        mapping<read_lib, ConvertedReadLibrary> files - a mapping
+            of the read library workspace references to information
+            about the converted data for each library.
+     */
+    typedef structure {
+        mapping<read_lib, ConvertedReadLibrary> files;
+    } ConvertReadLibraryOutput;
+   
+    /* Convert read libraries to files */
+    funcdef convert_read_library_to_file(ConvertReadLibraryParams params)
+        returns(ConvertReadLibraryOutput output) authentication required;
+
+
+    typedef structure {
+        string input_ref;
+    } ExportParams;
+
+    typedef structure {
+        string shock_id;
+    } ExportOutput;
+
+    /* 
+        Using the convert_read_library_to_file function, this prepares a standard
+        KBase download package, zips it, and uploads to shock.
+    */
+    funcdef export_reads(ExportParams params)
+        returns(ExportOutput output) authentication required;
+
 };

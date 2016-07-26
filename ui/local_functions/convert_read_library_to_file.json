@@ -1,0 +1,18 @@
+{
+    "name" : "PairedEndReads to fastq file(s)",
+    "short_description":"Loads a PairedEndReads file", 
+
+    "long_description": "convert_read_library_to_file.html",
+
+    "tags" : {
+        "categories" : [],
+        "input": {
+            "file_types": [],
+            "kb_types": ["KBaseAssembly.PairedEndReads","KBaseFile.PairedEndReads"]
+        },
+        "output": {
+            "file_types": ["fastq"],
+            "kb_types": []
+        }
+    }
+}

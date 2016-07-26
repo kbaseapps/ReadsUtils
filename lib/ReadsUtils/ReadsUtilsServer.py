@@ -335,6 +335,14 @@ class Application(object):
                              name='ReadsUtils.upload_reads',
                              types=[dict])
         self.method_authentication['ReadsUtils.upload_reads'] = 'required'
+        self.rpc_service.add(impl_ReadsUtils.convert_read_library_to_file,
+                             name='ReadsUtils.convert_read_library_to_file',
+                             types=[dict])
+        self.method_authentication['ReadsUtils.convert_read_library_to_file'] = 'required'
+        self.rpc_service.add(impl_ReadsUtils.export_reads,
+                             name='ReadsUtils.export_reads',
+                             types=[dict])
+        self.method_authentication['ReadsUtils.export_reads'] = 'required'
         self.rpc_service.add(impl_ReadsUtils.status,
                              name='ReadsUtils.status',
                              types=[dict])
