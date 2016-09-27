@@ -131,14 +131,27 @@ module ReadsUtils {
     } DownloadReadsParams;
     
     /* Reads file information.
+        Note that the file names provided are those *prior to* interleaving
+        or deinterleaving the reads.
+        
         string fwd - the path to the forward / left reads.
+        string fwd_name - the name of the forwards reads file from Shock, or
+            if not available, from the Shock handle.
         string rev - the path to the reverse / right reads. null if the reads
             are single end or interleaved.
+        string rev_name - the name of the reverse reads file from Shock, or
+            if not available, from the Shock handle. null if the reads
+            are single end or interleaved.
+        string otype - the original type of the reads. One of 'single',
+            'paired', or 'interleaved'.
         string type - one of 'single', 'paired', or 'interleaved'.
      */
     typedef structure {
         string fwd;
+        string fwd_name;
         string rev;
+        string rev_name;
+        string otype;
         string type;
     } ReadsFiles;
     
