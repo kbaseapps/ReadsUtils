@@ -918,6 +918,67 @@ class ReadsUtilsTest(unittest.TestCase):
              }
         )
 
+    def test_single_end(self):
+        self.download_success(
+            {'single_end': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_S,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end']['ref']
+                     })
+                },
+             'single_end_kbassy': {
+                'md5': {'fwd': self.MD5_SM_R},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.reverse.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end_kbassy']['ref']
+                     })
+                },
+             'single_end_gz': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_S,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.forward.fq.gz',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end_gz']['ref']
+                     })
+                },
+             'single_end_kbassy_gz': {
+                'md5': {'fwd': self.MD5_SM_R},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.reverse.fq.gz',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
+                     })
+                }
+             }
+        )
+
     def download_success(self, testspecs, interleave=None):
         self.maxDiff = None
         test_name = inspect.stack()[1][3]

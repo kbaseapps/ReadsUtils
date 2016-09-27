@@ -291,7 +291,7 @@ class ReadsUtils:
     def process_single_end(self, ref, obj_name, handle, file_type=None):
         path, name = self._download_reads_from_shock(
             ref, obj_name, handle, file_type)
-        np = path + '.sing.fastq'
+        np = path + '.single.fastq'
         self.mv(path, np)
         return {'fwd': np,
                 'fwd_name': name,
