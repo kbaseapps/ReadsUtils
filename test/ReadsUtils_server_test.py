@@ -1036,6 +1036,67 @@ class ReadsUtilsTest(unittest.TestCase):
              }
         )
 
+    def test_interleaved(self):
+        self.download_success(
+            {'intbasic': {
+                'md5': {'fwd': self.MD5_SM_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['intbasic']['ref']
+                     })
+                },
+             'intbasic_kbassy': {
+                'md5': {'fwd': self.MD5_SM_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['intbasic_kbassy']['ref']
+                     })
+                },
+             'intbasic_gz': {
+                'md5': {'fwd': self.MD5_SM_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq.gz',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['intbasic_gz']['ref']
+                     })
+                },
+             'intbasic_kbassy_gz': {
+                'md5': {'fwd': self.MD5_SM_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq.gz',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['intbasic_kbassy_gz']['ref']
+                     })
+                }
+             }, interleave='none'
+        )
+
     def download_success(self, testspecs, interleave=None):
         self.maxDiff = None
         test_name = inspect.stack()[1][3]
