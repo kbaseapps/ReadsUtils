@@ -32,8 +32,11 @@ class ReadsUtils:
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
     GIT_COMMIT_HASH = "27bcffa305929aa83937f3cb6ea6b51d8adcfe67"
-    
+
     #BEGIN_CLASS_HEADER
+
+    TRUE = 'true'
+    FALSE = 'false'
 
     FASTA_JAR = '/opt/lib/FastaValidator-1.0.jar'
     FASTQ_EXE = 'fastQValidator'
@@ -243,7 +246,7 @@ class ReadsUtils:
             return True
         return False
 
-    def _check_filename(self, from_obj, from_handle, from_shock):
+    def _check_filetype(self, from_obj, from_handle, from_shock):
         if (self._filename_ok(from_obj)):
             self.log('Acceptable file type in object: ' + from_obj)
             return True
@@ -283,10 +286,16 @@ class ReadsUtils:
                 .format(handle['id'], obj_name, ref))
         return ret['file_path'], fn
 
+    def mv(self, oldfile, newfile):
+        self.log('Moving {} to {}'.format(oldfile, newfile))
+        shutil.move(oldfile, newfile)
+
     def process_single_end(self, ref, obj_name, handle, file_type=None):
         path, name = self._download_reads_from_shock(
             ref, obj_name, handle, file_type)
-        return {'fwd': path,
+        np = path + '.sing.fastq'
+        self.mv(path, np)
+        return {'fwd': np,
                 'fwd_name': name,
                 'rev': None,
                 'rev_name': None,
@@ -360,7 +369,9 @@ class ReadsUtils:
 
         ret = {}
         if interleave is not False:  # e.g. True or None
-            ret = {'fwd': path,
+            np = path + '.inter.fastq'
+            self.mv(path, np)
+            ret = {'fwd': np,
                    'fwd_name': name,
                    'rev': None,
                    'rev_name': None,
@@ -404,9 +415,13 @@ class ReadsUtils:
                    'type': 'interleaved'
                    }
         else:
-            ret = {'fwd': fwdpath,
+            nf = fwdpath + '.fwd.fastq'
+            nr = revpath + '.rev.fastq'
+            self.mv(fwdpath, nf)
+            self.mv(revpath, nr)
+            ret = {'fwd': nf,
                    'fwd_name': fwdname,
-                   'rev': revpath,
+                   'rev': nr,
                    'rev_name': revname,
                    'otype': 'paired',
                    'type': 'paired'
@@ -899,9 +914,7 @@ class ReadsUtils:
 
         dfu = DataFileUtil(self.callback_url)
         # Get the reads library
-        ws_reads_ids = []
-        for read_name in params[self.PARAM_IN_LIB]:
-            ws_reads_ids.append({'ref': read_name})
+        ws_reads_ids = params[self.PARAM_IN_LIB]
         try:
             reads = dfu.get_objects({'object_refs': ws_reads_ids})['data']
         except DFUError as e:
@@ -909,7 +922,7 @@ class ReadsUtils:
             raise
 
         output = {}
-        for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
+        for read_name, read in zip(ws_reads_ids, reads):
             self.log('=== processing read library ' + read_name + '===\n',
                      prefix_newline=True)
             output[read_name] = self.process_reads(
