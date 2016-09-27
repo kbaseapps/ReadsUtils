@@ -191,19 +191,27 @@ class ReadsUtils(object):
            the total size of the reads, in bases. null if unavailable. float
            gc_content - the GC content of the reads. null if unavailable.) ->
            structure: parameter "files" of type "ReadsFiles" (Reads file
-           information. string fwd - the path to the forward / left reads.
-           string rev - the path to the reverse / right reads. null if the
-           reads are single end or interleaved. string type - one of
+           information. Note that the file names provided are those *prior
+           to* interleaving or deinterleaving the reads. string fwd - the
+           path to the forward / left reads. string fwd_name - the name of
+           the forwards reads file from Shock, or if not available, from the
+           Shock handle. string rev - the path to the reverse / right reads.
+           null if the reads are single end or interleaved. string rev_name -
+           the name of the reverse reads file from Shock, or if not
+           available, from the Shock handle. null if the reads are single end
+           or interleaved. string otype - the original type of the reads. One
+           of 'single', 'paired', or 'interleaved'. string type - one of
            'single', 'paired', or 'interleaved'.) -> structure: parameter
-           "fwd" of String, parameter "rev" of String, parameter "type" of
-           String, parameter "ref" of String, parameter "single_genome" of
-           type "tern" (A ternary. Allowed values are 'false', 'true', or
-           null. Any other value is invalid.), parameter
-           "read_orientation_outward" of type "tern" (A ternary. Allowed
+           "fwd" of String, parameter "fwd_name" of String, parameter "rev"
+           of String, parameter "rev_name" of String, parameter "otype" of
+           String, parameter "type" of String, parameter "ref" of String,
+           parameter "single_genome" of type "tern" (A ternary. Allowed
            values are 'false', 'true', or null. Any other value is invalid.),
-           parameter "sequencing_tech" of String, parameter "strain" of type
-           "StrainInfo" (Information about a strain. genetic_code - the
-           genetic code of the strain. See
+           parameter "read_orientation_outward" of type "tern" (A ternary.
+           Allowed values are 'false', 'true', or null. Any other value is
+           invalid.), parameter "sequencing_tech" of String, parameter
+           "strain" of type "StrainInfo" (Information about a strain.
+           genetic_code - the genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information
