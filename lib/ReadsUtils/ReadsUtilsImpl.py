@@ -263,8 +263,6 @@ class ReadsUtils:
                   'unpack': 'uncompress',
                   'file_path': os.path.join(self.scratch, handle['id'])
                   }
-        self.log('Downloading shock node {} to {}'.format(
-            params['shock_id'], params['file_path']))
         # TODO LATER may want to do dl en masse, but that means if there's a bad file it won't be caught until everythings dl'd @IgnorePep8
         dfu = DataFileUtil(self.callback_url)
         ret = dfu.shock_to_file(params)
@@ -906,7 +904,7 @@ class ReadsUtils:
                 metagenome, outwards reads, etc.
         '''
 
-        self.log('Running convert_read_library_to_file with params:\n' +
+        self.log('Running download_reads with params:\n' +
                  pformat(params))
 
         self.process_params(params)

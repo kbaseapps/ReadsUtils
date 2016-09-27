@@ -452,6 +452,8 @@ class ReadsUtilsTest(unittest.TestCase):
          'single_genome': None
          })
 
+    # FASTA/Q tests ########################################################
+
     def check_FASTA(self, filename, result):
         self.assertEqual(
             self.impl.validateFASTA(
@@ -531,6 +533,8 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_FASTQ_val_fail_bad_ext(self):
         self.fail_val_FASTQ([{'file_path': 'data/sample.txt'}],
                             'File data/sample.txt is not a FASTQ file')
+
+    # Upload tests ########################################################
 
     def test_single_end_reads_gzip(self):
         # gzip, minimum inputs
@@ -862,6 +866,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(ret1['id'])
         self.delete_shock_node(ret2['id'])
 
+    # Download tests ########################################################
+
     def test_download_one(self):
         self.download_success(
             {'frbasic': {
@@ -875,6 +881,38 @@ class ReadsUtilsTest(unittest.TestCase):
                                'rev_name': 'small.reverse.fq'
                                },
                      'ref': self.staged['frbasic']['ref']
+                     })
+                }
+             }
+        )
+
+    def test_multiple(self):
+        self.download_success(
+            {'frbasic': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq'
+                               },
+                     'ref': self.staged['frbasic']['ref']
+                     })
+                },
+             'intbasic': {
+                'md5': {'fwd': self.MD5_SM_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['intbasic']['ref']
                      })
                 }
              }
