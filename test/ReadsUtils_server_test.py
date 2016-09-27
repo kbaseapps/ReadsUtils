@@ -979,6 +979,63 @@ class ReadsUtilsTest(unittest.TestCase):
              }
         )
 
+    def test_paired(self):
+        self.download_success(
+            {'frbasic': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq'
+                               },
+                     'ref': self.staged['frbasic']['ref']
+                     })
+                },
+             'frbasic_kbassy': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq'
+                               },
+                     'ref': self.staged['frbasic_kbassy']['ref']
+                     })
+                },
+             'frbasic_gz': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq.gz',
+                               'rev_name': 'small.reverse.fq'
+                               },
+                     'ref': self.staged['frbasic_gz']['ref']
+                     })
+                },
+             'frbasic_kbassy_gz': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq.gz'
+                               },
+                     'ref': self.staged['frbasic_kbassy_gz']['ref']
+                     })
+                }
+             }
+        )
+
     def download_success(self, testspecs, interleave=None):
         self.maxDiff = None
         test_name = inspect.stack()[1][3]
