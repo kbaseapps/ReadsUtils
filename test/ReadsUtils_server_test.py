@@ -1097,6 +1097,96 @@ class ReadsUtilsTest(unittest.TestCase):
              }, interleave='none'
         )
 
+    # test some compressed, some uncompressed
+    def test_fr_to_interleave(self):
+        self.download_success(
+            {'frbasic': {
+                'md5': {'fwd': self.MD5_FR_TO_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq',
+                               'rev': None
+                               },
+                     'ref': self.staged['frbasic']['ref']
+                     })
+                },
+             'frbasic_kbassy_gz': {
+                'md5': {'fwd': self.MD5_FR_TO_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq.gz',
+                               'rev': None
+                               },
+                     'ref': self.staged['frbasic_kbassy_gz']['ref']
+                     })
+                },
+             'intbasic': {
+                'md5': {'fwd': self.MD5_SM_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['intbasic']['ref']
+                     })
+                },
+             'intbasic_kbassy_gz': {
+                'md5': {'fwd': self.MD5_SM_I},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq.gz',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['intbasic_kbassy_gz']['ref']
+                     })
+                },
+             'single_end': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_S,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end']['ref']
+                     })
+                },
+             'single_end_kbassy_gz': {
+                'md5': {'fwd': self.MD5_SM_R},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.reverse.fq.gz',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
+                     })
+                }
+             }, interleave='true'
+        )
+
     def download_success(self, testspecs, interleave=None):
         self.maxDiff = None
         test_name = inspect.stack()[1][3]
