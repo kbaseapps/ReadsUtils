@@ -868,6 +868,9 @@ class ReadsUtilsTest(unittest.TestCase):
 
     # Download tests ########################################################
 
+    # TODO tests with bzip file extensions, testing for allowed extensions
+    # TODO tests with interleave / deinterleave with files with blank lines, but otherwise valid @IgnorePep8
+
     def test_download_one(self):
         self.download_success(
             {'frbasic': {
@@ -1185,6 +1188,92 @@ class ReadsUtilsTest(unittest.TestCase):
                      })
                 }
              }, interleave='true'
+        )
+
+    # test some compressed, some uncompressed
+    def test_deinterleave(self):
+        self.download_success(
+            {'intbasic': {
+                'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'paired',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq',
+                               'rev_name': None
+                               },
+                     'ref': self.staged['intbasic']['ref']
+                     })
+                },
+             'intbasic_kbassy_gz': {
+                'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'paired',
+                               'otype': 'interleaved',
+                               'fwd_name': 'interleaved.fq.gz',
+                               'rev_name': None
+                               },
+                     'ref': self.staged['intbasic_kbassy_gz']['ref']
+                     })
+                },
+             'frbasic_gz': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq.gz',
+                               'rev_name': 'small.reverse.fq'
+                               },
+                     'ref': self.staged['frbasic_gz']['ref']
+                     })
+                },
+             'frbasic_kbassy': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq'
+                               },
+                     'ref': self.staged['frbasic_kbassy']['ref']
+                     })
+                },
+             'single_end_gz': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_S,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.forward.fq.gz',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end_gz']['ref']
+                     })
+                },
+             'single_end_kbassy': {
+                'md5': {'fwd': self.MD5_SM_R},
+                'fileext': {'fwd': 'single'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'type': 'single',
+                               'otype': 'single',
+                               'fwd_name': 'small.reverse.fq',
+                               'rev_name': None,
+                               'rev': None
+                               },
+                     'ref': self.staged['single_end_kbassy']['ref']
+                     })
+                },
+             }, interleave='false'
         )
 
     def download_success(self, testspecs, interleave=None):
