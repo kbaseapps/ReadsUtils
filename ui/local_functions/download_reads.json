@@ -1,0 +1,19 @@
+{
+    "name" : "Download a set of reads.",
+    "short_description" : "Download a set of reads from KBase.",
+    "long_description" : "Download single end or paired end reads from the KBase data stores.",
+    "tags" : {
+        "categories" : ["download", "FASTQ"],
+        "input": {
+            "file_types": [],
+            "kb_types": ["KBaseFile.SingleEndLibrary",
+                         "KBaseFile.PairedEndLibrary",
+                         "KBaseAssembly.SingleEndLibrary",
+                         "KBaseAssembly.PairedEndLibrary"]
+        },
+        "output": {
+            "file_types": ["FASTQ"],
+            "kb_types": []
+        }
+    }
+}

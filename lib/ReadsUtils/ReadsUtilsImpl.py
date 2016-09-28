@@ -273,19 +273,14 @@ class ReadsUtils:
                          'object {} ({}). Shock node {}')
                         .format(n, f, obj_name, ref, handle['id']))
                 ok = True
+        # TODO this is untested. You have to try pretty hard to upload a file without a name to Shock. @IgnorePep8
         if not ok:
             raise ValueError(
                 'Unable to determine file type from Shock or Workspace ' +
                 'data. Reads object {} ({}). Shock node {}'
                 .format(obj_name, ref, handle['id']))
         if not fn:
-            fn = handle['file_name']
-            if not fn:
-                self.log('No filename available from Shock or the read ' +
-                         'object handle')
-            else:
-                self.log('No filename available from Shock, using the read ' +
-                         'object handle filename: ' + fn)
+            self.log('No filename available from Shock')
         else:
             self.log('Filename from Shock: ' + fn)
         return ret['file_path'], fn

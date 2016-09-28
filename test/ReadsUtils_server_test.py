@@ -280,9 +280,12 @@ class ReadsUtilsTest(unittest.TestCase):
         fwd_reads = {'file': 'data/small.forward.fq',
                      'name': 'test_fwd.fastq',
                      'type': 'fastq'}
+        fwd_reads2 = {'file': 'data/small.forward.fq',
+                      'name': 'test_fwd.fnq',
+                      'type': 'fnq.gz'}
         fwd_reads_gz = {'file': 'data/small.forward.fq.gz',
                         'name': 'test_fwd.fastq.gz',
-                        'type': 'fastq.Gz'}
+                        'type': '.fastq.Gz'}
         # get file type from handle file name
         rev_reads = {'file': 'data/small.reverse.fq',
                      'name': 'test_rev.FQ',
@@ -305,7 +308,7 @@ class ReadsUtilsTest(unittest.TestCase):
                             rev_reads=rev_reads)
         cls.upload_assembly('intbasic', sq, int_reads)
         cls.upload_assembly('intbasic_gz', sq, int_reads_gz)
-        cls.upload_assembly('frbasic_kbassy', {}, fwd_reads,
+        cls.upload_assembly('frbasic_kbassy', {}, fwd_reads2,
                             rev_reads=rev_reads, kbase_assy=True)
         cls.upload_assembly('frbasic_kbassy_gz', {}, fwd_reads,
                             rev_reads=rev_reads_gz, kbase_assy=True)
@@ -407,6 +410,8 @@ class ReadsUtilsTest(unittest.TestCase):
         bad_fn_reads['name'] = 'small.forward.fastq'
         bad_fn_reads['type'] = 'xls'
         cls.upload_assembly('bad_file_type', sq, bad_fn_reads)
+#         cls.upload_assembly('no_file_info', sq,
+#                             {'file': None, 'name': None, 'type': None})
         cls.upload_assembly('bad_node', sq, fwd_reads)
         cls.delete_shock_node(cls.nodes_to_delete.pop())
         cls.upload_empty_data('empty')
@@ -1561,6 +1566,15 @@ class ReadsUtilsTest(unittest.TestCase):
              'Shock node {}').format(
                 self.staged['bad_file_type']['ref'],
                 self.staged['bad_file_type']['fwd_node_id']))
+
+#     def test_no_file_info(self):
+#
+#         self.download_error(
+#             [self.getWsName() + '/no_file_info'],
+#             ('Unable to determine file type from Shock or Workspace ' +
+#              'data. Reads object no_file_info ({}). Shock node {}').format(
+#                 self.staged['no_file_info']['ref'],
+#                 self.staged['no_file_info']['fwd_node_id']))
 
     def test_bad_shock_node(self):
 
