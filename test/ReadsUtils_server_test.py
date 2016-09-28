@@ -1450,6 +1450,32 @@ class ReadsUtilsTest(unittest.TestCase):
              }
         )
 
+    def test_no_workspace_param(self):
+
+        self.download_error(
+            ['foo'], 'Error on ObjectSpecification #1: Illegal number ' +
+            'of separators / in object reference foo',
+            exception=DFUError)
+
+    def download_error(self, readnames, error,
+                       interleave=None, exception=ValueError):
+
+        test_name = inspect.stack()[1][3]
+        print('\n****** starting expected fail test: ' + test_name + ' ******')
+
+        params = {'interleaved': interleave}
+
+        if (readnames is not None):
+            params['read_libraries'] = readnames
+
+        print('Running test with {} libs. Params:'.format(
+            0 if not readnames else len(readnames)))
+        pprint(params)
+
+        with self.assertRaises(exception) as context:
+            self.impl.download_reads(self.ctx, params)
+        self.assertEqual(error, str(context.exception.message))
+
     def download_success(self, testspecs, interleave=None):
         self.maxDiff = None
         test_name = inspect.stack()[1][3]
