@@ -416,7 +416,24 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.delete_shock_node(cls.nodes_to_delete.pop())
         cls.upload_empty_data('empty')
         cls.upload_file_ref('fileref', 'data/small.forward.fq')
+
+        # file type testing
+        # at this point the 3 basic filetypes + gz are staged
+        cls.upload_assy_fileext('gzip', sq, 'fq.gzip', 'foo.FNQ.GZIP')
+        cls.upload_assy_fileext('bz', sq, 'fastQ.bz', 'foo.fnq.BZ2')
+        cls.upload_assy_fileext('bzip', sq, 'FQ.bzip', 'foo.FASTQ.BZIP2')
         print('Data staged.')
+
+    @classmethod
+    def upload_assy_fileext(cls, wsobjname, object_body, file_type,
+                            handle_file_name):
+        cls.upload_assembly(
+            wsobjname, object_body,
+            {'file': 'data/small.forward.fq',
+             'name': handle_file_name,
+             'type': file_type
+             }
+        )
 
     @classmethod
     def make_ref(self, objinfo):
@@ -1283,6 +1300,52 @@ class ReadsUtilsTest(unittest.TestCase):
                 },
              }, interleave='false'
         )
+
+    def test_compressed_file_extensions(self):
+        self.download_success(
+            {'gzip': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'small.forward.fq',
+                               'rev': None,
+                               'rev_name': None
+                               },
+                     'ref': self.staged['gzip']['ref']
+                     })
+                },
+             'bz': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'small.forward.fq',
+                               'rev': None,
+                               'rev_name': None
+                               },
+                     'ref': self.staged['bz']['ref']
+                     })
+                },
+             'bzip': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'interleaved',
+                               'fwd_name': 'small.forward.fq',
+                               'rev': None,
+                               'rev_name': None
+                               },
+                     'ref': self.staged['bzip']['ref']
+                     })
+                }
+             })
 
     def test_object_contents_single_end_single_genome(self):
         self.download_success(
