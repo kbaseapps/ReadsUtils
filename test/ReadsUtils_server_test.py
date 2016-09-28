@@ -189,6 +189,7 @@ class ReadsUtilsTest(unittest.TestCase):
                  }
 
         rev_id = None
+        rev_handle = None
         if rev_reads:
             print('uploading reverse reads file ' + rev_reads['file'])
             rev_id, rev_handle_id, rev_md5, rev_size = \
@@ -219,7 +220,9 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.staged[wsobjname] = {'info': objdata,
                                  'ref': cls.make_ref(objdata),
                                  'fwd_node_id': fwd_id,
-                                 'rev_node_id': rev_id
+                                 'rev_node_id': rev_id,
+                                 'fwd_handle': fwd_handle,
+                                 'rev_handle': rev_handle,
                                  }
 
     @classmethod
@@ -1456,6 +1459,126 @@ class ReadsUtilsTest(unittest.TestCase):
             ['foo'], 'Error on ObjectSpecification #1: Illegal number ' +
             'of separators / in object reference foo',
             exception=DFUError)
+
+    def test_bad_workspace_name(self):
+
+        self.download_error(
+            ['bad*name/foo'],
+            'Error on ObjectSpecification #1: Illegal character in ' +
+            'workspace name bad*name: *', exception=DFUError)
+
+    def test_non_extant_workspace(self):
+
+        self.download_error(
+            ['Ireallyhopethisworkspacedoesntexistorthistestwillfail/foo'],
+            'Object foo cannot be accessed: No workspace with name ' +
+            'Ireallyhopethisworkspacedoesntexistorthistestwillfail exists',
+            exception=DFUError)
+
+    def test_bad_lib_name(self):
+
+        self.download_error(
+            [self.getWsName() + '/bad&name'],
+            'Error on ObjectSpecification #1: Illegal character in object ' +
+            'name bad&name: &', exception=DFUError)
+
+    def test_no_libs_param(self):
+
+        self.download_error(None, 'read_libraries parameter is required')
+
+    def test_no_libs_list(self):
+
+        self.download_error('foo', 'read_libraries must be a list')
+
+    def test_non_extant_lib(self):
+
+        self.download_error(
+            [self.getWsName() + '/foo'],
+            'No object with name foo exists in workspace ' +
+            str(self.ws_info[0]), exception=DFUError)
+
+    def test_no_libs(self):
+
+        self.download_error([], 'At least one reads library must be provided')
+
+    def test_bad_module(self):
+
+        self.download_error(
+            [self.getWsName() + '/empty'],
+            ('Invalid type for object {} (empty). Supported ' +
+             'types: KBaseFile.SingleEndLibrary ' +
+             'KBaseFile.PairedEndLibrary ' +
+             'KBaseAssembly.SingleEndLibrary ' +
+             'KBaseAssembly.PairedEndLibrary').format(
+                self.staged['empty']['ref']))
+
+    def test_bad_type(self):
+
+        self.download_error(
+            [self.getWsName() + '/fileref'],
+            ('Invalid type for object {} (fileref). Supported ' +
+             'types: KBaseFile.SingleEndLibrary ' +
+             'KBaseFile.PairedEndLibrary ' +
+             'KBaseAssembly.SingleEndLibrary ' +
+             'KBaseAssembly.PairedEndLibrary').format(
+                self.staged['fileref']['ref']))
+
+    def test_bad_shock_filename(self):
+
+        self.download_error(
+            [self.getWsName() + '/bad_shk_name'],
+            ('Error downloading reads for object {} (bad_shk_name) from ' +
+             'Shock node {}: A valid file extension could not be determined ' +
+             'for the reads file. In order of precedence:\n' +
+             'File type is: \nHandle file name is: \n' +
+             'Shock file name is: small.forward.bad\n' +
+             'Acceptable extensions: .fq .fastq .fq.gz ' +
+             '.fastq.gz').format(self.staged['bad_shk_name']['ref'],
+                                 self.staged['bad_shk_name']['fwd_node_id']))
+
+    def test_bad_handle_filename(self):
+
+        self.download_error(
+            [self.getWsName() + '/bad_file_name'],
+            ('Error downloading reads for object {} (bad_file_name) from ' +
+             'Shock node {}: A valid file extension could not be determined ' +
+             'for the reads file. In order of precedence:\n' +
+             'File type is: \nHandle file name is: file.terrible\n' +
+             'Shock file name is: small.forward.fq\n' +
+             'Acceptable extensions: .fq .fastq .fq.gz ' +
+             '.fastq.gz').format(self.staged['bad_file_name']['ref'],
+                                 self.staged['bad_file_name']['fwd_node_id']))
+
+    def test_bad_file_type(self):
+
+        self.download_error(
+            [self.getWsName() + '/bad_file_type'],
+            ('Error downloading reads for object {} (bad_file_type) from ' +
+             'Shock node {}: A valid file extension could not be determined ' +
+             'for the reads file. In order of precedence:\n' +
+             'File type is: .xls\nHandle file name is: small.forward.fastq\n' +
+             'Shock file name is: small.forward.fq\n' +
+             'Acceptable extensions: .fq .fastq .fq.gz ' +
+             '.fastq.gz').format(self.staged['bad_file_type']['ref'],
+                                 self.staged['bad_file_type']['fwd_node_id']))
+
+    def test_bad_shock_node(self):
+
+        self.download_error(
+            [self.getWsName() + '/bad_node'],
+            ('Handle error for object {}: The Handle Manager reported a ' +
+             'problem while attempting to set Handle ACLs: Unable to set ' +
+             'acl(s) on handles {}').format(
+                self.staged['bad_node']['ref'],
+                self.staged['bad_node']['fwd_handle']['hid']),
+            exception=DFUError)
+
+    def test_invalid_interleave_input(self):
+
+        self.download_error(
+            ['foo'], 'Illegal value for ternary parameter interleaved: ' +
+            'wubba. Allowed values are "true", "false", and null.',
+            interleave='wubba')
 
     def download_error(self, readnames, error,
                        interleave=None, exception=ValueError):
