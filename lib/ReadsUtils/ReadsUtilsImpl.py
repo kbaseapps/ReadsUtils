@@ -236,6 +236,7 @@ class ReadsUtils:
     def _filename_ok(self, fn):
         if not fn:
             return False
+        fn = fn.lower()
         if (self._get_ext(fn, self.FASTQ_EXT)):
             return True
         compress_ext = self._get_ext(fn, self.COMPRESS_EXT)
@@ -246,27 +247,36 @@ class ReadsUtils:
             return True
         return False
 
-    def _check_filetype(self, from_obj, from_handle, from_shock):
-        if (self._filename_ok(from_obj)):
-            self.log('Acceptable file type in object: ' + from_obj)
-            return True
-        if (self._filename_ok(from_handle)):
-            self.log('Acceptable file type in handle: ' + from_handle)
-            return True
-        if (self._filename_ok(from_shock)):
-            self.log('Acceptable file type in Shock attributes: ' + from_shock)
-            return True
-        return False
-
     def _download_reads_from_shock(self, ref, obj_name, handle, file_type):
         params = {'shock_id': handle['id'],
                   'unpack': 'uncompress',
                   'file_path': os.path.join(self.scratch, handle['id'])
                   }
         # TODO LATER may want to do dl en masse, but that means if there's a bad file it won't be caught until everythings dl'd @IgnorePep8
+        # TODO LATER add method to DFU to get shock attribs and check filename prior to download @IgnorePep8
+        # TODO LATER at least check handle filename & file type are ok before download @IgnorePep8
         dfu = DataFileUtil(self.callback_url)
         ret = dfu.shock_to_file(params)
         fn = ret['node_file_name']
+        if file_type and not file_type.startswith('.'):
+            file_type = '.' + file_type
+        ok = False
+        for f, n in zip([fn, handle['file_name'], file_type],
+                        ['Shock file name',
+                         'Handle file name from reads Workspace object',
+                         'File type from reads Workspace object']):
+            if f:
+                if not self._filename_ok(f):
+                    raise ValueError(
+                        ('{} is illegal: {}. Expected FASTQ file. Reads ' +
+                         'object {} ({}). Shock node {}')
+                        .format(n, f, obj_name, ref, handle['id']))
+                ok = True
+        if not ok:
+            raise ValueError(
+                'Unable to determine file type from Shock or Workspace ' +
+                'data. Reads object {} ({}). Shock node {}'
+                .format(obj_name, ref, handle['id']))
         if not fn:
             fn = handle['file_name']
             if not fn:
@@ -276,12 +286,7 @@ class ReadsUtils:
                 self.log('No filename available from Shock, using the read ' +
                          'object handle filename: ' + fn)
         else:
-            self.log('Filename from shock: ' + fn)
-        if not self._check_filetype(file_type, handle['file_name'],
-                                    ret['node_file_name']):
-            raise ValueError(
-                'Shock node {} from reads object {} ({}) is not a fastq file'
-                .format(handle['id'], obj_name, ref))
+            self.log('Filename from Shock: ' + fn)
         return ret['file_path'], fn
 
     def mv(self, oldfile, newfile):

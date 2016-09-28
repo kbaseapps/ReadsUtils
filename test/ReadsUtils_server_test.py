@@ -1527,40 +1527,30 @@ class ReadsUtilsTest(unittest.TestCase):
 
         self.download_error(
             [self.getWsName() + '/bad_shk_name'],
-            ('Error downloading reads for object {} (bad_shk_name) from ' +
-             'Shock node {}: A valid file extension could not be determined ' +
-             'for the reads file. In order of precedence:\n' +
-             'File type is: \nHandle file name is: \n' +
-             'Shock file name is: small.forward.bad\n' +
-             'Acceptable extensions: .fq .fastq .fq.gz ' +
-             '.fastq.gz').format(self.staged['bad_shk_name']['ref'],
-                                 self.staged['bad_shk_name']['fwd_node_id']))
+            ('Shock file name is illegal: small.forward.bad. Expected FASTQ ' +
+             'file. Reads object bad_shk_name ({}). Shock node {}').format(
+                self.staged['bad_shk_name']['ref'],
+                self.staged['bad_shk_name']['fwd_node_id']))
 
     def test_bad_handle_filename(self):
 
         self.download_error(
             [self.getWsName() + '/bad_file_name'],
-            ('Error downloading reads for object {} (bad_file_name) from ' +
-             'Shock node {}: A valid file extension could not be determined ' +
-             'for the reads file. In order of precedence:\n' +
-             'File type is: \nHandle file name is: file.terrible\n' +
-             'Shock file name is: small.forward.fq\n' +
-             'Acceptable extensions: .fq .fastq .fq.gz ' +
-             '.fastq.gz').format(self.staged['bad_file_name']['ref'],
-                                 self.staged['bad_file_name']['fwd_node_id']))
+            ('Handle file name from reads Workspace object is illegal: ' +
+             'file.terrible. Expected FASTQ file. Reads object ' +
+             'bad_file_name ({}). Shock node {}').format(
+                self.staged['bad_file_name']['ref'],
+                self.staged['bad_file_name']['fwd_node_id']))
 
     def test_bad_file_type(self):
 
         self.download_error(
             [self.getWsName() + '/bad_file_type'],
-            ('Error downloading reads for object {} (bad_file_type) from ' +
-             'Shock node {}: A valid file extension could not be determined ' +
-             'for the reads file. In order of precedence:\n' +
-             'File type is: .xls\nHandle file name is: small.forward.fastq\n' +
-             'Shock file name is: small.forward.fq\n' +
-             'Acceptable extensions: .fq .fastq .fq.gz ' +
-             '.fastq.gz').format(self.staged['bad_file_type']['ref'],
-                                 self.staged['bad_file_type']['fwd_node_id']))
+            ('File type from reads Workspace object is illegal: .xls. ' +
+             'Expected FASTQ file. Reads object bad_file_type ({}). ' +
+             'Shock node {}').format(
+                self.staged['bad_file_type']['ref'],
+                self.staged['bad_file_type']['fwd_node_id']))
 
     def test_bad_shock_node(self):
 
