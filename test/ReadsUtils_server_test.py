@@ -1501,6 +1501,16 @@ class ReadsUtilsTest(unittest.TestCase):
 
         self.download_error([], 'At least one reads library must be provided')
 
+    def test_null_libs(self):
+
+        self.download_error([None],
+                            'Invalid workspace object name: None')
+
+    def test_empty_name_libs(self):
+
+        self.download_error([''],
+                            'Invalid workspace object name: ')
+
     def test_bad_module(self):
 
         self.download_error(

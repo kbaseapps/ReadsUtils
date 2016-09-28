@@ -136,7 +136,7 @@ class ReadsUtils:
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid
 
     def process_ternary(self, params, boolname):
-        if boolname not in params or params[boolname] is None:
+        if params.get(boolname) is None:
             params[boolname] = None
         elif params[boolname] == 'true':
             params[boolname] = True
@@ -158,7 +158,8 @@ class ReadsUtils:
         reads = list(set(reads))
         for read_name in reads:
             if not read_name:
-                raise ValueError('Invalid workspace object name ' + read_name)
+                raise ValueError('Invalid workspace object name: ' +
+                                 str(read_name))
         params[self.PARAM_IN_LIB] = reads
 
         self.process_ternary(params, self.PARAM_IN_INTERLEAVED)
