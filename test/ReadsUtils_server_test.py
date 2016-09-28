@@ -868,8 +868,8 @@ class ReadsUtilsTest(unittest.TestCase):
 
     # Download tests ########################################################
 
-    # TODO tests with bzip file extensions, testing for allowed extensions
-    # TODO tests with interleave / deinterleave with files with blank lines, but otherwise valid @IgnorePep8
+    # TODO NOW tests with bzip file extensions, testing for allowed extensions
+    # TODO NOW tests with interleave / deinterleave with files with blank lines, but otherwise valid @IgnorePep8
 
     def test_download_one(self):
         self.download_success(
@@ -1274,6 +1274,180 @@ class ReadsUtilsTest(unittest.TestCase):
                      })
                 },
              }, interleave='false'
+        )
+
+    def test_object_contents_single_end_single_genome(self):
+        self.download_success(
+            {'kbfile_sing_sg_t': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'single'},
+                'obj': {'files': {'type': 'single',
+                                  'otype': 'single',
+                                  'fwd_name': 'small.forward.fq',
+                                  'rev_name': None,
+                                  'rev': None
+                                  },
+                        'ref': self.staged['kbfile_sing_sg_t']['ref'],
+                        'single_genome': 'true',
+                        'strain': {u'genus': u'Yersinia',
+                                   u'species': u'pestis',
+                                   u'strain': u'happypants'
+                                   },
+                        'source': {u'source': u'my pants'},
+                        'sequencing_tech': u'IonTorrent',
+                        'read_count': 3,
+                        'read_size': 12,
+                        'gc_content': 2.3,
+                        'read_orientation_outward': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_single_end_metagenome(self):
+        self.download_success(
+            {'kbfile_sing_sg_f': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'single'},
+                'obj': {'files': {'type': 'single',
+                                  'otype': 'single',
+                                  'fwd_name': 'small.forward.fq',
+                                  'rev_name': None,
+                                  'rev': None
+                                  },
+                        'ref': self.staged['kbfile_sing_sg_f']['ref'],
+                        'single_genome': 'false',
+                        'strain': {u'genus': u'Deinococcus',
+                                   u'species': u'radiodurans',
+                                   u'strain': u'radiopants'
+                                   },
+                        'source': {u'source': u'also my pants'},
+                        'sequencing_tech': u'PacBio CCS',
+                        'read_count': 4,
+                        'read_size': 13,
+                        'gc_content': 2.4,
+                        'read_orientation_outward': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_kbassy_roo_true(self):
+        self.download_success(
+            {'kbassy_roo_t': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'inter'},
+                'obj': {'files': {'type': 'interleaved',
+                                  'otype': 'interleaved',
+                                  'fwd_name': 'small.forward.fq',
+                                  'rev_name': None,
+                                  'rev': None
+                                  },
+                        'ref': self.staged['kbassy_roo_t']['ref'],
+                        'single_genome': None,
+                        'strain': None,
+                        'source': None,
+                        'sequencing_tech': None,
+                        'read_count': None,
+                        'read_size': None,
+                        'gc_content': None,
+                        'read_orientation_outward': 'true',
+                        'insert_size_mean': 42,
+                        'insert_size_std_dev': 1000000
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_kbassy_roo_false(self):
+        self.download_success(
+            {'kbassy_roo_f': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'inter'},
+                'obj': {'files': {'type': 'interleaved',
+                                  'otype': 'interleaved',
+                                  'fwd_name': 'small.forward.fq',
+                                  'rev_name': None,
+                                  'rev': None
+                                  },
+                        'ref': self.staged['kbassy_roo_f']['ref'],
+                        'single_genome': None,
+                        'strain': None,
+                        'source': None,
+                        'sequencing_tech': None,
+                        'read_count': None,
+                        'read_size': None,
+                        'gc_content': None,
+                        'read_orientation_outward': 'false',
+                        'insert_size_mean': 43,
+                        'insert_size_std_dev': 1000001
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_kbfile_true(self):
+        self.download_success(
+            {'kbfile_pe_t': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'inter'},
+                'obj': {'files': {'type': 'interleaved',
+                                  'otype': 'interleaved',
+                                  'fwd_name': 'small.forward.fq',
+                                  'rev_name': None,
+                                  'rev': None
+                                  },
+                        'ref': self.staged['kbfile_pe_t']['ref'],
+                        'single_genome': 'true',
+                        'strain': {u'genus': u'Bacillus',
+                                   u'species': u'subtilis',
+                                   u'strain': u'soilpants'
+                                   },
+                        'source': {u'source': u'my other pants'},
+                        'sequencing_tech': 'Sanger',
+                        'read_count': 5,
+                        'read_size': 14,
+                        'gc_content': 2.5,
+                        'read_orientation_outward': 'true',
+                        'insert_size_mean': 50,
+                        'insert_size_std_dev': 1000002
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_kbfile_false(self):
+        self.download_success(
+            {'kbfile_pe_f': {
+                'md5': {'fwd': self.MD5_SM_F},
+                'fileext': {'fwd': 'inter'},
+                'obj': {'files': {'type': 'interleaved',
+                                  'otype': 'interleaved',
+                                  'fwd_name': 'small.forward.fq',
+                                  'rev_name': None,
+                                  'rev': None
+                                  },
+                        'ref': self.staged['kbfile_pe_f']['ref'],
+                        'single_genome': 'false',
+                        'strain': {u'genus': u'Escheria',
+                                   u'species': u'coli',
+                                   u'strain': u'poopypants'
+                                   },
+                        'source': {u'source': u'my ex-pants'},
+                        'sequencing_tech': 'PacBio CLR',
+                        'read_count': 6,
+                        'read_size': 15,
+                        'gc_content': 2.6,
+                        'read_orientation_outward': 'false',
+                        'insert_size_mean': 51,
+                        'insert_size_std_dev': 1000003
+                        }
+                }
+             }
         )
 
     def download_success(self, testspecs, interleave=None):
