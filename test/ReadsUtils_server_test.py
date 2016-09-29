@@ -939,8 +939,6 @@ class ReadsUtilsTest(unittest.TestCase):
 
     # Download tests ########################################################
 
-    # TODO NOW tests with interleave / deinterleave with files with blank lines, but otherwise valid @IgnorePep8
-
     def test_download_one(self):
         self.download_success(
             {'frbasic': {
