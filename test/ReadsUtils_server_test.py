@@ -425,6 +425,24 @@ class ReadsUtilsTest(unittest.TestCase):
         # bad file type testing
         cls.upload_assy_fileext('bad_ext', sq, 'foo.gzip', 'foo.FNQ.GZIP')
 
+        # interleave testing
+        cls.upload_assy_with_file(
+            'fr_blank_line', sq,
+            'data/Sample5_noninterleaved.1.blank_lines.fastq',
+            'data/Sample5_noninterleaved.2.fastq')
+        cls.upload_assy_with_file(
+            'fr_missing_line', sq,
+            'data/Sample5_noninterleaved.1.missing_line.fastq',
+            'data/Sample5_noninterleaved.2.fastq')
+        cls.upload_assy_with_file(
+            'fr_missing_rec_f', sq,
+            'data/Sample5_noninterleaved.1.missing_rec.fastq',
+            'data/Sample5_noninterleaved.2.fastq')
+        cls.upload_assy_with_file(
+            'fr_missing_rec_r', sq,
+            'data/Sample5_noninterleaved.1.fastq',
+            'data/Sample5_noninterleaved.2.missing_rec.fastq')
+
         # deinterleave testing
         cls.upload_assy_with_file(
             'int_blank_line', sq, 'data/Sample5_interleaved_blank_lines.fastq')
@@ -435,14 +453,19 @@ class ReadsUtilsTest(unittest.TestCase):
         print('Data staged.')
 
     @classmethod
-    def upload_assy_with_file(cls, wsobjname, object_body, file_):
-        cls.upload_assembly(
-            wsobjname, object_body,
-            {'file': file_,
-             'name': '',
-             'type': None
-             }
-        )
+    def upload_assy_with_file(cls, wsobjname, object_body, fwdfile,
+                              revfile=None):
+        fwd = {'file': fwdfile,
+               'name': '',
+               'type': None
+               }
+        rev = None
+        if revfile:
+            rev = {'file': revfile,
+                   'name': None,
+                   'type': ''
+                   }
+        cls.upload_assembly(wsobjname, object_body, fwd, rev)
 
     @classmethod
     def upload_assy_fileext(cls, wsobjname, object_body, file_type,
@@ -473,10 +496,11 @@ class ReadsUtilsTest(unittest.TestCase):
     MD5_SM_R = '2cf41e49cd6b9fdcf1e511b083bb42b5'
     MD5_SM_I = '6271cd02987c9d1c4bdc1733878fe9cf'
     MD5_FR_TO_I = '1c58d7d59c656db39cedcb431376514b'
+    MD5_FR_TO_I_BLANK = '971a5f445055c85fd45b17459e15e3ed'
     MD5_I_TO_F = '4a5f4c05aae26dcb288c0faec6583946'
     MD5_I_TO_R = '2be8de9afa4bcd1f437f35891363800a'
-    MD5_BLANK_TO_F = '140a61c7f183dd6a2b93ef195bb3ec63'
-    MD5_BLANK_TO_R = 'a5c6dc77baf9b245ad61a1053864ef88'
+    MD5_I_BLANK_TO_F = '140a61c7f183dd6a2b93ef195bb3ec63'
+    MD5_I_BLANK_TO_R = 'a5c6dc77baf9b245ad61a1053864ef88'
 
     STD_OBJ_KBF_P = {'gc_content': None,
                      'insert_size_mean': None,
@@ -1148,6 +1172,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
     # test some compressed, some uncompressed
     def test_fr_to_interleave(self):
+        fn = 'Sample5_noninterleaved.1.blank_lines.fastq'
         self.download_success(
             {'frbasic': {
                 'md5': {'fwd': self.MD5_FR_TO_I},
@@ -1232,7 +1257,21 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
-                }
+                },
+             'fr_blank_line': {
+                'md5': {'fwd': self.MD5_FR_TO_I_BLANK},
+                'fileext': {'fwd': 'inter'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'interleaved',
+                               'otype': 'paired',
+                               'fwd_name': fn,
+                               'rev_name': 'Sample5_noninterleaved.2.fastq',
+                               'rev': None
+                               },
+                     'ref': self.staged['fr_blank_line']['ref']
+                     })
+                },
              }, interleave='true'
         )
 
@@ -1320,8 +1359,8 @@ class ReadsUtilsTest(unittest.TestCase):
                      })
                 },
              'int_blank_line': {
-                'md5': {'fwd': self.MD5_BLANK_TO_F,
-                        'rev': self.MD5_BLANK_TO_R},
+                'md5': {'fwd': self.MD5_I_BLANK_TO_F,
+                        'rev': self.MD5_I_BLANK_TO_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
@@ -1712,6 +1751,46 @@ class ReadsUtilsTest(unittest.TestCase):
             .format(self.staged['int_miss_line']['ref'],
                     self.staged['int_miss_line']['fwd_node_id']),
             interleave='false')
+
+    def test_bad_interleave_missing_line(self):
+        self.download_error(
+            [self.getWsName() + '/fr_missing_line'],
+            ('Reading FASTQ record failed - non-blank lines ' +
+             'are not a multiple of four. Workspace reads ' +
+             'object fr_missing_line ({}), Shock node {}, Shock filename ' +
+             'Sample5_noninterleaved.1.missing_line.fastq')
+            .format(self.staged['fr_missing_line']['ref'],
+                    self.staged['fr_missing_line']['fwd_node_id']),
+            interleave='true')
+
+    def test_bad_interleave_missing_record_fwd(self):
+        self.download_error(
+            [self.getWsName() + '/fr_missing_rec_f'],
+            ('Interleave failed - reads files do not have ' +
+             'an equal number of records. Workspace reads ' +
+             'object fr_missing_rec_f ({}), ' +
+             'forward Shock node {}, filename ' +
+             'Sample5_noninterleaved.1.missing_rec.fastq, ' +
+             'reverse Shock node {}, filename Sample5_noninterleaved.2.fastq')
+            .format(self.staged['fr_missing_rec_f']['ref'],
+                    self.staged['fr_missing_rec_f']['fwd_node_id'],
+                    self.staged['fr_missing_rec_f']['rev_node_id']),
+            interleave='true')
+
+    def test_bad_interleave_missing_record_rev(self):
+        self.download_error(
+            [self.getWsName() + '/fr_missing_rec_r'],
+            ('Interleave failed - reads files do not have ' +
+             'an equal number of records. Workspace reads ' +
+             'object fr_missing_rec_r ({}), ' +
+             'forward Shock node {}, filename ' +
+             'Sample5_noninterleaved.1.fastq, ' +
+             'reverse Shock node {}, filename ' +
+             'Sample5_noninterleaved.2.missing_rec.fastq')
+            .format(self.staged['fr_missing_rec_r']['ref'],
+                    self.staged['fr_missing_rec_r']['fwd_node_id'],
+                    self.staged['fr_missing_rec_r']['rev_node_id']),
+            interleave='true')
 
     def download_error(self, readnames, error,
                        interleave=None, exception=ValueError):

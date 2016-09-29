@@ -304,7 +304,11 @@ class ReadsUtils:
     def get_file_prefix(self):
         return os.path.join(self.scratch, str(uuid.uuid4()))
 
-    def _read_fq_record(self, f, name):
+    # should probably make an InterleaveProcessor class to avoid these
+    # insane method sigs
+
+    def _read_fq_record(self, source_obj_ref, source_obj_name,
+                        shock_filename, shock_node, f):
         r = ''
         for i in xrange(4):
             l = f.readline()
@@ -313,8 +317,11 @@ class ReadsUtils:
             if not l:  # EOF
                 if i != 0:
                     raise ValueError(
-                        '{} is not a valid reads file - non-blank lines ' +
-                        'are not a multiple of four'.format(name))
+                        ('Reading FASTQ record failed - non-blank lines ' +
+                         'are not a multiple of four. Workspace reads ' +
+                         'object {} ({}), Shock node {}, Shock filename {}')
+                        .format(source_obj_name, source_obj_ref,
+                                shock_node, shock_filename))
                 else:
                     return ''
             r = r + l
@@ -322,18 +329,30 @@ class ReadsUtils:
 
     # this assumes that the FASTQ files are properly formatted and matched,
     # which they should be if they're in KBase.
-    def interleave(self, fwdpath, revpath, targetpath):
+    def interleave(self, source_obj_ref, source_obj_name, fwd_shock_filename,
+                   fwd_shock_node, rev_shock_filename, rev_shock_node,
+                   fwdpath, revpath, targetpath):
         self.log('Interleaving files {} and {} to {}'.format(
             fwdpath, revpath, targetpath))
         with open(targetpath, 'w') as t:
             with open(fwdpath, 'r') as f, open(revpath, 'r') as r:
                 while True:
-                    frec = self._read_fq_record(f, fwdpath)
-                    rrec = self._read_fq_record(r, revpath)
+                    frec = self._read_fq_record(
+                        source_obj_ref, source_obj_name,
+                        fwd_shock_filename, fwd_shock_node, f)
+                    rrec = self._read_fq_record(
+                        source_obj_ref, source_obj_name,
+                        rev_shock_filename, rev_shock_node, r)
                     if (not frec and rrec) or (frec and not rrec):
                         raise ValueError(
-                            'Reads files {} and {} do not have an equal ' +
-                            'number of records'.format(fwdpath, revpath))
+                            ('Interleave failed - reads files do not have ' +
+                             'an equal number of records. Workspace reads ' +
+                             'object {} ({}), ' +
+                             'forward Shock node {}, filename {}, ' +
+                             'reverse Shock node {}, filename {}')
+                            .format(source_obj_name, source_obj_ref,
+                                    fwd_shock_node, fwd_shock_filename,
+                                    rev_shock_node, rev_shock_filename))
                     if not frec:  # not rrec is implied at this point
                         break
                     t.write(frec)
@@ -413,7 +432,9 @@ class ReadsUtils:
             # we expect the job runner to clean up for us
             intpath = os.path.join(self.scratch, self.get_file_prefix() +
                                    '.inter.fastq')
-            self.interleave(fwdpath, revpath, intpath)
+            self.interleave(
+                    source_obj_ref, source_obj_name, fwdname, fwdhandle['id'],
+                    revname, revhandle['id'], fwdpath, revpath, intpath)
             ret = {'fwd': intpath,
                    'fwd_name': fwdname,
                    'rev': None,
