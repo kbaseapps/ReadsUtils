@@ -29,10 +29,10 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     #########################################
-    VERSION = "0.0.1"
+    VERSION = "0.1.0"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "27bcffa305929aa83937f3cb6ea6b51d8adcfe67"
-
+    GIT_COMMIT_HASH = "3bba833aad52690c75bcc65beae73d81c31e991f"
+    
     #BEGIN_CLASS_HEADER
 
     TRUE = 'true'
@@ -654,14 +654,18 @@ class ReadsUtils:
         :param params: instance of type "UploadReadsParams" (Input to the
            upload_reads function. Required parameters: fwd_id - the id of the
            shock node containing the reads data file: either single end
-           reads, forward/left reads, or interleaved reads. sequencing_tech -
-           the sequencing technology used to produce the reads. One of: wsid
-           - the id of the workspace where the reads will be saved
-           (preferred). wsname - the name of the workspace where the reads
-           will be saved. One of: objid - the id of the workspace object to
-           save over name - the name to which the workspace object will be
-           saved Optional parameters: rev_id - the shock node id containing
-           the reverse/right reads for paired end, non-interleaved reads.
+           reads, forward/left reads, or interleaved reads. - OR - fwd_file -
+           a local path to the reads data file: either single end reads,
+           forward/left reads, or interleaved reads. sequencing_tech - the
+           sequencing technology used to produce the reads. One of: wsid -
+           the id of the workspace where the reads will be saved (preferred).
+           wsname - the name of the workspace where the reads will be saved.
+           One of: objid - the id of the workspace object to save over name -
+           the name to which the workspace object will be saved Optional
+           parameters: rev_id - the shock node id containing the
+           reverse/right reads for paired end, non-interleaved reads. - OR -
+           rev_file - a local path to the reads data file containing the
+           reverse/right reads for paired end, non-interleaved reads.
            single_genome - whether the reads are from a single genome or a
            metagenome. Default is single genome. strain - information about
            the organism strain that was sequenced. source - information about
@@ -674,13 +678,14 @@ class ReadsUtils:
            fragments. Ignored for single end reads. insert_size_std_dev - the
            standard deviation of the size of the genetic fragments. Ignored
            for single end reads.) -> structure: parameter "fwd_id" of String,
-           parameter "wsid" of Long, parameter "wsname" of String, parameter
-           "objid" of Long, parameter "name" of String, parameter "rev_id" of
-           String, parameter "sequencing_tech" of String, parameter
-           "single_genome" of type "boolean" (A boolean - 0 for false, 1 for
-           true. @range (0, 1)), parameter "strain" of type "StrainInfo"
-           (Information about a strain. genetic_code - the genetic code of
-           the strain. See
+           parameter "fwd_file" of String, parameter "wsid" of Long,
+           parameter "wsname" of String, parameter "objid" of Long, parameter
+           "name" of String, parameter "rev_id" of String, parameter
+           "rev_file" of String, parameter "sequencing_tech" of String,
+           parameter "single_genome" of type "boolean" (A boolean - 0 for
+           false, 1 for true. @range (0, 1)), parameter "strain" of type
+           "StrainInfo" (Information about a strain. genetic_code - the
+           genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information

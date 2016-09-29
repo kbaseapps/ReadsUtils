@@ -56,6 +56,9 @@ module ReadsUtils {
         Required parameters:
         fwd_id - the id of the shock node containing the reads data file:
             either single end reads, forward/left reads, or interleaved reads.
+        - OR -
+        fwd_file - a local path to the reads data file: either single end
+            reads, forward/left reads, or interleaved reads.
         sequencing_tech - the sequencing technology used to produce the
             reads.
         
@@ -71,6 +74,9 @@ module ReadsUtils {
         Optional parameters:
         rev_id - the shock node id containing the reverse/right reads for
             paired end, non-interleaved reads.
+        - OR -
+        rev_file - a local path to the reads data file containing the
+            reverse/right reads for paired end, non-interleaved reads.
         single_genome - whether the reads are from a single genome or a
             metagenome. Default is single genome.
         strain - information about the organism strain
@@ -89,11 +95,13 @@ module ReadsUtils {
     */
     typedef structure {
         string fwd_id;
+        string fwd_file;
         int wsid;
         string wsname;
         int objid;
         string name;
         string rev_id;
+        string rev_file;
         string sequencing_tech;
         boolean single_genome;
         KBaseCommon.StrainInfo strain;
