@@ -422,6 +422,9 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.upload_assy_fileext('gzip', sq, 'fq.gzip', 'foo.FNQ.GZIP')
         cls.upload_assy_fileext('bz', sq, 'fastQ.bz', 'foo.fnq.BZ2')
         cls.upload_assy_fileext('bzip', sq, 'FQ.bzip', 'foo.FASTQ.BZIP2')
+        # bad file type testing
+        cls.upload_assy_fileext('bad_ext', sq, 'foo.gzip', 'foo.FNQ.GZIP')
+
         print('Data staged.')
 
     @classmethod
@@ -1629,6 +1632,16 @@ class ReadsUtilsTest(unittest.TestCase):
              'Shock node {}').format(
                 self.staged['bad_file_type']['ref'],
                 self.staged['bad_file_type']['fwd_node_id']))
+
+    def test_bad_file_type_good_compress_ext(self):
+
+        self.download_error(
+            [self.getWsName() + '/bad_ext'],
+            ('File type from reads Workspace object is illegal: .foo.gzip. ' +
+             'Expected FASTQ file. Reads object bad_ext ({}). ' +
+             'Shock node {}').format(
+                self.staged['bad_ext']['ref'],
+                self.staged['bad_ext']['fwd_node_id']))
 
 #     def test_no_file_info(self):
 #
