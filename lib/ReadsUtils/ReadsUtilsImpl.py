@@ -342,7 +342,8 @@ class ReadsUtils:
     # this assumes that the FASTQ file is properly formatted, which it should
     # be if it's in KBase. Credit:
     # https://www.biostars.org/p/19446/#117160
-    def deinterleave(self, filepath, fwdpath, revpath):
+    def deinterleave(self, source_obj_ref, source_obj_name, shock_filename,
+                     shock_node, filepath, fwdpath, revpath):
         self.log('Deinterleaving file {} to files {} and {}'.format(
             filepath, fwdpath, revpath))
         with open(filepath, 'r') as s:
@@ -356,6 +357,12 @@ class ReadsUtils:
                     else:
                         r.write(line)
                     count += 1
+        if count % 8 != 0:
+            raise ValueError('Deinterleave failed - line count ' +
+                             'is not divisible by 8. Workspace reads object ' +
+                             '{} ({}), Shock node {}, Shock filename {}.'
+                             .format(source_obj_name, source_obj_ref,
+                                     shock_node, shock_filename))
 
     # there's got to be better way to do this than these processing methods.
     # make some input classes for starters to fix these gross method sigs
@@ -381,7 +388,8 @@ class ReadsUtils:
                                    '.fwd.fastq')
             revpath = os.path.join(self.scratch, self.get_file_prefix() +
                                    '.rev.fastq')
-            self.deinterleave(path, fwdpath, revpath)
+            self.deinterleave(source_obj_ref, source_obj_name, name,
+                              handle['id'], path, fwdpath, revpath)
             ret = {'fwd': fwdpath,
                    'fwd_name': name,
                    'rev': revpath,

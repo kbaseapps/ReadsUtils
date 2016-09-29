@@ -425,7 +425,24 @@ class ReadsUtilsTest(unittest.TestCase):
         # bad file type testing
         cls.upload_assy_fileext('bad_ext', sq, 'foo.gzip', 'foo.FNQ.GZIP')
 
+        # deinterleave testing
+        cls.upload_assy_with_file(
+            'int_blank_line', sq, 'data/Sample5_interleaved_blank_lines.fastq')
+        cls.upload_assy_with_file(
+            'int_miss_line', sq,
+            'data/Sample5_interleaved_missing_line.fastq')
+
         print('Data staged.')
+
+    @classmethod
+    def upload_assy_with_file(cls, wsobjname, object_body, file_):
+        cls.upload_assembly(
+            wsobjname, object_body,
+            {'file': file_,
+             'name': '',
+             'type': None
+             }
+        )
 
     @classmethod
     def upload_assy_fileext(cls, wsobjname, object_body, file_type,
@@ -458,6 +475,8 @@ class ReadsUtilsTest(unittest.TestCase):
     MD5_FR_TO_I = '1c58d7d59c656db39cedcb431376514b'
     MD5_I_TO_F = '4a5f4c05aae26dcb288c0faec6583946'
     MD5_I_TO_R = '2be8de9afa4bcd1f437f35891363800a'
+    MD5_BLANK_TO_F = '140a61c7f183dd6a2b93ef195bb3ec63'
+    MD5_BLANK_TO_R = 'a5c6dc77baf9b245ad61a1053864ef88'
 
     STD_OBJ_KBF_P = {'gc_content': None,
                      'insert_size_mean': None,
@@ -896,7 +915,6 @@ class ReadsUtilsTest(unittest.TestCase):
 
     # Download tests ########################################################
 
-    # TODO NOW tests with bzip file extensions, testing for allowed extensions
     # TODO NOW tests with interleave / deinterleave with files with blank lines, but otherwise valid @IgnorePep8
 
     def test_download_one(self):
@@ -1301,6 +1319,21 @@ class ReadsUtilsTest(unittest.TestCase):
                      'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
+             'int_blank_line': {
+                'md5': {'fwd': self.MD5_BLANK_TO_F,
+                        'rev': self.MD5_BLANK_TO_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'paired',
+                               'otype': 'interleaved',
+                               'fwd_name':
+                                   'Sample5_interleaved_blank_lines.fastq',
+                               'rev_name': None
+                               },
+                     'ref': self.staged['int_blank_line']['ref']
+                     })
+                },
              }, interleave='false'
         )
 
@@ -1669,6 +1702,16 @@ class ReadsUtilsTest(unittest.TestCase):
             ['foo'], 'Illegal value for ternary parameter interleaved: ' +
             'wubba. Allowed values are "true", "false", and null.',
             interleave='wubba')
+
+    def test_bad_deinterleave(self):
+        self.download_error(
+            [self.getWsName() + '/int_miss_line'],
+            ('Deinterleave failed - line count is not divisible by 8. ' +
+             'Workspace reads object int_miss_line ({}), Shock node {}, ' +
+             'Shock filename Sample5_interleaved_missing_line.fastq.')
+            .format(self.staged['int_miss_line']['ref'],
+                    self.staged['int_miss_line']['fwd_node_id']),
+            interleave='false')
 
     def download_error(self, readnames, error,
                        interleave=None, exception=ValueError):
