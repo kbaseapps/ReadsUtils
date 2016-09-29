@@ -53,6 +53,20 @@ public class ReadsUtilsClient {
         caller = new JsonClientCaller(url, user, password);
     }
 
+    /** Constructs a client with a custom URL
+     * and a custom authorization service URL.
+     * @param url the URL of the service.
+     * @param user the user name.
+     * @param password the password for the user name.
+     * @param auth the URL of the authorization server.
+     * @throws UnauthorizedException if the credentials are not valid.
+     * @throws IOException if an IOException occurs when checking the user's
+     * credentials.
+     */
+    public ReadsUtilsClient(URL url, String user, String password, URL auth) throws UnauthorizedException, IOException {
+        caller = new JsonClientCaller(url, user, password, auth);
+    }
+
     /** Get the token this client uses to communicate with the server.
      * @return the authorization token.
      */
@@ -183,6 +197,25 @@ public class ReadsUtilsClient {
         args.add(params);
         TypeReference<List<UploadReadsOutput>> retType = new TypeReference<List<UploadReadsOutput>>() {};
         List<UploadReadsOutput> res = caller.jsonrpcCall("ReadsUtils.upload_reads", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
+    /**
+     * <p>Original spec-file function name: download_reads</p>
+     * <pre>
+     * Download read libraries. Reads compressed with gzip or bzip are
+     * automatically uncompressed.
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.readsutils.DownloadReadsParams DownloadReadsParams}
+     * @return   parameter "output" of type {@link us.kbase.readsutils.DownloadReadsOutput DownloadReadsOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public DownloadReadsOutput downloadReads(DownloadReadsParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<DownloadReadsOutput>> retType = new TypeReference<List<DownloadReadsOutput>>() {};
+        List<DownloadReadsOutput> res = caller.jsonrpcCall("ReadsUtils.download_reads", args, retType, true, true, jsonRpcContext, this.serviceVersion);
         return res.get(0);
     }
 
