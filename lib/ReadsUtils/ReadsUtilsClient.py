@@ -271,6 +271,19 @@ class ReadsUtils(object):
             'ReadsUtils.download_reads',
             [params], self._service_ver, context)
 
+    def export_reads(self, params, context=None):
+        """
+        KBase downloader function. Packages a set of reads into a zip file and
+        stores the zip in shock.
+        :param params: instance of type "ExportParams" (Standard KBase
+           downloader input.) -> structure: parameter "input_ref" of String
+        :returns: instance of type "ExportOutput" (Standard KBase downloader
+           output.) -> structure: parameter "shock_id" of String
+        """
+        return self._client.call_method(
+            'ReadsUtils.export_reads',
+            [params], self._service_ver, context)
+
     def status(self, context=None):
         return self._client.call_method('ReadsUtils.status',
                                         [], self._service_ver, context)

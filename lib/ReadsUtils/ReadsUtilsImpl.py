@@ -31,7 +31,7 @@ class ReadsUtils:
     #########################################
     VERSION = "0.1.1"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "adc1b73a66bd577af01a36dbf80c4ab0c7e3d864"
+    GIT_COMMIT_HASH = "43386a99be668244c08048afbe190fdbde3245f6"
     
     #BEGIN_CLASS_HEADER
 
@@ -1021,6 +1021,27 @@ class ReadsUtils:
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
             raise ValueError('Method download_reads return value ' +
+                             'output is not type dict as required.')
+        # return the results
+        return [output]
+
+    def export_reads(self, ctx, params):
+        """
+        KBase downloader function. Packages a set of reads into a zip file and
+        stores the zip in shock.
+        :param params: instance of type "ExportParams" (Standard KBase
+           downloader input.) -> structure: parameter "input_ref" of String
+        :returns: instance of type "ExportOutput" (Standard KBase downloader
+           output.) -> structure: parameter "shock_id" of String
+        """
+        # ctx is the context object
+        # return variables are: output
+        #BEGIN export_reads
+        #END export_reads
+
+        # At some point might do deeper type checking...
+        if not isinstance(output, dict):
+            raise ValueError('Method export_reads return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]

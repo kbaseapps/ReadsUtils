@@ -341,6 +341,10 @@ class Application(object):
                              name='ReadsUtils.download_reads',
                              types=[dict])
         self.method_authentication['ReadsUtils.download_reads'] = 'required'
+        self.rpc_service.add(impl_ReadsUtils.export_reads,
+                             name='ReadsUtils.export_reads',
+                             types=[dict])
+        self.method_authentication['ReadsUtils.export_reads'] = 'required'
         self.rpc_service.add(impl_ReadsUtils.status,
                              name='ReadsUtils.status',
                              types=[dict])
