@@ -83,7 +83,8 @@ class ReadsUtils:
             raise ValueError('Exactly one of a file or shock id containing ' +
                              'a forwards reads file must be specified')
         shock = True if fwdid else False
-        fwdid = fwdid if shock else fwdfile
+        fwdid = fwdid if shock else os.path.abspath(
+            os.path.expanduser(fwdfile))
         wsid = params.get('wsid')
         wsname = params.get('wsname')
         if not self.xor(wsid, wsname):
@@ -108,12 +109,13 @@ class ReadsUtils:
             raise ValueError('Specified both a local file and a shock node ' +
                              'for the reverse reads file')
         if shock and revfile:
-            raise ValueError('Cannot specify a reverse reads file in shock ' +
-                             'with a local forward reads file')
-        if not shock and revid:
             raise ValueError('Cannot specify a local reverse reads file ' +
                              'with a forward reads file in shock')
-        revid = revid if shock else fwdfile
+        if not shock and revid:
+            raise ValueError('Cannot specify a reverse reads file in shock ' +
+                             'with a local forward reads file')
+        if not shock and revfile:
+            revid = os.path.abspath(os.path.expanduser(revfile))
         interleaved = 1 if params.get('interleaved') else 0
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
@@ -194,7 +196,7 @@ class ReadsUtils:
             if not self.validateFASTQ(
                 {}, [{'file_path': f['file_path'], 'interleaved': interleaved}]
                     )[0][0]['validated']:
-                raise ValueError('invalid fasta file: ' + f['file_path'])
+                raise ValueError('Invalid fasta file ' + f['file_path'])
         self.log('validation complete, uploading files to shock')
         dfu = DataFileUtil(self.callback_url)
         files = dfu.file_to_shock_mass(params)
