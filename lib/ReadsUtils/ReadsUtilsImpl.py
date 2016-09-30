@@ -78,8 +78,12 @@ class ReadsUtils:
 
     def _proc_upload_reads_params(self, params):
         fwdid = params.get('fwd_id')
-        if not fwdid:
-            raise ValueError('No reads file provided')
+        fwdfile = params.get('fwd_file')
+        if not self.xor(fwdid, fwdfile):
+            raise ValueError('Exactly one of a file or shock id containing ' +
+                             'a forwards reads file must be specified')
+        shock = True if fwdid else False
+        fwdid = fwdid if shock else fwdfile
         wsid = params.get('wsid')
         wsname = params.get('wsname')
         if not self.xor(wsid, wsname):
@@ -99,6 +103,17 @@ class ReadsUtils:
             raise ValueError(
                 'Exactly one of the object ID or name must be provided')
         revid = params.get('rev_id')
+        revfile = params.get('rev_file')
+        if revid and revfile:
+            raise ValueError('Specified both a local file and a shock node ' +
+                             'for the reverse reads file')
+        if shock and revfile:
+            raise ValueError('Cannot specify a reverse reads file in shock ' +
+                             'with a local forward reads file')
+        if not shock and revid:
+            raise ValueError('Cannot specify a local reverse reads file ' +
+                             'with a forward reads file in shock')
+        revid = revid if shock else fwdfile
         interleaved = 1 if params.get('interleaved') else 0
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
@@ -133,7 +148,60 @@ class ReadsUtils:
                       'read_orientation_outward': 1 if params.get(
                             'read_orientation_outward') else 0
                       })
-        return o, wsid, name, objid, kbtype, single_end, fwdid, revid
+        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
+
+    def process_shock_ids_for_upload(self, fwdid, revid, interleaved):
+        fileinput = [{'shock_id': fwdid,
+                      'file_path': self.scratch + '/fwd/',
+                      'unpack': 'uncompress'}]
+        if revid:
+            fileinput.append({'shock_id': revid,
+                              'file_path': self.scratch + '/rev/',
+                              'unpack': 'uncompress'})
+        dfu = DataFileUtil(self.callback_url)
+        self.log('downloading reads files from Shock')
+        files = dfu.shock_to_file_mass(fileinput)
+        self.log('download complete, validating files')
+        for f, i in zip(files, fileinput):
+            if not self.validateFASTQ(
+                    {}, [{'file_path': f['file_path'],
+                          'interleaved': interleaved
+                          }])[0][0]['validated']:
+                raise ValueError('Invalid fasta file {} from Shock node {}'
+                                 .format(f['file_path'], i['shock_id']))
+        self.log('file validation complete')
+        self.log('coercing forward reads node to my control, muhahahaha!')
+        fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
+        self.log('coercing complete, my evil schemes know no bounds')
+        if revid:
+            self.log('coercing reverse reads node to my control, muhahahaha!')
+            revr = dfu.own_shock_node({'shock_id': revid, 'make_handle': 1})
+            self.log('coercing complete. Will I stop at nothing?')
+            return (fwdr['handle'], revr['handle'],
+                    files[0]['size'], files[1]['size'])
+        return fwdr['handle'], None, files[0]['size'], None
+
+    def process_files_for_upload(self, fwdfile, revfile, interleaved):
+        params = [{'file_path': fwdfile,
+                   'make_handle': 1,
+                   'pack': 'gzip'}]
+        if revfile:
+            params.append({'file_path': revfile,
+                           'make_handle': 1,
+                           'pack': 'gzip'})
+        self.log('validating files')
+        for f in params:
+            if not self.validateFASTQ(
+                {}, [{'file_path': f['file_path'], 'interleaved': interleaved}]
+                    )[0][0]['validated']:
+                raise ValueError('invalid fasta file: ' + f['file_path'])
+        self.log('validation complete, uploading files to shock')
+        dfu = DataFileUtil(self.callback_url)
+        files = dfu.file_to_shock_mass(params)
+        if revfile:
+            return (files[0]['handle'], files[1]['handle'],
+                    files[0]['size'], files[1]['size'])
+        return files[0]['handle'], None, files[0]['size'], None
 
     def process_ternary(self, params, boolname):
         if params.get(boolname) is None:
@@ -743,51 +811,30 @@ class ReadsUtils:
         # return variables are: returnVal
         #BEGIN upload_reads
         self.log('Starting upload reads, parsing args')
-        o, wsid, name, objid, kbtype, single_end, fwdid, revid = (
+        o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
             self._proc_upload_reads_params(params))
         interleaved = 1 if (not single_end and not revid) else 0
-        fileinput = [{'shock_id': fwdid,
-                      'file_path': self.scratch + '/fwd/',
-                      'unpack': 'uncompress'}]
-        if revid:
-            fileinput.append({'shock_id': revid,
-                              'file_path': self.scratch + '/rev/',
-                              'unpack': 'uncompress'})
-        dfu = DataFileUtil(self.callback_url)
-        self.log('downloading reads files from Shock')
-        files = dfu.shock_to_file_mass(fileinput)
-        self.log('download complete, validating files')
-        for f, i in zip(files, fileinput):
-            if not self.validateFASTQ(
-                    ctx, [{'file_path': f['file_path'],
-                           'interleaved': interleaved
-                           }])[0][0]['validated']:
-                raise ValueError('Invalid fasta file {} from Shock node {}'
-                                 .format(f['file_path'], i['shock_id']))
-        self.log('file validation complete')
-        self.log('coercing forward reads node to my control, muhahahaha!')
-        fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
-        self.log('coercing complete, my evil schemes know no bounds')
-        revr = None
-        if revid:
-            self.log('coercing reverse reads node to my control, muhahahaha!')
-            revr = dfu.own_shock_node({'shock_id': revid, 'make_handle': 1})
-            self.log('coercing complete. Will I stop at nothing?')
+        if shock:
+            fhandle, rhandle, fsize, rsize = self.process_shock_ids_for_upload(
+                fwdid, revid, interleaved)
+        else:
+            fhandle, rhandle, fsize, rsize = self.process_files_for_upload(
+                fwdid, revid, interleaved)
 
         # TODO calculate gc content, read size, read_count (find a program)
-        fwdfile = {'file': fwdr['handle'],
+        fwdfile = {'file': fhandle,
                    'encoding': 'ascii',
-                   'size': files[0]['size'],
+                   'size': fsize,
                    'type': 'fq'
                    }
         if single_end:
             o['lib'] = fwdfile
         else:
             o['lib1'] = fwdfile
-            if revr:
-                o['lib2'] = {'file': revr['handle'],
+            if rhandle:
+                o['lib2'] = {'file': rhandle,
                              'encoding': 'ascii',
-                             'size': files[1]['size'],
+                             'size': rsize,
                              'type': 'fq'
                              }
 
@@ -799,6 +846,7 @@ class ReadsUtils:
         else:
             so['objid'] = objid
         self.log('saving workspace object')
+        dfu = DataFileUtil(self.callback_url)
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
         self.log('save complete')
 

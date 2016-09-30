@@ -21,8 +21,6 @@ from DataFileUtil.baseclient import ServerError as DFUError
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
 
-# TODO update the uploader tests to use the infrastructure for the downloader tests @IgnorePep8
-
 
 class TestError(Exception):
     pass
@@ -790,7 +788,8 @@ class ReadsUtilsTest(unittest.TestCase):
              'wsname': self.ws_info[1],
              'name': 'foo'
              },
-            'No reads file provided')
+            'Exactly one of a file or shock id containing a forwards reads ' +
+            'file must be specified')
 
     def test_upload_fail_no_seqtech(self):
         self.fail_upload_reads(
