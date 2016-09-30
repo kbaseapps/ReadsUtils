@@ -59,21 +59,23 @@ class ReadsUtils(object):
         """
         Loads a set of reads to KBase data stores.
         :param params: instance of type "UploadReadsParams" (Input to the
-           upload_reads function. Note that if a reverse read file is
-           specified, it must be a local file if the forward reads file is a
-           local file, or a shock id if not. Required parameters: fwd_id -
-           the id of the shock node containing the reads data file: either
-           single end reads, forward/left reads, or interleaved reads. - OR -
-           fwd_file - a local path to the reads data file: either single end
-           reads, forward/left reads, or interleaved reads. sequencing_tech -
-           the sequencing technology used to produce the reads. One of: wsid
-           - the id of the workspace where the reads will be saved
-           (preferred). wsname - the name of the workspace where the reads
-           will be saved. One of: objid - the id of the workspace object to
-           save over name - the name to which the workspace object will be
-           saved Optional parameters: rev_id - the shock node id containing
-           the reverse/right reads for paired end, non-interleaved reads. -
-           OR - rev_file - a local path to the reads data file containing the
+           upload_reads function. If local files are specified for upload,
+           they must be uncompressed. Files will be gzipped prior to upload.
+           Note that if a reverse read file is specified, it must be a local
+           file if the forward reads file is a local file, or a shock id if
+           not. Required parameters: fwd_id - the id of the shock node
+           containing the reads data file: either single end reads,
+           forward/left reads, or interleaved reads. - OR - fwd_file - a
+           local path to the reads data file: either single end reads,
+           forward/left reads, or interleaved reads. sequencing_tech - the
+           sequencing technology used to produce the reads. One of: wsid -
+           the id of the workspace where the reads will be saved (preferred).
+           wsname - the name of the workspace where the reads will be saved.
+           One of: objid - the id of the workspace object to save over name -
+           the name to which the workspace object will be saved Optional
+           parameters: rev_id - the shock node id containing the
+           reverse/right reads for paired end, non-interleaved reads. - OR -
+           rev_file - a local path to the reads data file containing the
            reverse/right reads for paired end, non-interleaved reads.
            single_genome - whether the reads are from a single genome or a
            metagenome. Default is single genome. strain - information about

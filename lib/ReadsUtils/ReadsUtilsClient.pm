@@ -824,6 +824,9 @@ validated has a value which is a ReadsUtils.boolean
 
 Input to the upload_reads function.
 
+If local files are specified for upload, they must be uncompressed.
+Files will be gzipped prior to upload.
+
 Note that if a reverse read file is specified, it must be a local file
 if the forward reads file is a local file, or a shock id if not.
 
