@@ -220,11 +220,13 @@ $params is a ReadsUtils.UploadReadsParams
 $return is a ReadsUtils.UploadReadsOutput
 UploadReadsParams is a reference to a hash where the following keys are defined:
 	fwd_id has a value which is a string
+	fwd_file has a value which is a string
 	wsid has a value which is an int
 	wsname has a value which is a string
 	objid has a value which is an int
 	name has a value which is a string
 	rev_id has a value which is a string
+	rev_file has a value which is a string
 	sequencing_tech has a value which is a string
 	single_genome has a value which is a ReadsUtils.boolean
 	strain has a value which is a KBaseCommon.StrainInfo
@@ -268,11 +270,13 @@ $params is a ReadsUtils.UploadReadsParams
 $return is a ReadsUtils.UploadReadsOutput
 UploadReadsParams is a reference to a hash where the following keys are defined:
 	fwd_id has a value which is a string
+	fwd_file has a value which is a string
 	wsid has a value which is an int
 	wsname has a value which is a string
 	objid has a value which is an int
 	name has a value which is a string
 	rev_id has a value which is a string
+	rev_file has a value which is a string
 	sequencing_tech has a value which is a string
 	single_genome has a value which is a ReadsUtils.boolean
 	strain has a value which is a KBaseCommon.StrainInfo
@@ -820,9 +824,18 @@ validated has a value which is a ReadsUtils.boolean
 
 Input to the upload_reads function.
 
+If local files are specified for upload, they must be uncompressed.
+Files will be gzipped prior to upload.
+
+Note that if a reverse read file is specified, it must be a local file
+if the forward reads file is a local file, or a shock id if not.
+
 Required parameters:
 fwd_id - the id of the shock node containing the reads data file:
     either single end reads, forward/left reads, or interleaved reads.
+- OR -
+fwd_file - a local path to the reads data file: either single end
+    reads, forward/left reads, or interleaved reads.
 sequencing_tech - the sequencing technology used to produce the
     reads.
 
@@ -838,6 +851,9 @@ name - the name to which the workspace object will be saved
 Optional parameters:
 rev_id - the shock node id containing the reverse/right reads for
     paired end, non-interleaved reads.
+- OR -
+rev_file - a local path to the reads data file containing the
+    reverse/right reads for paired end, non-interleaved reads.
 single_genome - whether the reads are from a single genome or a
     metagenome. Default is single genome.
 strain - information about the organism strain
@@ -862,11 +878,13 @@ insert_size_std_dev - the standard deviation of the size of the
 <pre>
 a reference to a hash where the following keys are defined:
 fwd_id has a value which is a string
+fwd_file has a value which is a string
 wsid has a value which is an int
 wsname has a value which is a string
 objid has a value which is an int
 name has a value which is a string
 rev_id has a value which is a string
+rev_file has a value which is a string
 sequencing_tech has a value which is a string
 single_genome has a value which is a ReadsUtils.boolean
 strain has a value which is a KBaseCommon.StrainInfo
@@ -884,11 +902,13 @@ insert_size_std_dev has a value which is a float
 
 a reference to a hash where the following keys are defined:
 fwd_id has a value which is a string
+fwd_file has a value which is a string
 wsid has a value which is an int
 wsname has a value which is a string
 objid has a value which is an int
 name has a value which is a string
 rev_id has a value which is a string
+rev_file has a value which is a string
 sequencing_tech has a value which is a string
 single_genome has a value which is a ReadsUtils.boolean
 strain has a value which is a KBaseCommon.StrainInfo

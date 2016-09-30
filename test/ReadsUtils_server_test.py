@@ -21,8 +21,6 @@ from DataFileUtil.baseclient import ServerError as DFUError
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
 
-# TODO update the uploader tests to use the infrastructure for the downloader tests @IgnorePep8
-
 
 class TestError(Exception):
     pass
@@ -60,8 +58,9 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.hs = HandleService(url=cls.cfg['handle-service-url'],
                                token=cls.token)
         cls.impl = ReadsUtils(cls.cfg)
-        shutil.rmtree(cls.cfg['scratch'])
-        os.mkdir(cls.cfg['scratch'])
+        cls.scratch = cls.cfg['scratch']
+        shutil.rmtree(cls.scratch)
+        os.mkdir(cls.scratch)
         suffix = int(time.time() * 1000)
         wsName = "test_ReadsUtils_" + str(suffix)
         cls.ws_info = cls.ws.create_workspace({'workspace': wsName})
@@ -628,6 +627,29 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_lib(d['lib'], 2847, 'Sample1.fastq.gz', ret['id'],
                        '48efea6945c4382c68f5eac485c177c2')
 
+    def test_forward_reads_file(self):
+        tf = 'Sample1.fastq'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_file': target,
+                       'sequencing_tech': 'seqtech',
+                       'wsname': self.ws_info[1],
+                       'name': 'filereads1'})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/filereads1']})['data'][0]
+        node = obj['data']['lib']['file']['id']
+        self.delete_shock_node(node)
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'seqtech')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', node, None)
+
     def test_single_end_reads_metagenome_objid(self):
         # single genome = 0, test saving to an object id
         ret = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
@@ -735,6 +757,46 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_lib(d['lib2'], 2847, 'Sample1.fastq.gz',
                        ret2['id'], '48efea6945c4382c68f5eac485c177c2')
 
+    def test_paired_end_reads_file(self):
+        # paired end non interlaced, minimum inputs
+        fwdtf = 'Sample5_noninterleaved.1.fastq'
+        revtf = 'Sample1.fastq'
+        fwdtarget = os.path.join(self.scratch, fwdtf)
+        revtarget = os.path.join(self.scratch, revtf)
+        shutil.copy('data/' + fwdtf, fwdtarget)
+        shutil.copy('data/' + revtf, revtarget)
+
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_file': fwdtarget,
+                       'rev_file': revtarget,
+                       'sequencing_tech': 'seqtech-pr1',
+                       'wsname': self.ws_info[1],
+                       'name': 'pairedreadsfile1',
+                       'interleaved': 1})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/pairedreadsfile1']}
+        )['data'][0]
+        node1 = obj['data']['lib1']['file']['id']
+        node2 = obj['data']['lib2']['file']['id']
+        self.delete_shock_node(node1)
+        self.delete_shock_node(node2)
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.PairedEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.assertEqual(d['interleaved'], 0)
+        self.assertEqual(d['read_orientation_outward'], 0)
+        self.assertEqual(d['insert_size_mean'], None)
+        self.assertEqual(d['insert_size_std_dev'], None)
+        self.check_lib(d['lib1'], 604, 'Sample5_noninterleaved.1.fastq.gz',
+                       node1, None)
+        self.check_lib(d['lib2'], 2835, 'Sample1.fastq.gz',
+                       node2, None)
+
     def test_interleaved_with_pe_inputs(self):
         # paired end interlaced with the 4 pe input set
         ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
@@ -775,7 +837,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(libfile['file_name'], filename)
         self.assertEqual(libfile['id'], id_)
         self.assertEqual(libfile['hid'].startswith('KBH_'), True)
-        self.assertEqual(libfile['remote_md5'], md5)
+        if md5:  # in some cases md5 is not repeatable (e.g. gzip)
+            self.assertEqual(libfile['remote_md5'], md5)
         self.assertEqual(libfile['type'], 'shock')
         self.assertEqual(libfile['url'], self.shockURL)
 
@@ -790,7 +853,53 @@ class ReadsUtilsTest(unittest.TestCase):
              'wsname': self.ws_info[1],
              'name': 'foo'
              },
-            'No reads file provided')
+            'Exactly one of a file or shock id containing a forwards reads ' +
+            'file must be specified')
+
+    def test_upload_fail_fwd_reads_spec_twice(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_id': 'whee',
+             'fwd_file': 'whoo'
+             },
+            'Exactly one of a file or shock id containing a forwards reads ' +
+            'file must be specified')
+
+    def test_upload_fail_rev_reads_spec_twice(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_id': 'whoa',
+             'rev_id': 'whee',
+             'rev_file': 'whoo'
+             },
+            'Specified both a local file and a shock node for the reverse ' +
+            'reads file')
+
+    def test_upload_fail_spec_fwd_id_rev_file(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_id': 'whee',
+             'rev_file': 'whoo'
+             },
+            'Cannot specify a local reverse reads file with a forward reads ' +
+            'file in shock')
+
+    def test_upload_fail_spec_fwd_file_rev_id(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_file': 'whee',
+             'rev_id': 'whoo'
+             },
+            'Cannot specify a reverse reads file in shock with a local ' +
+            'forward reads file')
 
     def test_upload_fail_no_seqtech(self):
         self.fail_upload_reads(
@@ -838,6 +947,15 @@ class ReadsUtilsTest(unittest.TestCase):
             'Error downloading file from shock node foo: Node not found',
             exception=DFUError)
         self.delete_shock_node(ret['id'])
+
+    def test_upload_fail_non_existant_file(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file': 'foo',
+             'name': 'bar'
+             },
+            'No such file: /kb/module/test/foo')
 
     def test_upload_fail_non_string_wsname(self):
         self.fail_upload_reads(
@@ -897,8 +1015,8 @@ class ReadsUtilsTest(unittest.TestCase):
              },
             'insert_size_std_dev must be > 0')
 
-    def test_upload_fail_bad_fasta(self):
-        print('*** upload_fail_bad_fasta ***')
+    def test_upload_fail_bad_fastq(self):
+        print('*** upload_fail_bad_fastq ***')
         ret = self.upload_file_to_shock('data/Sample1_invalid.fastq')
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
@@ -909,6 +1027,17 @@ class ReadsUtilsTest(unittest.TestCase):
             'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid' +
             '.fastq from Shock node ' + ret['id'])
         self.delete_shock_node(ret['id'])
+
+    def test_upload_fail_bad_fastq_file(self):
+        print('*** upload_fail_bad_fastq_file***')
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file': 'data/Sample1_invalid.fastq',
+             'name': 'bar'
+             },
+            'Invalid fasta file /kb/module/test/data/Sample1_invalid' +
+            '.fastq')
 
     def test_upload_fail_interleaved_for_single(self):
         ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
