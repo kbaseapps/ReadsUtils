@@ -824,6 +824,9 @@ validated has a value which is a ReadsUtils.boolean
 
 Input to the upload_reads function.
 
+Note that if a reverse read file is specified, it must be a local file
+if the forward reads file is a local file, or a shock id if not.
+
 Required parameters:
 fwd_id - the id of the shock node containing the reads data file:
     either single end reads, forward/left reads, or interleaved reads.
