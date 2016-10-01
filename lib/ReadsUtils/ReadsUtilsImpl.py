@@ -8,6 +8,8 @@ import shutil
 from pprint import pformat
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from DataFileUtil.baseclient import ServerError as DFUError
+from Workspace.WorkspaceClient import Workspace
+from Workspace.baseclient import ServerError as WorkspaceError
 from numbers import Number
 import six
 import uuid
@@ -631,6 +633,7 @@ class ReadsUtils:
         #BEGIN_CONSTRUCTOR
         self.scratch = config['scratch']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
+        self.ws_url = config['workspace-url']
         #END_CONSTRUCTOR
         pass
     
@@ -993,7 +996,7 @@ class ReadsUtils:
             Add user specified failure conditions - e.g. fail if is/is not
                 metagenome, outwards reads, etc.
         '''
-
+        del ctx
         self.log('Running download_reads with params:\n' +
                  pformat(params))
 
@@ -1037,6 +1040,41 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: output
         #BEGIN export_reads
+
+        inref = params.get('input_ref')
+        if not inref:
+            raise ValueError('No input_ref specified')
+
+        # get WS metadata to get obj_name
+        ws = Workspace(self.ws_url)
+        try:
+            info = ws.get_object_info_new({'objects': [{'ref': inref}]})[0]
+        except WorkspaceError as wse:
+            self.log('Logging workspace exception')
+            self.log(str(wse))
+            raise
+
+        files = self.download_reads(
+            ctx, {self.PARAM_IN_LIB: [inref]})[0]['files'][inref]['files']
+
+        # create the output directory and move the file there
+        tempdir = tempfile.mkdtemp(dir=self.scratch)
+        export_dir = os.path.join(tempdir, info[1])
+        os.makedirs(export_dir)
+        fwd = files['fwd']
+        shutil.move(fwd, os.path.join(export_dir, os.path.basename(fwd)))
+        rev = files.get('rev')
+        if rev:
+            shutil.move(rev, os.path.join(export_dir, os.path.basename(rev)))
+
+        # package and load to shock
+        dfu = DataFileUtil(self.callback_url)
+        ret = dfu.package_for_download({'file_path': export_dir,
+                                        'ws_refs': [inref]
+                                        })
+
+        output = {'shock_id': ret['shock_id']}
+
         #END export_reads
 
         # At some point might do deeper type checking...

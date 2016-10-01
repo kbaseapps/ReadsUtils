@@ -10,12 +10,15 @@ from pprint import pprint
 import subprocess
 import hashlib
 import inspect
+import tempfile
+from zipfile import ZipFile
 try:
     from ConfigParser import ConfigParser  # py2 @UnusedImport
 except:
     from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
 
 from Workspace.WorkspaceClient import Workspace
+from Workspace.baseclient import ServerError as WorkspaceError
 from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport @IgnorePep8
 from DataFileUtil.baseclient import ServerError as DFUError
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
@@ -1971,3 +1974,79 @@ class ReadsUtilsTest(unittest.TestCase):
                 self.assertEqual(expectedmd5, self.md5(file_))
                 del retmap[wsref]['files'][dirc]
             self.assertDictEqual(testspecs[f]['obj'], retmap[wsref])
+
+    # exporter tests #####################################################
+
+    def test_fail_export_no_ref(self):
+        self.export_error(None, 'No input_ref specified')
+
+    def test_fail_export_bad_ref(self):
+        self.export_error(
+            '1000000000/10000000000/10000000',
+            'Object 10000000000 cannot be accessed: No workspace with id ' +
+            '1000000000 exists', exception=WorkspaceError)
+
+    def test_export_fr(self):
+        self.export_success('frbasic', self.MD5_SM_F, self.MD5_SM_R)
+
+    def test_export_sing(self):
+        self.export_success('single_end', self.MD5_SM_F)
+
+    def export_error(self, ref, error, exception=ValueError):
+        test_name = inspect.stack()[1][3]
+        print('\n*** starting expected export fail test: ' + test_name + ' **')
+        print('ref: ' + str(ref))
+        with self.assertRaises(exception) as context:
+            self.impl.export_reads(self.ctx, {'input_ref': ref})
+        self.assertEqual(error, str(context.exception.message))
+
+    def export_success(self, stagedname, fwdmd5, revmd5=None):
+        test_name = inspect.stack()[1][3]
+        print('\n*** starting expected export pass test: ' + test_name + ' **')
+        shocknode = self.impl.export_reads(
+            self.ctx,
+            {'input_ref': self.staged[stagedname]['ref']})[0]['shock_id']
+        node_url = self.shockURL + '/node/' + shocknode
+        headers = {'Authorization': 'OAuth ' + self.token}
+        r = requests.get(node_url, headers=headers, allow_redirects=True)
+        fn = r.json()['data']['file']['name']
+        self.assertEquals(fn, stagedname + '.zip')
+        tempdir = tempfile.mkdtemp(dir=self.scratch)
+        file_path = os.path.join(tempdir, test_name) + '.zip'
+        print('zip file path: ' + file_path)
+        print('downloading shocknode ' + shocknode)
+        with open(file_path, 'wb') as fhandle:
+            r = requests.get(node_url + '?download_raw', stream=True,
+                             headers=headers, allow_redirects=True)
+            for chunk in r.iter_content(1024):
+                if not chunk:
+                    break
+                fhandle.write(chunk)
+        with ZipFile(file_path) as z:
+            z.extractall(tempdir)
+        print('zip file contents: ' + str(os.listdir(tempdir)))
+        foundf = False
+        foundr = False
+        for f in os.listdir(tempdir):
+            if '.fwd.' in f or '.inter.' in f or '.single.' in f:
+                foundf = True
+                print('fwd reads: ' + f)
+                with open(os.path.join(tempdir, f)) as fl:
+                    md5 = hashlib.md5(fl.read()).hexdigest()
+                    self.assertEqual(md5, fwdmd5)
+            if '.rev.' in f:
+                foundr = True
+                print('rev reads: ' + f)
+                with open(os.path.join(tempdir, f)) as fl:
+                    md5 = hashlib.md5(fl.read()).hexdigest()
+                    self.assertEqual(md5, revmd5)
+        if not foundf:
+            raise TestError('no fwd reads file')
+        if revmd5 and not foundr:
+            raise TestError('no rev reads file when expected')
+        if foundr and not revmd5:
+            raise TestError('found rev reads when unexpected')
+        count = 4 if revmd5 else 3
+        if len(os.listdir(tempdir)) != count:
+            raise TestError('found extra files in testdir {}: {}'.format(
+                os.path.abspath(tempdir), str(os.listdir(tempdir))))
