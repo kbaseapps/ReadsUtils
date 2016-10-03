@@ -223,4 +223,20 @@ module ReadsUtils {
      */
     funcdef download_reads(DownloadReadsParams params)
         returns(DownloadReadsOutput output) authentication required;
+
+    /*  Standard KBase downloader input. */
+    typedef structure {
+        string input_ref;
+    } ExportParams;
+
+	/*  Standard KBase downloader output. */
+    typedef structure {
+        string shock_id;
+    } ExportOutput;
+
+    /* KBase downloader function. Packages a set of reads into a zip file and
+        stores the zip in shock.
+     */
+    funcdef export_reads(ExportParams params)
+                returns (ExportOutput output) authentication required;
 };
