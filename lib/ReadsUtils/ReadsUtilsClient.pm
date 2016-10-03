@@ -220,11 +220,13 @@ $params is a ReadsUtils.UploadReadsParams
 $return is a ReadsUtils.UploadReadsOutput
 UploadReadsParams is a reference to a hash where the following keys are defined:
 	fwd_id has a value which is a string
+	fwd_file has a value which is a string
 	wsid has a value which is an int
 	wsname has a value which is a string
 	objid has a value which is an int
 	name has a value which is a string
 	rev_id has a value which is a string
+	rev_file has a value which is a string
 	sequencing_tech has a value which is a string
 	single_genome has a value which is a ReadsUtils.boolean
 	strain has a value which is a KBaseCommon.StrainInfo
@@ -268,11 +270,13 @@ $params is a ReadsUtils.UploadReadsParams
 $return is a ReadsUtils.UploadReadsOutput
 UploadReadsParams is a reference to a hash where the following keys are defined:
 	fwd_id has a value which is a string
+	fwd_file has a value which is a string
 	wsid has a value which is an int
 	wsname has a value which is a string
 	objid has a value which is an int
 	name has a value which is a string
 	rev_id has a value which is a string
+	rev_file has a value which is a string
 	sequencing_tech has a value which is a string
 	single_genome has a value which is a ReadsUtils.boolean
 	strain has a value which is a KBaseCommon.StrainInfo
@@ -363,6 +367,276 @@ Loads a set of reads to KBase data stores.
     }
 }
  
+
+
+=head2 download_reads
+
+  $output = $obj->download_reads($params)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$params is a ReadsUtils.DownloadReadsParams
+$output is a ReadsUtils.DownloadReadsOutput
+DownloadReadsParams is a reference to a hash where the following keys are defined:
+	read_libraries has a value which is a reference to a list where each element is a ReadsUtils.read_lib
+	interleaved has a value which is a ReadsUtils.tern
+read_lib is a string
+tern is a string
+DownloadReadsOutput is a reference to a hash where the following keys are defined:
+	files has a value which is a reference to a hash where the key is a ReadsUtils.read_lib and the value is a ReadsUtils.DownloadedReadLibrary
+DownloadedReadLibrary is a reference to a hash where the following keys are defined:
+	files has a value which is a ReadsUtils.ReadsFiles
+	ref has a value which is a string
+	single_genome has a value which is a ReadsUtils.tern
+	read_orientation_outward has a value which is a ReadsUtils.tern
+	sequencing_tech has a value which is a string
+	strain has a value which is a KBaseCommon.StrainInfo
+	source has a value which is a KBaseCommon.SourceInfo
+	insert_size_mean has a value which is a float
+	insert_size_std_dev has a value which is a float
+	read_count has a value which is an int
+	read_size has a value which is an int
+	gc_content has a value which is a float
+ReadsFiles is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	fwd_name has a value which is a string
+	rev has a value which is a string
+	rev_name has a value which is a string
+	otype has a value which is a string
+	type has a value which is a string
+StrainInfo is a reference to a hash where the following keys are defined:
+	genetic_code has a value which is an int
+	genus has a value which is a string
+	species has a value which is a string
+	strain has a value which is a string
+	organelle has a value which is a string
+	source has a value which is a KBaseCommon.SourceInfo
+	ncbi_taxid has a value which is an int
+	location has a value which is a KBaseCommon.Location
+SourceInfo is a reference to a hash where the following keys are defined:
+	source has a value which is a string
+	source_id has a value which is a KBaseCommon.source_id
+	project_id has a value which is a KBaseCommon.project_id
+source_id is a string
+project_id is a string
+Location is a reference to a hash where the following keys are defined:
+	lat has a value which is a float
+	lon has a value which is a float
+	elevation has a value which is a float
+	date has a value which is a string
+	description has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$params is a ReadsUtils.DownloadReadsParams
+$output is a ReadsUtils.DownloadReadsOutput
+DownloadReadsParams is a reference to a hash where the following keys are defined:
+	read_libraries has a value which is a reference to a list where each element is a ReadsUtils.read_lib
+	interleaved has a value which is a ReadsUtils.tern
+read_lib is a string
+tern is a string
+DownloadReadsOutput is a reference to a hash where the following keys are defined:
+	files has a value which is a reference to a hash where the key is a ReadsUtils.read_lib and the value is a ReadsUtils.DownloadedReadLibrary
+DownloadedReadLibrary is a reference to a hash where the following keys are defined:
+	files has a value which is a ReadsUtils.ReadsFiles
+	ref has a value which is a string
+	single_genome has a value which is a ReadsUtils.tern
+	read_orientation_outward has a value which is a ReadsUtils.tern
+	sequencing_tech has a value which is a string
+	strain has a value which is a KBaseCommon.StrainInfo
+	source has a value which is a KBaseCommon.SourceInfo
+	insert_size_mean has a value which is a float
+	insert_size_std_dev has a value which is a float
+	read_count has a value which is an int
+	read_size has a value which is an int
+	gc_content has a value which is a float
+ReadsFiles is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	fwd_name has a value which is a string
+	rev has a value which is a string
+	rev_name has a value which is a string
+	otype has a value which is a string
+	type has a value which is a string
+StrainInfo is a reference to a hash where the following keys are defined:
+	genetic_code has a value which is an int
+	genus has a value which is a string
+	species has a value which is a string
+	strain has a value which is a string
+	organelle has a value which is a string
+	source has a value which is a KBaseCommon.SourceInfo
+	ncbi_taxid has a value which is an int
+	location has a value which is a KBaseCommon.Location
+SourceInfo is a reference to a hash where the following keys are defined:
+	source has a value which is a string
+	source_id has a value which is a KBaseCommon.source_id
+	project_id has a value which is a KBaseCommon.project_id
+source_id is a string
+project_id is a string
+Location is a reference to a hash where the following keys are defined:
+	lat has a value which is a float
+	lon has a value which is a float
+	elevation has a value which is a float
+	date has a value which is a string
+	description has a value which is a string
+
+
+=end text
+
+=item Description
+
+Download read libraries. Reads compressed with gzip or bzip are
+automatically uncompressed.
+
+=back
+
+=cut
+
+ sub download_reads
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function download_reads (received $n, expecting 1)");
+    }
+    {
+	my($params) = @args;
+
+	my @_bad_arguments;
+        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to download_reads:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'download_reads');
+	}
+    }
+
+    my $url = $self->{url};
+    my $result = $self->{client}->call($url, $self->{headers}, {
+	    method => "ReadsUtils.download_reads",
+	    params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'download_reads',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method download_reads",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'download_reads',
+				       );
+    }
+}
+ 
+
+
+=head2 export_reads
+
+  $output = $obj->export_reads($params)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$params is a ReadsUtils.ExportParams
+$output is a ReadsUtils.ExportOutput
+ExportParams is a reference to a hash where the following keys are defined:
+	input_ref has a value which is a string
+ExportOutput is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$params is a ReadsUtils.ExportParams
+$output is a ReadsUtils.ExportOutput
+ExportParams is a reference to a hash where the following keys are defined:
+	input_ref has a value which is a string
+ExportOutput is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+
+
+=end text
+
+=item Description
+
+KBase downloader function. Packages a set of reads into a zip file and
+stores the zip in shock.
+
+=back
+
+=cut
+
+ sub export_reads
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function export_reads (received $n, expecting 1)");
+    }
+    {
+	my($params) = @args;
+
+	my @_bad_arguments;
+        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to export_reads:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'export_reads');
+	}
+    }
+
+    my $url = $self->{url};
+    my $result = $self->{client}->call($url, $self->{headers}, {
+	    method => "ReadsUtils.export_reads",
+	    params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'export_reads',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method export_reads",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'export_reads',
+				       );
+    }
+}
+ 
   
 sub status
 {
@@ -406,16 +680,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'upload_reads',
+                method_name => 'export_reads',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method upload_reads",
+            error => "Error invoking method export_reads",
             status_line => $self->{client}->status_line,
-            method_name => 'upload_reads',
+            method_name => 'export_reads',
         );
     }
 }
@@ -477,6 +751,72 @@ an int
 =begin text
 
 an int
+
+=end text
+
+=back
+
+
+
+=head2 tern
+
+=over 4
+
+
+
+=item Description
+
+A ternary. Allowed values are 'false', 'true', or null. Any other
+value is invalid.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 read_lib
+
+=over 4
+
+
+
+=item Description
+
+A reference to a read library stored in the workspace service, whether
+of the KBaseAssembly or KBaseFile type. Usage of absolute references
+(e.g. 256/3/6) is strongly encouraged to avoid race conditions,
+although any valid reference is allowed.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
 
 =end text
 
@@ -575,9 +915,18 @@ validated has a value which is a ReadsUtils.boolean
 
 Input to the upload_reads function.
 
+If local files are specified for upload, they must be uncompressed.
+Files will be gzipped prior to upload.
+
+Note that if a reverse read file is specified, it must be a local file
+if the forward reads file is a local file, or a shock id if not.
+
 Required parameters:
 fwd_id - the id of the shock node containing the reads data file:
     either single end reads, forward/left reads, or interleaved reads.
+- OR -
+fwd_file - a local path to the reads data file: either single end
+    reads, forward/left reads, or interleaved reads.
 sequencing_tech - the sequencing technology used to produce the
     reads.
 
@@ -593,6 +942,9 @@ name - the name to which the workspace object will be saved
 Optional parameters:
 rev_id - the shock node id containing the reverse/right reads for
     paired end, non-interleaved reads.
+- OR -
+rev_file - a local path to the reads data file containing the
+    reverse/right reads for paired end, non-interleaved reads.
 single_genome - whether the reads are from a single genome or a
     metagenome. Default is single genome.
 strain - information about the organism strain
@@ -617,11 +969,13 @@ insert_size_std_dev - the standard deviation of the size of the
 <pre>
 a reference to a hash where the following keys are defined:
 fwd_id has a value which is a string
+fwd_file has a value which is a string
 wsid has a value which is an int
 wsname has a value which is a string
 objid has a value which is an int
 name has a value which is a string
 rev_id has a value which is a string
+rev_file has a value which is a string
 sequencing_tech has a value which is a string
 single_genome has a value which is a ReadsUtils.boolean
 strain has a value which is a KBaseCommon.StrainInfo
@@ -639,11 +993,13 @@ insert_size_std_dev has a value which is a float
 
 a reference to a hash where the following keys are defined:
 fwd_id has a value which is a string
+fwd_file has a value which is a string
 wsid has a value which is an int
 wsname has a value which is a string
 objid has a value which is an int
 name has a value which is a string
 rev_id has a value which is a string
+rev_file has a value which is a string
 sequencing_tech has a value which is a string
 single_genome has a value which is a ReadsUtils.boolean
 strain has a value which is a KBaseCommon.StrainInfo
@@ -691,6 +1047,295 @@ obj_ref has a value which is a string
 
 a reference to a hash where the following keys are defined:
 obj_ref has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 DownloadReadsParams
+
+=over 4
+
+
+
+=item Description
+
+Input parameters for downloading reads objects.
+list<read_lib> read_libraries - the the workspace read library objects
+    to download.
+tern interleaved - if true, provide the files in interleaved format if
+    they are not already. If false, provide forward and reverse reads
+    files. If null or missing, leave files as is.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+read_libraries has a value which is a reference to a list where each element is a ReadsUtils.read_lib
+interleaved has a value which is a ReadsUtils.tern
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+read_libraries has a value which is a reference to a list where each element is a ReadsUtils.read_lib
+interleaved has a value which is a ReadsUtils.tern
+
+
+=end text
+
+=back
+
+
+
+=head2 ReadsFiles
+
+=over 4
+
+
+
+=item Description
+
+Reads file information.
+Note that the file names provided are those *prior to* interleaving
+or deinterleaving the reads.
+
+string fwd - the path to the forward / left reads.
+string fwd_name - the name of the forwards reads file from Shock, or
+    if not available, from the Shock handle.
+string rev - the path to the reverse / right reads. null if the reads
+    are single end or interleaved.
+string rev_name - the name of the reverse reads file from Shock, or
+    if not available, from the Shock handle. null if the reads
+    are single end or interleaved.
+string otype - the original type of the reads. One of 'single',
+    'paired', or 'interleaved'.
+string type - one of 'single', 'paired', or 'interleaved'.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+fwd has a value which is a string
+fwd_name has a value which is a string
+rev has a value which is a string
+rev_name has a value which is a string
+otype has a value which is a string
+type has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+fwd has a value which is a string
+fwd_name has a value which is a string
+rev has a value which is a string
+rev_name has a value which is a string
+otype has a value which is a string
+type has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 DownloadedReadLibrary
+
+=over 4
+
+
+
+=item Description
+
+Information about each set of reads.
+ReadsFiles files - the reads files.
+string ref - the absolute workspace reference of the reads file, e.g
+    workspace_id/object_id/version.
+tern single_genome - whether the reads are from a single genome or a
+    metagenome. null if unknown.
+tern read_orientation_outward - whether the read orientation is outward
+    from the set of primers. null if unknown or single ended reads.
+string sequencing_tech - the sequencing technology used to produce the
+    reads. null if unknown.
+KBaseCommon.StrainInfo strain - information about the organism strain
+    that was sequenced. null if unavailable.
+KBaseCommon.SourceInfo source - information about the organism source.
+    null if unavailable.
+float insert_size_mean - the mean size of the genetic fragments. null
+    if unavailable or single end reads.
+float insert_size_std_dev - the standard deviation of the size of the
+    genetic fragments. null if unavailable or single end reads.
+int read_count - the number of reads in the this dataset. null if
+    unavailable.
+int read_size - the total size of the reads, in bases. null if
+    unavailable.
+float gc_content - the GC content of the reads. null if
+    unavailable.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+files has a value which is a ReadsUtils.ReadsFiles
+ref has a value which is a string
+single_genome has a value which is a ReadsUtils.tern
+read_orientation_outward has a value which is a ReadsUtils.tern
+sequencing_tech has a value which is a string
+strain has a value which is a KBaseCommon.StrainInfo
+source has a value which is a KBaseCommon.SourceInfo
+insert_size_mean has a value which is a float
+insert_size_std_dev has a value which is a float
+read_count has a value which is an int
+read_size has a value which is an int
+gc_content has a value which is a float
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+files has a value which is a ReadsUtils.ReadsFiles
+ref has a value which is a string
+single_genome has a value which is a ReadsUtils.tern
+read_orientation_outward has a value which is a ReadsUtils.tern
+sequencing_tech has a value which is a string
+strain has a value which is a KBaseCommon.StrainInfo
+source has a value which is a KBaseCommon.SourceInfo
+insert_size_mean has a value which is a float
+insert_size_std_dev has a value which is a float
+read_count has a value which is an int
+read_size has a value which is an int
+gc_content has a value which is a float
+
+
+=end text
+
+=back
+
+
+
+=head2 DownloadReadsOutput
+
+=over 4
+
+
+
+=item Description
+
+The output of the download method.
+mapping<read_lib, DownloadedReadLibrary> files - a mapping
+    of the read library workspace references to information
+    about the converted data for each library.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+files has a value which is a reference to a hash where the key is a ReadsUtils.read_lib and the value is a ReadsUtils.DownloadedReadLibrary
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+files has a value which is a reference to a hash where the key is a ReadsUtils.read_lib and the value is a ReadsUtils.DownloadedReadLibrary
+
+
+=end text
+
+=back
+
+
+
+=head2 ExportParams
+
+=over 4
+
+
+
+=item Description
+
+Standard KBase downloader input.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+input_ref has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+input_ref has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 ExportOutput
+
+=over 4
+
+
+
+=item Description
+
+Standard KBase downloader output.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
 
 
 =end text

@@ -17,9 +17,16 @@ import us.kbase.kbasecommon.StrainInfo;
  * <p>Original spec-file type: UploadReadsParams</p>
  * <pre>
  * Input to the upload_reads function.
+ * If local files are specified for upload, they must be uncompressed.
+ * Files will be gzipped prior to upload.
+ * Note that if a reverse read file is specified, it must be a local file
+ * if the forward reads file is a local file, or a shock id if not.
  * Required parameters:
  * fwd_id - the id of the shock node containing the reads data file:
  *     either single end reads, forward/left reads, or interleaved reads.
+ * - OR -
+ * fwd_file - a local path to the reads data file: either single end
+ *     reads, forward/left reads, or interleaved reads.
  * sequencing_tech - the sequencing technology used to produce the
  *     reads.
  * One of:
@@ -33,6 +40,9 @@ import us.kbase.kbasecommon.StrainInfo;
  * Optional parameters:
  * rev_id - the shock node id containing the reverse/right reads for
  *     paired end, non-interleaved reads.
+ * - OR -
+ * rev_file - a local path to the reads data file containing the
+ *     reverse/right reads for paired end, non-interleaved reads.
  * single_genome - whether the reads are from a single genome or a
  *     metagenome. Default is single genome.
  * strain - information about the organism strain
@@ -55,11 +65,13 @@ import us.kbase.kbasecommon.StrainInfo;
 @Generated("com.googlecode.jsonschema2pojo")
 @JsonPropertyOrder({
     "fwd_id",
+    "fwd_file",
     "wsid",
     "wsname",
     "objid",
     "name",
     "rev_id",
+    "rev_file",
     "sequencing_tech",
     "single_genome",
     "strain",
@@ -73,6 +85,8 @@ public class UploadReadsParams {
 
     @JsonProperty("fwd_id")
     private String fwdId;
+    @JsonProperty("fwd_file")
+    private String fwdFile;
     @JsonProperty("wsid")
     private Long wsid;
     @JsonProperty("wsname")
@@ -83,6 +97,8 @@ public class UploadReadsParams {
     private String name;
     @JsonProperty("rev_id")
     private String revId;
+    @JsonProperty("rev_file")
+    private String revFile;
     @JsonProperty("sequencing_tech")
     private String sequencingTech;
     @JsonProperty("single_genome")
@@ -142,6 +158,21 @@ public class UploadReadsParams {
 
     public UploadReadsParams withFwdId(String fwdId) {
         this.fwdId = fwdId;
+        return this;
+    }
+
+    @JsonProperty("fwd_file")
+    public String getFwdFile() {
+        return fwdFile;
+    }
+
+    @JsonProperty("fwd_file")
+    public void setFwdFile(String fwdFile) {
+        this.fwdFile = fwdFile;
+    }
+
+    public UploadReadsParams withFwdFile(String fwdFile) {
+        this.fwdFile = fwdFile;
         return this;
     }
 
@@ -217,6 +248,21 @@ public class UploadReadsParams {
 
     public UploadReadsParams withRevId(String revId) {
         this.revId = revId;
+        return this;
+    }
+
+    @JsonProperty("rev_file")
+    public String getRevFile() {
+        return revFile;
+    }
+
+    @JsonProperty("rev_file")
+    public void setRevFile(String revFile) {
+        this.revFile = revFile;
+    }
+
+    public UploadReadsParams withRevFile(String revFile) {
+        this.revFile = revFile;
         return this;
     }
 
@@ -410,7 +456,7 @@ public class UploadReadsParams {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", sequencingTech=")+ sequencingTech)+", singleGenome=")+ singleGenome)+", strain=")+ strain)+", source=")+ source)+", interleaved=")+ interleaved)+", readOrientationOutward=")+ readOrientationOutward)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", fwdFile=")+ fwdFile)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", revFile=")+ revFile)+", sequencingTech=")+ sequencingTech)+", singleGenome=")+ singleGenome)+", strain=")+ strain)+", source=")+ source)+", interleaved=")+ interleaved)+", readOrientationOutward=")+ readOrientationOutward)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

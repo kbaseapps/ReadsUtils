@@ -3,7 +3,7 @@
     "short_description" : "Upload a set of reads to KBase.",
     "long_description" : "Uploads single end or paired end reads to the KBase data stores.",
     "tags" : {
-        "categories" : ["upload", "FASTA", "FASTQ"],
+        "categories" : ["upload", "FASTQ"],
         "input": {
             "file_types": ["shock"],
             "kb_types": []

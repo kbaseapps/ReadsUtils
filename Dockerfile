@@ -25,7 +25,8 @@ RUN cd /opt \
     && pip install 'requests[security]' --upgrade \
     && pip install six \
     && pip install ipython \
-    && apt-get install nano
+    && apt-get install nano \
+    && apt-get install tree
 
 ENV PATH $PATH:/opt/fastQValidator/bin/
 
