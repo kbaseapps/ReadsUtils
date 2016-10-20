@@ -125,7 +125,7 @@ class ReadsUtils:
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
         if revid:
-            interleaved = 0
+            interleaved = 1
         seqtype = params.get('sequencing_tech')
         if not seqtype:
             raise ValueError('The sequencing technology must be provided')
@@ -388,12 +388,16 @@ class ReadsUtils:
                 l = f.readline()
             if not l:  # EOF
                 if i != 0:
+                    error_message_bindings = [shock_node, shock_filename]
+                    error_message = 'Reading FASTQ record failed - non-blank lines are not a multiple of four. '
+                    if source_obj_ref is not None and source_obj_name is not None:
+                        error_message += 'Workspace reads object {} ({}), '
+                        error_message_bindings.insert(0,source_obj_ref)
+                        error_message_bindings.insert(0,source_obj_name)
+                    error_message += 'Shock node {}, Shock filename {}'
                     raise ValueError(
-                        ('Reading FASTQ record failed - non-blank lines ' +
-                         'are not a multiple of four. Workspace reads ' +
-                         'object {} ({}), Shock node {}, Shock filename {}')
-                        .format(source_obj_name, source_obj_ref,
-                                shock_node, shock_filename))
+                        (error_message)
+                        .format(*error_message_bindings))
                 else:
                     return ''
             r = r + l
@@ -416,15 +420,17 @@ class ReadsUtils:
                         source_obj_ref, source_obj_name,
                         rev_shock_filename, rev_shock_node, r)
                     if (not frec and rrec) or (frec and not rrec):
+                        error_message_bindings = [fwd_shock_node, fwd_shock_filename,
+                                    rev_shock_node, rev_shock_filename]
+                        error_message = 'Interleave failed - reads files do not have an equal number of records. '
+                        if source_obj_name is not None and source_obj_ref is not None:
+                            error_message += 'Workspace reads object {} ({}), '
+                            error_message_bindings.insert(0,source_obj_ref)
+                            error_message_bindings.insert(0,source_obj_name)
+                        error_message += 'forward Shock node {}, filename {}, reverse Shock node {}, filename {}'
                         raise ValueError(
-                            ('Interleave failed - reads files do not have ' +
-                             'an equal number of records. Workspace reads ' +
-                             'object {} ({}), ' +
-                             'forward Shock node {}, filename {}, ' +
-                             'reverse Shock node {}, filename {}')
-                            .format(source_obj_name, source_obj_ref,
-                                    fwd_shock_node, fwd_shock_filename,
-                                    rev_shock_node, rev_shock_filename))
+                            (error_message
+                            .format(*error_message_bindings)))
                     if not frec:  # not rrec is implied at this point
                         break
                     t.write(frec)
@@ -823,6 +829,44 @@ class ReadsUtils:
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
             self._proc_upload_reads_params(params))
+
+        needs_to_be_interleaved = 0
+        if not single_end and revid is not None:
+            needs_to_be_interleaved = 1
+
+        if revid and shock:
+            #Download files so we can interleave them later.
+            fileinput = [{'shock_id': fwdid,
+                          'file_path': self.scratch + '/fwd/',
+                          'unpack': 'uncompress'}]
+            fileinput.append({'shock_id': revid,
+                              'file_path': self.scratch + '/rev/',
+                              'unpack': 'uncompress'})
+            dfu = DataFileUtil(self.callback_url)
+            self.log('downloading reads files from Shock')
+            files = dfu.shock_to_file_mass(fileinput)
+            shock = False
+            fwdpath = files[0]["file_path"]
+            revpath = files[1]["file_path"]
+            fwdname = files[0]["node_file_name"]
+            revname = files[1]["node_file_name"]
+        elif revid:
+            fwdpath = fwdid
+            revpath = revid
+            fwdname = None
+            revname = None
+            
+        if revid:
+            #now interleave the files
+            intpath = os.path.join(self.scratch, self.get_file_prefix() +
+                                    '.inter.fastq')
+            self.interleave(
+                    None, None, fwdname, fwdid,
+                    revname, revid, fwdpath, revpath, intpath)
+            fwdid = intpath
+            revid = None
+            shock = False      
+        
         interleaved = 1 if (not single_end and not revid) else 0
         if shock:
             fhandle, rhandle, fsize, rsize = self.process_shock_ids_for_upload(
