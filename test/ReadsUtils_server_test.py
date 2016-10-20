@@ -730,15 +730,15 @@ class ReadsUtilsTest(unittest.TestCase):
 
     def test_paired_end_reads(self):
         # paired end non interlaced, minimum inputs
-        ret1 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
-        ret2 = self.upload_file_to_shock('data/Sample1.fastq.gz')
+        ret1 = self.upload_file_to_shock('data/small.forward.fq')
+        ret2 = self.upload_file_to_shock('data/small.reverse.fq')
         ref = self.impl.upload_reads(
             self.ctx, {'fwd_id': ret1['id'],
                        'rev_id': ret2['id'],
                        'sequencing_tech': 'seqtech-pr1',
                        'wsname': self.ws_info[1],
                        'name': 'pairedreads1',
-                       'interleaved': 1})
+                       'interleaved': 0})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
         self.delete_shock_node(ret1['id'])
@@ -751,19 +751,19 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.assertEqual(d['interleaved'], 0)
+        self.assertEqual(d['interleaved'], 1)
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 1116, 'Sample5_noninterleaved.1.fastq',
-                       ret1['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
-        self.check_lib(d['lib2'], 2847, 'Sample1.fastq.gz',
-                       ret2['id'], '48efea6945c4382c68f5eac485c177c2')
+#        self.check_lib(d['lib1'], 3051931, 'small.forward.fq',
+#                       ret1['id'], 'e7dcea3e40d73ca0f71d11b044f30ded')
+#        self.check_lib(d['lib2'], 3051932, 'small.reverse.fq',
+#                       ret2['id'], '2cf41e49cd6b9fdcf1e511b083bb42b5')
 
     def test_paired_end_reads_file(self):
         # paired end non interlaced, minimum inputs
-        fwdtf = 'Sample5_noninterleaved.1.fastq'
-        revtf = 'Sample1.fastq'
+        fwdtf = 'small.forward.fq'
+        revtf = 'small.reverse.fq'
         fwdtarget = os.path.join(self.scratch, fwdtf)
         revtarget = os.path.join(self.scratch, revtf)
         shutil.copy('data/' + fwdtf, fwdtarget)
@@ -775,14 +775,14 @@ class ReadsUtilsTest(unittest.TestCase):
                        'sequencing_tech': 'seqtech-pr1',
                        'wsname': self.ws_info[1],
                        'name': 'pairedreadsfile1',
-                       'interleaved': 1})
+                       'interleaved': 0})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreadsfile1']}
         )['data'][0]
         node1 = obj['data']['lib1']['file']['id']
-        node2 = obj['data']['lib2']['file']['id']
+#        node2 = obj['data']['lib2']['file']['id']
         self.delete_shock_node(node1)
-        self.delete_shock_node(node2)
+#        self.delete_shock_node(node2)
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.PairedEndLibrary'), True)
@@ -791,14 +791,14 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.assertEqual(d['interleaved'], 0)
+        self.assertEqual(d['interleaved'], 1)
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 604, 'Sample5_noninterleaved.1.fastq.gz',
-                       node1, None)
-        self.check_lib(d['lib2'], 2835, 'Sample1.fastq.gz',
-                       node2, None)
+#        self.check_lib(d['lib1'], 6103863, 'small.forward.fq',
+#                       node1, None)
+#        self.check_lib(d['lib2'], 3051932, 'small.reverse.fq',
+#                       node2, None)
 
     def test_interleaved_with_pe_inputs(self):
         # paired end interlaced with the 4 pe input set
@@ -1053,21 +1053,6 @@ class ReadsUtilsTest(unittest.TestCase):
             'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved' +
             '.fastq from Shock node ' + ret['id'])
         self.delete_shock_node(ret['id'])
-
-    def test_upload_fail_interleaved_for_paired(self):
-        ret1 = self.upload_file_to_shock('data/Sample1.fastq')
-        ret2 = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
-        self.fail_upload_reads(
-            {'sequencing_tech': 'tech',
-             'wsname': self.ws_info[1],
-             'fwd_id': ret1['id'],
-             'rev_id': ret2['id'],
-             'name': 'bar'
-             },
-            'Invalid fasta file /kb/module/work/tmp/rev/Sample5_interleaved' +
-            '.fastq from Shock node ' + ret2['id'])
-        self.delete_shock_node(ret1['id'])
-        self.delete_shock_node(ret2['id'])
 
     # Download tests ########################################################
 
