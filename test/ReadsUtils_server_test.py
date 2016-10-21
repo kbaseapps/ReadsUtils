@@ -78,7 +78,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def tearDownClass(cls):
         if hasattr(cls, 'ws_info'):
             cls.ws.delete_workspace({'id': cls.ws_info[0]})
-            print('Deleted test workspace')
+            print('Deleted test workspace: '.format(cls.ws_info[0]))
         if hasattr(cls, 'nodes_to_delete'):
             for node in cls.nodes_to_delete:
                 cls.delete_shock_node(node)
@@ -747,6 +747,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
+        file_name = d["lib1"]["file"]["file_name"]
+        shock_id = d["lib1"]["file"]["id"]
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
@@ -755,10 +757,9 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-#        self.check_lib(d['lib1'], 3051931, 'small.forward.fq',
-#                       ret1['id'], 'e7dcea3e40d73ca0f71d11b044f30ded')
-#        self.check_lib(d['lib2'], 3051932, 'small.reverse.fq',
-#                       ret2['id'], '2cf41e49cd6b9fdcf1e511b083bb42b5')
+        self.check_lib(d['lib1'],2491520, file_name,
+                       shock_id, None)
+
 
     def test_paired_end_reads_file(self):
         # paired end non interlaced, minimum inputs
@@ -780,13 +781,13 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/pairedreadsfile1']}
         )['data'][0]
         node1 = obj['data']['lib1']['file']['id']
-#        node2 = obj['data']['lib2']['file']['id']
         self.delete_shock_node(node1)
-#        self.delete_shock_node(node2)
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
+        file_name = d["lib1"]["file"]["file_name"]
+        shock_id = d["lib1"]["file"]["id"]
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
@@ -795,10 +796,9 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-#        self.check_lib(d['lib1'], 6103863, 'small.forward.fq',
-#                       node1, None)
-#        self.check_lib(d['lib2'], 3051932, 'small.reverse.fq',
-#                       node2, None)
+        self.check_lib(d['lib1'],2491520, file_name,
+                       shock_id, None)
+
 
     def test_interleaved_with_pe_inputs(self):
         # paired end interlaced with the 4 pe input set
