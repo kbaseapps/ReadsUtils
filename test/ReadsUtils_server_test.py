@@ -627,8 +627,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2847, 'Sample1.fastq.gz', ret['id'],
-                       '48efea6945c4382c68f5eac485c177c2')
+        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
 
     def test_forward_reads_file(self):
         tf = 'Sample1.fastq'
@@ -641,17 +640,17 @@ class ReadsUtilsTest(unittest.TestCase):
                        'name': 'filereads1'})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/filereads1']})['data'][0]
-        node = obj['data']['lib']['file']['id']
-        self.delete_shock_node(node)
+    
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
+        node = d["lib"]["file"]["id"]
         self.assertEqual(d['sequencing_tech'], 'seqtech')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', node, None)
+        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
 
     def test_single_end_reads_metagenome_objid(self):
         # single genome = 0, test saving to an object id
@@ -671,8 +670,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 0)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 1116, 'Sample5_noninterleaved.1.fastq',
-                       ret['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
+        self.check_lib(d['lib'], 604, 'Sample5_noninterleaved.1.fastq.gz', '140a61c7f183dd6a2b93ef195bb3ec63')
 
         # test saving with IDs only
         ref = self.impl.upload_reads(
@@ -691,8 +689,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 1116, 'Sample5_noninterleaved.1.fastq',
-                       ret['id'], '140a61c7f183dd6a2b93ef195bb3ec63')
+        self.check_lib(d['lib'], 604, 'Sample5_noninterleaved.1.fastq.gz', '140a61c7f183dd6a2b93ef195bb3ec63')
 
     def test_single_end_reads_genome_source_strain(self):
         # specify single genome, source, strain, use workspace id
@@ -725,8 +722,23 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual(d['source'], source)
         self.assertEqual(d['strain'], strain)
-        self.check_lib(d['lib'], 9648, 'Sample1.fastq', ret['id'],
-                       'f118ee769a5e1b40ec44629994dfc3cd')
+        self.assertEqual(d['read_count'],50)
+        self.assertEqual(d['read_size'],2500)
+        self.assertEqual(d['number_of_duplicates'],0)
+        self.assertEqual(d['base_percentages']['A'],31.8286)
+        self.assertEqual(d['base_percentages']['T'],22.8571)
+        self.assertEqual(d['base_percentages']['N'],1.3143)
+        self.assertEqual(d['base_percentages']['C'],19.6571)        
+        self.assertEqual(d['base_percentages']['G'],24.3429)        
+        self.assertEqual(d["phred_type"], "64")
+        self.assertEqual(d["qual_mean"], 37.5537)
+        self.assertEqual(d["qual_min"], 2)
+        self.assertEqual(d["qual_max"], 40)
+        self.assertEqual(d["qual_stdev"], 5.2006)
+        self.assertEqual(d["gc_content"], 0.44)
+        self.assertEqual(d["read_length_mean"], 50)
+        self.assertEqual(d["read_length_stdev"], 0)
+        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
 
     def test_paired_end_reads(self):
         # paired end non interlaced, minimum inputs
@@ -748,7 +760,6 @@ class ReadsUtilsTest(unittest.TestCase):
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
-        shock_id = d["lib1"]["file"]["id"]
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
@@ -757,8 +768,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'],2491520, file_name,
-                       shock_id, None)
+        self.check_lib(d['lib1'],2491520, file_name, '1c58d7d59c656db39cedcb431376514b')
 
 
     def test_paired_end_reads_file(self):
@@ -780,14 +790,12 @@ class ReadsUtilsTest(unittest.TestCase):
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreadsfile1']}
         )['data'][0]
-        node1 = obj['data']['lib1']['file']['id']
-        self.delete_shock_node(node1)
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
+        node1 = d["lib1"]["file"]["id"]
         file_name = d["lib1"]["file"]["file_name"]
-        shock_id = d["lib1"]["file"]["id"]
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
@@ -796,8 +804,25 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'],2491520, file_name,
-                       shock_id, None)
+        self.assertNotIn('lib2',d)
+        self.assertEqual(d['read_count'],25000)
+        self.assertEqual(d['read_size'],2500000)
+        self.assertEqual(d['number_of_duplicates'],792)
+        self.assertEqual(d['base_percentages']['A'],16.0727)
+        self.assertEqual(d['base_percentages']['T'],16)
+        self.assertEqual(d['base_percentages']['N'],0)
+        self.assertEqual(d['base_percentages']['C'],33.9538)        
+        self.assertEqual(d['base_percentages']['G'],33.9735)        
+        self.assertEqual(d["phred_type"], "33")
+        self.assertEqual(d["qual_mean"], 43.0493)
+        self.assertEqual(d["qual_min"], 10)
+        self.assertEqual(d["qual_max"], 51)
+        self.assertEqual(d["qual_stdev"], 10.545)
+        self.assertEqual(d["gc_content"], 0.679273)
+        self.assertEqual(d["read_length_mean"], 100)
+        self.assertEqual(d["read_length_stdev"], 0)
+        
+        self.check_lib(d['lib1'],2491520, file_name, '1c58d7d59c656db39cedcb431376514b')
 
 
     def test_interleaved_with_pe_inputs(self):
@@ -829,21 +854,48 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 1)
         self.assertEqual(d['insert_size_mean'], 72.1)
         self.assertEqual(d['insert_size_std_dev'], 84.0)
-        self.check_lib(d['lib1'], 2232, 'Sample5_interleaved.fastq',
-                       ret['id'], '971a5f445055c85fd45b17459e15e3ed')
+        self.assertNotIn('lib2',d)
+        self.assertEqual(d['read_count'],4)
+        self.assertEqual(d['read_size'],1004)
+        self.assertEqual(d['number_of_duplicates'],0)
+        self.assertEqual(d['base_percentages']['A'],20)
+        self.assertEqual(d['base_percentages']['T'],20)
+        self.assertEqual(d['base_percentages']['N'],0)
+        self.assertEqual(d['base_percentages']['C'],26.4286)        
+        self.assertEqual(d['base_percentages']['G'],33.5714)        
+        self.assertEqual(d["phred_type"], "33")
+        self.assertEqual(d["qual_mean"], 25.1143)
+        self.assertEqual(d["qual_min"], 10)
+        self.assertEqual(d["qual_max"], 40)
+        self.assertEqual(d["qual_stdev"], 10.081)
+        self.assertEqual(d["gc_content"], 0.6)
+        self.assertEqual(d["read_length_mean"], 251)
+        self.assertEqual(d["read_length_stdev"], 0)
+        self.check_lib(d['lib1'], 1050, 'Sample5_interleaved.fastq.gz', '971a5f445055c85fd45b17459e15e3ed')
 
-    def check_lib(self, lib, size, filename, id_, md5):
+    def check_lib(self, lib, size, filename, md5):
+        shock_id = lib["file"]["id"]
+        print "LIB: {}".format(str(lib))
+        print "Shock ID: {}".format(str(shock_id))
+        fileinput = [{'shock_id': shock_id,
+                      'file_path': self.scratch + '/temp',
+                      'unpack': 'uncompress'}]
+        print "File Input: {}".format(str(fileinput))
+        files = self.dfu.shock_to_file_mass(fileinput)
+        path = files[0]["file_path"]
+        file_md5 = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        libfile = lib['file']
+        self.assertEqual(file_md5, md5)
         self.assertEqual(lib['size'], size)
         self.assertEqual(lib['type'], 'fq')
         self.assertEqual(lib['encoding'], 'ascii')
-        libfile = lib['file']
+
         self.assertEqual(libfile['file_name'], filename)
-        self.assertEqual(libfile['id'], id_)
         self.assertEqual(libfile['hid'].startswith('KBH_'), True)
-        if md5:  # in some cases md5 is not repeatable (e.g. gzip)
-            self.assertEqual(libfile['remote_md5'], md5)
+
         self.assertEqual(libfile['type'], 'shock')
         self.assertEqual(libfile['url'], self.shockURL)
+
 
     def fail_upload_reads(self, params, error, exception=ValueError):
         with self.assertRaises(exception) as context:
@@ -1027,8 +1079,9 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': ret['id'],
              'name': 'bar'
              },
-            'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid' +
-            '.fastq from Shock node ' + ret['id'])
+            'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid.fastq')
+#            'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid' +
+#            '.fastq from Shock node ' + ret['id'])
         self.delete_shock_node(ret['id'])
 
     def test_upload_fail_bad_fastq_file(self):
@@ -1050,8 +1103,9 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': ret['id'],
              'name': 'bar'
              },
-            'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved' +
-            '.fastq from Shock node ' + ret['id'])
+            'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved.fastq')
+#            'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved' +
+#            '.fastq from Shock node ' + ret['id'])
         self.delete_shock_node(ret['id'])
 
     # Download tests ########################################################

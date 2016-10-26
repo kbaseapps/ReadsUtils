@@ -8,6 +8,7 @@ import shutil
 from pprint import pformat
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from DataFileUtil.baseclient import ServerError as DFUError
+from kb_ea_utils.kb_ea_utilsClient import kb_ea_utils
 from Workspace.WorkspaceClient import Workspace
 from Workspace.baseclient import ServerError as WorkspaceError
 from numbers import Number
@@ -154,36 +155,6 @@ class ReadsUtils:
                       })
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
 
-    def process_shock_ids_for_upload(self, fwdid, revid, interleaved):
-        fileinput = [{'shock_id': fwdid,
-                      'file_path': self.scratch + '/fwd/',
-                      'unpack': 'uncompress'}]
-        if revid:
-            fileinput.append({'shock_id': revid,
-                              'file_path': self.scratch + '/rev/',
-                              'unpack': 'uncompress'})
-        dfu = DataFileUtil(self.callback_url)
-        self.log('downloading reads files from Shock')
-        files = dfu.shock_to_file_mass(fileinput)
-        self.log('download complete, validating files')
-        for f, i in zip(files, fileinput):
-            if not self.validateFASTQ(
-                    {}, [{'file_path': f['file_path'],
-                          'interleaved': interleaved
-                          }])[0][0]['validated']:
-                raise ValueError('Invalid fasta file {} from Shock node {}'
-                                 .format(f['file_path'], i['shock_id']))
-        self.log('file validation complete')
-        self.log('coercing forward reads node to my control, muhahahaha!')
-        fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
-        self.log('coercing complete, my evil schemes know no bounds')
-        if revid:
-            self.log('coercing reverse reads node to my control, muhahahaha!')
-            revr = dfu.own_shock_node({'shock_id': revid, 'make_handle': 1})
-            self.log('coercing complete. Will I stop at nothing?')
-            return (fwdr['handle'], revr['handle'],
-                    files[0]['size'], files[1]['size'])
-        return fwdr['handle'], None, files[0]['size'], None
 
     def process_files_for_upload(self, fwdfile, revfile, interleaved):
         params = [{'file_path': fwdfile,
@@ -395,9 +366,7 @@ class ReadsUtils:
                         error_message_bindings.insert(0,source_obj_ref)
                         error_message_bindings.insert(0,source_obj_name)
                     error_message += 'Shock node {}, Shock filename {}'
-                    raise ValueError(
-                        (error_message)
-                        .format(*error_message_bindings))
+                    raise ValueError(error_message.format(*error_message_bindings))
                 else:
                     return ''
             r = r + l
@@ -428,9 +397,7 @@ class ReadsUtils:
                             error_message_bindings.insert(0,source_obj_ref)
                             error_message_bindings.insert(0,source_obj_name)
                         error_message += 'forward Shock node {}, filename {}, reverse Shock node {}, filename {}'
-                        raise ValueError(
-                            (error_message
-                            .format(*error_message_bindings)))
+                        raise ValueError(error_message.format(*error_message_bindings))
                     if not frec:  # not rrec is implied at this point
                         break
                     t.write(frec)
@@ -631,6 +598,56 @@ class ReadsUtils:
         # return the results
         return [out]
 
+    def calculate_fq_stats(self, reads_object, file_path):
+        eautils = kb_ea_utils(self.callback_url)
+        ea_report = eautils.get_ea_utils_stats({'read_library_path':file_path})
+#        print "Full Report : {}".format(ea_report)
+
+        report_lines = ea_report.splitlines()
+        report_to_object_mappings = {'reads':'read_count',
+                                     'total bases':'read_size',
+                                     'len mean':'read_length_mean',
+                                     'len stdev':'read_length_stdev',
+                                     'phred':'phred_type',
+                                     'dups':'number_of_duplicates',
+                                     'qual min':'qual_min',
+                                     'qual max':'qual_max',
+                                     'qual mean':'qual_mean',
+                                     'qual stdev':'qual_stdev'}
+        integer_fields = ['read_count','read_size','number_of_duplicates']
+        for line in report_lines:
+            line_elements = line.split()
+            line_value = line_elements.pop()
+            line_key = " ".join(line_elements)
+            line_key = line_key.strip()
+            if line_key in report_to_object_mappings:
+                #print ":{}: = :{}:".format(report_to_object_mappings[line_key],line_value)
+                value_to_use = None
+                if line_key == 'phred':
+                    value_to_use = line_value.strip()
+                elif report_to_object_mappings[line_key] in integer_fields :
+                    value_to_use = int(line_value.strip())
+                else:
+                    value_to_use = float(line_value.strip())
+                reads_object[report_to_object_mappings[line_key]] = value_to_use
+            elif line_key.startswith("%") and not line_key.startswith("%dup"):
+                if 'base_percentages' not in reads_object:
+                    reads_object['base_percentages'] = dict()
+                dict_key = line_key.strip("%")
+                reads_object['base_percentages'][dict_key] = float(line_value.strip())
+        #populate the GC content (as a value betwwen 0 and 1)
+        if 'base_percentages' in reads_object:
+            gc_content = 0
+            if "G" in reads_object['base_percentages']:
+                gc_content += reads_object['base_percentages']["G"]
+            if "C" in reads_object['base_percentages']: 
+                gc_content += reads_object['base_percentages']["C"]
+            reads_object["gc_content"] = gc_content/100
+        #set number of dups if no dups, but read_count
+        if 'read_count' in reads_object and 'number_of_duplicates' not in reads_object:
+            reads_object["number_of_duplicates"] = 0 
+        return reads_object
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -829,53 +846,54 @@ class ReadsUtils:
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
             self._proc_upload_reads_params(params))
-
-        needs_to_be_interleaved = 0
-        if not single_end and revid is not None:
-            needs_to_be_interleaved = 1
-
-        if revid and shock:
-            #Download files so we can interleave them later.
+        #IF from shock fwdid and revid are shock nodes, if not shock they are file paths
+        dfu = DataFileUtil(self.callback_url)
+        fwdpath = None
+        revpath = None
+        if shock:
+            #Grab files from Shock
             fileinput = [{'shock_id': fwdid,
                           'file_path': self.scratch + '/fwd/',
                           'unpack': 'uncompress'}]
-            fileinput.append({'shock_id': revid,
-                              'file_path': self.scratch + '/rev/',
-                              'unpack': 'uncompress'})
-            dfu = DataFileUtil(self.callback_url)
-            self.log('downloading reads files from Shock')
+            if revid:
+                fileinput.append({'shock_id': revid,
+                                  'file_path': self.scratch + '/rev/',
+                                  'unpack': 'uncompress'})                            
+            self.log('downloading reads file(s) from Shock')
             files = dfu.shock_to_file_mass(fileinput)
             shock = False
             fwdpath = files[0]["file_path"]
-            revpath = files[1]["file_path"]
             fwdname = files[0]["node_file_name"]
-            revname = files[1]["node_file_name"]
-        elif revid:
+            if revid:
+                revpath = files[1]["file_path"]
+                revname = files[1]["node_file_name"]            
+        else:
+            #Not shock
             fwdpath = fwdid
             revpath = revid
             fwdname = None
             revname = None
-            
+
+        shock = False
         if revid:
             #now interleave the files
             intpath = os.path.join(self.scratch, self.get_file_prefix() +
                                     '.inter.fastq')
             self.interleave(
-                    None, None, fwdname, fwdid,
-                    revname, revid, fwdpath, revpath, intpath)
-            fwdid = intpath
+                    None, None, fwdname, fwdpath,
+                    revname, revpath, fwdpath, revpath, intpath)
+            fwdpath = intpath
             revid = None
-            shock = False      
-        
-        interleaved = 1 if (not single_end and not revid) else 0
-        if shock:
-            fhandle, rhandle, fsize, rsize = self.process_shock_ids_for_upload(
-                fwdid, revid, interleaved)
-        else:
-            fhandle, rhandle, fsize, rsize = self.process_files_for_upload(
-                fwdid, revid, interleaved)
+            revpath = None
+  
+        interleaved = 1 if (not single_end and not revid) else 0        
 
-        # TODO calculate gc content, read size, read_count (find a program)
+        fhandle, rhandle, fsize, rsize = self.process_files_for_upload(
+                fwdpath, revpath, interleaved)
+
+        #calculate the stats for fwd_file.
+        o = self.calculate_fq_stats(o, fwdpath)
+
         fwdfile = {'file': fhandle,
                    'encoding': 'ascii',
                    'size': fsize,
@@ -900,7 +918,7 @@ class ReadsUtils:
         else:
             so['objid'] = objid
         self.log('saving workspace object')
-        dfu = DataFileUtil(self.callback_url)
+
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
         self.log('save complete')
 
@@ -1127,6 +1145,7 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
+
 
     def status(self, ctx):
         #BEGIN_STATUS
