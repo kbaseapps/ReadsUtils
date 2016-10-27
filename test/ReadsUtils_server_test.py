@@ -19,7 +19,7 @@ except:
 
 from Workspace.WorkspaceClient import Workspace
 from Workspace.baseclient import ServerError as WorkspaceError
-from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport @IgnorePep8
+from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
 from DataFileUtil.baseclient import ServerError as DFUError
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext

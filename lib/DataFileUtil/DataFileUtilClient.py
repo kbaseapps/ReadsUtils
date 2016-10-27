@@ -26,7 +26,7 @@ class DataFileUtil(object):
             trust_all_ssl_certificates=False,
             auth_svc='https://kbase.us/services/authorization/Sessions/Login',
             service_ver='release',
-            async_job_check_time_ms=100, async_job_check_time_scale_percent=150, 
+            async_job_check_time_ms=100, async_job_check_time_scale_percent=150,
             async_job_check_max_time_ms=300000):
         if url is None:
             url = 'https://kbase.us/services/njs_wrapper'
@@ -44,9 +44,8 @@ class DataFileUtil(object):
         return self._client._check_job('DataFileUtil', job_id)
 
     def _shock_to_file_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.shock_to_file', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.shock_to_file', [params],
+                                        self._service_ver, context)
 
     def shock_to_file(self, params, context=None):
         """
@@ -89,7 +88,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -97,9 +97,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _shock_to_file_mass_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.shock_to_file_mass', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.shock_to_file_mass', [params],
+                                        self._service_ver, context)
 
     def shock_to_file_mass(self, params, context=None):
         """
@@ -142,7 +141,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -150,9 +150,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _file_to_shock_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.file_to_shock', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.file_to_shock', [params],
+                                        self._service_ver, context)
 
     def file_to_shock(self, params, context=None):
         """
@@ -200,7 +199,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -208,16 +208,15 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _unpack_file_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.unpack_file', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.unpack_file', [params],
+                                        self._service_ver, context)
 
     def unpack_file(self, params, context=None):
         """
         Using the same logic as unpacking a Shock file, this method will cause
         any bzip or gzip files to be uncompressed, and then unpack tar and zip
-        archive files (uncompressing gzipped or bzipped archive files if 
-        necessary). If the file is an archive, it will be unbundled into the 
+        archive files (uncompressing gzipped or bzipped archive files if
+        necessary). If the file is an archive, it will be unbundled into the
         directory containing the original output file.
         :param params: instance of type "UnpackFileParams" -> structure:
            parameter "file_path" of String
@@ -229,7 +228,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -237,9 +237,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _package_for_download_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.package_for_download', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.package_for_download', [params],
+                                        self._service_ver, context)
 
     def package_for_download(self, params, context=None):
         """
@@ -272,7 +271,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -280,9 +280,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _file_to_shock_mass_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.file_to_shock_mass', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.file_to_shock_mass', [params],
+                                        self._service_ver, context)
 
     def file_to_shock_mass(self, params, context=None):
         """
@@ -330,7 +329,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -338,9 +338,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _copy_shock_node_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.copy_shock_node', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.copy_shock_node', [params],
+                                        self._service_ver, context)
 
     def copy_shock_node(self, params, context=None):
         """
@@ -371,7 +370,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -379,9 +379,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _own_shock_node_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.own_shock_node', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.own_shock_node', [params],
+                                        self._service_ver, context)
 
     def own_shock_node(self, params, context=None):
         """
@@ -420,7 +419,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -428,9 +428,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _ws_name_to_id_submit(self, name, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.ws_name_to_id', [name],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.ws_name_to_id', [name],
+                                        self._service_ver, context)
 
     def ws_name_to_id(self, name, context=None):
         """
@@ -443,7 +442,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -451,9 +451,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _save_objects_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.save_objects', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.save_objects', [params],
+                                        self._service_ver, context)
 
     def save_objects(self, params, context=None):
         """
@@ -503,7 +502,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -511,9 +511,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _get_objects_submit(self, params, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.get_objects', [params],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.get_objects', [params],
+                                        self._service_ver, context)
 
     def get_objects(self, params, context=None):
         """
@@ -557,7 +556,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -565,9 +565,8 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _versions_submit(self, context=None):
-        return self._client._submit_job(
-             'DataFileUtil.versions', [],
-             self._service_ver, context)
+        return self._client._submit_job('DataFileUtil.versions', [],
+                                        self._service_ver, context)
 
     def versions(self, context=None):
         """
@@ -580,7 +579,8 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -588,13 +588,14 @@ class DataFileUtil(object):
                 return job_state['result']
 
     def status(self, context=None):
-        job_id = self._client._submit_job('DataFileUtil.status', 
-            [], self._service_ver, context)
+        job_id = self._client._submit_job('DataFileUtil.status',
+                                          [], self._service_ver, context)
         async_job_check_time = self._client.async_job_check_time
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                self._client.async_job_check_time_scale_percent / 100.0)
+                                    self._client.async_job_check_time_scale_percent /
+                                    100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
