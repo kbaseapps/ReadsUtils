@@ -17,6 +17,7 @@ import requests as _requests
 import random as _random
 import os
 from ReadsUtils.authclient import KBaseAuth as _KBaseAuth
+from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 
 DEPLOY = 'KB_DEPLOYMENT_CONFIG'
 SERVICE = 'KB_SERVICE_NAME'
@@ -45,7 +46,6 @@ def get_config():
 
 config = get_config()
 
-from ReadsUtils.ReadsUtilsImpl import ReadsUtils  # @IgnorePep8
 impl_ReadsUtils = ReadsUtils(config)
 
 
@@ -171,7 +171,7 @@ class JSONRPCServiceCustom(JSONRPCService):
 
     def _handle_request(self, ctx, request):
         """Handles given request and returns its response."""
-        if self.method_data[request['method']].has_key('types'): # @IgnorePep8
+        if 'types' in self.method_data[request['method']]:
             self._validate_params_types(request['method'], request['params'])
 
         result = self._call_method(ctx, request)
@@ -481,11 +481,11 @@ class Application(object):
         return json.dumps(error)
 
     def now_in_utc(self):
-        # Taken from http://stackoverflow.com/questions/3401428/how-to-get-an-isoformat-datetime-string-including-the-default-timezone @IgnorePep8
+        # noqa Taken from http://stackoverflow.com/questions/3401428/how-to-get-an-isoformat-datetime-string-including-the-default-timezone @IgnorePEP8
         dtnow = datetime.datetime.now()
         dtutcnow = datetime.datetime.utcnow()
         delta = dtnow - dtutcnow
-        hh, mm = divmod((delta.days * 24*60*60 + delta.seconds + 30) // 60, 60)
+        hh, mm = divmod((delta.days * 24 * 60 * 60 + delta.seconds + 30) // 60, 60)
         return "%s%+02d:%02d" % (dtnow.isoformat(), hh, mm)
 
 application = Application()
@@ -514,9 +514,7 @@ try:
         print "Monkeypatching std libraries for async"
         from gevent import monkey
         monkey.patch_all()
-    uwsgi.applications = {
-        '': application
-        }
+    uwsgi.applications = {'': application}
 except ImportError:
     # Not available outside of wsgi, ignore
     pass
