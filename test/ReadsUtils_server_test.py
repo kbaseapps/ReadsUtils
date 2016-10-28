@@ -645,7 +645,6 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
-        node = d["lib"]["file"]["id"]
         self.assertEqual(d['sequencing_tech'], 'seqtech')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
@@ -795,7 +794,6 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
-        node1 = d["lib1"]["file"]["id"]
         file_name = d["lib1"]["file"]["file_name"]
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
