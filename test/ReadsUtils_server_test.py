@@ -820,7 +820,6 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["gc_content"], 0.679273)
         self.assertEqual(d["read_length_mean"], 100)
         self.assertEqual(d["read_length_stdev"], 0)
-
         self.check_lib(d['lib1'], 2491520, file_name, '1c58d7d59c656db39cedcb431376514b')
 
     def test_interleaved_with_pe_inputs(self):
@@ -1078,8 +1077,6 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'bar'
              },
             'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid.fastq')
-#            'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid' +
-#            '.fastq from Shock node ' + ret['id'])
         self.delete_shock_node(ret['id'])
 
     def test_upload_fail_bad_fastq_file(self):
@@ -1102,9 +1099,42 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'bar'
              },
             'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved.fastq')
-#            'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved' +
-#            '.fastq from Shock node ' + ret['id'])
         self.delete_shock_node(ret['id'])
+
+    def test_bad_paired_end_reads(self):
+        ret1 = self.upload_file_to_shock('data/small.forward.fq')
+        ret2 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
+        self.fail_upload_reads({'fwd_id': ret1['id'],
+                                'rev_id': ret2['id'],
+                                'sequencing_tech': 'seqtech-pr1',
+                                'wsname': self.ws_info[1],
+                                'name': 'pairedreads1',
+                                'interleaved': 0},
+                               'Interleave failed - reads files do not have ' +
+                               'an equal number of records. forward Shock node ' +
+                               '/kb/module/work/tmp/fwd/small.forward.fq, ' +
+                               'filename small.forward.fq, reverse Shock node ' +
+                               '/kb/module/work/tmp/rev/Sample5_noninterleaved.1.fastq, ' +
+                               'filename Sample5_noninterleaved.1.fastq')
+        self.delete_shock_node(ret1['id'])
+        self.delete_shock_node(ret2['id'])
+
+    def test_missing_line_paired_end_reads(self):
+        ret1 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.missing_line.fastq')
+        ret2 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
+        self.fail_upload_reads({'fwd_id': ret1['id'],
+                                'rev_id': ret2['id'],
+                                'sequencing_tech': 'seqtech-pr1',
+                                'wsname': self.ws_info[1],
+                                'name': 'pairedreads1',
+                                'interleaved': 0},
+                               'Reading FASTQ record failed - non-blank lines are not a ' +
+                               'multiple of four. ' +
+                               'Shock node /kb/module/work/tmp/fwd/Sample5_noninterleaved.1.' +
+                               'missing_line.fastq, Shock filename ' +
+                               'Sample5_noninterleaved.1.missing_line.fastq')
+        self.delete_shock_node(ret1['id'])
+        self.delete_shock_node(ret2['id'])
 
     # Download tests ########################################################
 
@@ -1881,15 +1911,6 @@ class ReadsUtilsTest(unittest.TestCase):
              'Shock node {}').format(
                 self.staged['bad_ext']['ref'],
                 self.staged['bad_ext']['fwd_node_id']))
-
-#     def test_no_file_info(self):
-#
-#         self.download_error(
-#             [self.getWsName() + '/no_file_info'],
-#             ('Unable to determine file type from Shock or Workspace ' +
-#              'data. Reads object no_file_info ({}). Shock node {}').format(
-#                 self.staged['no_file_info']['ref'],
-#                 self.staged['no_file_info']['fwd_node_id']))
 
     def test_bad_shock_node(self):
 

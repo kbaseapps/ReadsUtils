@@ -609,7 +609,7 @@ class ReadsUtils:
 
         report_lines = ea_report.splitlines()
         report_to_object_mappings = {'reads': 'read_count',
-                                     'total bases': 'read_size',
+                                     'total bases': 'total_bases',
                                      'len mean': 'read_length_mean',
                                      'len stdev': 'read_length_stdev',
                                      'phred': 'phred_type',
@@ -618,7 +618,7 @@ class ReadsUtils:
                                      'qual max': 'qual_max',
                                      'qual mean': 'qual_mean',
                                      'qual stdev': 'qual_stdev'}
-        integer_fields = ['read_count', 'read_size', 'number_of_duplicates']
+        integer_fields = ['read_count', 'total_bases', 'number_of_duplicates']
         for line in report_lines:
             line_elements = line.split()
             line_value = line_elements.pop()
