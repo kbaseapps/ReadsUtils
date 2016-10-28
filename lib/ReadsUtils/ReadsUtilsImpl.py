@@ -769,7 +769,8 @@ class ReadsUtils:
            parameters: rev_id - the shock node id containing the
            reverse/right reads for paired end, non-interleaved reads. - OR -
            rev_file - a local path to the reads data file containing the
-           reverse/right reads for paired end, non-interleaved reads.
+           reverse/right reads for paired end, non-interleaved reads, note the
+           reverse file will get interleaved with the forward file.
            single_genome - whether the reads are from a single genome or a
            metagenome. Default is single genome. strain - information about
            the organism strain that was sequenced. source - information about
