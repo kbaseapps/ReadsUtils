@@ -640,8 +640,6 @@ class ReadsUtilsTest(unittest.TestCase):
                        'name': 'filereads1'})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/filereads1']})['data'][0]
-        node = obj['data']['lib']['file']['id']
-        self.delete_shock_node(node)
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
@@ -651,6 +649,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
         self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 
     def test_single_end_reads_metagenome_objid(self):
         # single genome = 0, test saving to an object id
@@ -762,7 +762,7 @@ class ReadsUtilsTest(unittest.TestCase):
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
-        self.assertTrue(file_name.endswith("fq"))
+        self.assertTrue(file_name.endswith("fastq.gz"))
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
