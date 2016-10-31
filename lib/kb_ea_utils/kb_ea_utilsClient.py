@@ -25,8 +25,8 @@ class kb_ea_utils(object):
             password=None, token=None, ignore_authrc=False,
             trust_all_ssl_certificates=False,
             auth_svc='https://kbase.us/services/authorization/Sessions/Login',
-            service_ver='dev',
-            async_job_check_time_ms=100, async_job_check_time_scale_percent=150,
+            service_ver='release',
+            async_job_check_time_ms=100, async_job_check_time_scale_percent=150, 
             async_job_check_max_time_ms=300000):
         if url is None:
             url = 'https://kbase.us/services/njs_wrapper'
@@ -44,17 +44,18 @@ class kb_ea_utils(object):
         return self._client._check_job('kb_ea_utils', job_id)
 
     def _get_fastq_ea_utils_stats_submit(self, input_params, context=None):
-        return self._client._submit_job('kb_ea_utils.get_fastq_ea_utils_stats', [input_params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'kb_ea_utils.get_fastq_ea_utils_stats', [input_params],
+             self._service_ver, context)
 
     def get_fastq_ea_utils_stats(self, input_params, context=None):
         """
-        This function should be used for getting statistics on read library object types
+        This function should be used for getting statistics on read library object types 
         The results are returned as a string.
         :param input_params: instance of type
            "get_fastq_ea_utils_stats_params" (This module has methods to  get
            fastq statistics workspace_name    - the name of the workspace for
-           input/output read_library_name - the name of
+           input/output read_library_name - the name of 
            KBaseFile.SingleEndLibrary or KBaseFile.PairedEndLibrary) ->
            structure: parameter "workspace_name" of String, parameter
            "read_library_name" of String
@@ -65,8 +66,7 @@ class kb_ea_utils(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -74,8 +74,9 @@ class kb_ea_utils(object):
                 return job_state['result'][0]
 
     def _run_app_fastq_ea_utils_stats_submit(self, input_params, context=None):
-        return self._client._submit_job('kb_ea_utils.run_app_fastq_ea_utils_stats', [input_params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'kb_ea_utils.run_app_fastq_ea_utils_stats', [input_params],
+             self._service_ver, context)
 
     def run_app_fastq_ea_utils_stats(self, input_params, context=None):
         """
@@ -92,8 +93,7 @@ class kb_ea_utils(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -101,13 +101,13 @@ class kb_ea_utils(object):
                 return job_state['result'][0]
 
     def _get_ea_utils_stats_submit(self, input_params, context=None):
-        return self._client._submit_job('kb_ea_utils.get_ea_utils_stats', [input_params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'kb_ea_utils.get_ea_utils_stats', [input_params],
+             self._service_ver, context)
 
     def get_ea_utils_stats(self, input_params, context=None):
         """
-        This function should be used for getting statistics on fastq files.
-        Input is string of file path
+        This function should be used for getting statistics on fastq files. Input is string of file path
         :param input_params: instance of type "ea_utils_params"
            (read_library_path : absolute path of fastq files) -> structure:
            parameter "read_library_path" of String
@@ -118,8 +118,7 @@ class kb_ea_utils(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -127,13 +126,13 @@ class kb_ea_utils(object):
                 return job_state['result'][0]
 
     def status(self, context=None):
-        job_id = self._client._submit_job('kb_ea_utils.status', [], self._service_ver, context)
+        job_id = self._client._submit_job('kb_ea_utils.status', 
+            [], self._service_ver, context)
         async_job_check_time = self._client.async_job_check_time
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)

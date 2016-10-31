@@ -640,7 +640,8 @@ class ReadsUtilsTest(unittest.TestCase):
                        'name': 'filereads1'})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/filereads1']})['data'][0]
-
+        node = obj['data']['lib']['file']['id']
+        self.delete_shock_node(node)
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                         'KBaseFile.SingleEndLibrary'), True)
@@ -761,6 +762,7 @@ class ReadsUtilsTest(unittest.TestCase):
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
+        self.assertTrue(file_name.endswith("fq"))
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)

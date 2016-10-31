@@ -603,7 +603,7 @@ class ReadsUtils:
         return [out]
 
     def calculate_fq_stats(self, reads_object, file_path):
-        eautils = kb_ea_utils(self.callback_url)
+        eautils = kb_ea_utils(self.callback_url, service_ver='dev')
         ea_report = eautils.get_ea_utils_stats({'read_library_path': file_path})
 #        print "Full Report : {}".format(ea_report)
 
