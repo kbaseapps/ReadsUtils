@@ -20,14 +20,14 @@ suggestions :
 parameters :
     fwd :
         ui-name : READS FILE
-        short-hint : Short read file containing a paired end library in FASTQ format
+        short-hint : File of short reads containing a paired end library in FASTQ format
         long-hint  : |
             Valid file extensions for FASTQ: .fastq, .fnq, .fq. Gzipped or bzipped
             files are acceptable.
 
     rev :
         ui-name : READS FILE
-        short-hint : Optional second short read file containing a paired end library in FASTQ format.
+        short-hint : Optional second short read file containing a paired end library in FASTQ format
         long-hint  : Not needed in an interleaved library
 
     singleGenome:
@@ -42,18 +42,18 @@ parameters :
 
     insertSizeMean :
         ui-name : MEAN INSERT SIZE
-        short-hint : Specify the mean (average) insert length
-        long-hint  : Specify the mean (average) insert length
+        short-hint : The mean (average) insert length
+        long-hint  : The mean (average) insert length
 
     insertSizeStDev :
         ui-name : STDEV OF INSERT SIZE
-        short-hint : Specify the standard deviation of insert lengths
-        long-hint  : Specify the standard deviation of insert lengths
+        short-hint : The standard deviation of insert lengths
+        long-hint  : The standard deviation of insert lengths
 
     readOrientationOutward :
         ui-name : READS ORIENTATION OUTWARD
-        short-hint : Reads in a pair point outward
-        long-hint  : Reads in a pair point outward
+        short-hint : Whether reads in a pair point outward
+        long-hint  : Whether reads in a pair point outward
 
     objname :
         ui-name : OBJECT NAME
