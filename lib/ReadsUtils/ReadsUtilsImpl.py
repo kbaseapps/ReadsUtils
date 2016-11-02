@@ -119,14 +119,14 @@ class ReadsUtils:
                              'with a local forward reads file')
         if not shock and revfile:
             revid = os.path.abspath(os.path.expanduser(revfile))
-        interleaved = 1 if params.get('interleaved') else 0
+        interleaved = 0
+        if params.get('interleaved') or revid:
+            interleaved = 1
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
         if interleaved or revid:
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
-        if revid:
-            interleaved = 1
         seqtype = params.get('sequencing_tech')
         if not seqtype:
             raise ValueError('The sequencing technology must be provided')
@@ -267,6 +267,16 @@ class ReadsUtils:
         self.copy_field(data, 'read_count', ret)
         self.copy_field(data, 'read_size', ret)
         self.copy_field(data, 'gc_content', ret)
+        self.copy_field(data, 'total_bases', ret)
+        self.copy_field(data, 'read_length_mean', ret)
+        self.copy_field(data, 'read_length_stdev', ret)
+        self.copy_field(data, 'phred_type', ret)
+        self.copy_field(data, 'number_of_duplicates', ret)
+        self.copy_field(data, 'qual_min', ret)
+        self.copy_field(data, 'qual_max', ret)
+        self.copy_field(data, 'qual_mean', ret)
+        self.copy_field(data, 'qual_stdev', ret)
+        self.copy_field(data, 'base_percentages', ret)
 
         return ret
 
@@ -295,11 +305,9 @@ class ReadsUtils:
                   'unpack': 'uncompress',
                   'file_path': os.path.join(self.scratch, handle['id'])
                   }
-        # TODO LATER may want to do dl en masse, but that means if there's
-        # TODO a bad file it won't be caught until everythings dl'd @IgnorePep8
-        # TODO LATER add method to DFU to get shock attribs and check filename prior to
-        # TODO download LATER at least check handle filename & file type are
-        # TODO ok before download @IgnorePep8
+        # TODO LATER may want to do dl en masse, but that means if there's a bad file it won't be caught until everythings dl'd @IgnorePep8 # noqa
+        # TODO LATER add method to DFU to get shock attribs and check filename prior to download @IgnorePep8 # noqa
+        # TODO LATER at least check handle filename & file type are ok before download
         dfu = DataFileUtil(self.callback_url)
         ret = dfu.shock_to_file(params)
         fn = ret['node_file_name']
@@ -317,8 +325,7 @@ class ReadsUtils:
                          'object {} ({}). Shock node {}')
                         .format(n, f, obj_name, ref, handle['id']))
                 ok = True
-        # TODO this is untested. You have to try pretty hard to upload a file
-        # TODO without a name to Shock.
+        # TODO this is untested. You have to try pretty hard to upload a file without a name to Shock. @IgnorePep8 # noqa
         if not ok:
             raise ValueError(
                 'Unable to determine file type from Shock or Workspace ' +
@@ -377,6 +384,7 @@ class ReadsUtils:
 
     # this assumes that the FASTQ files are properly formatted and matched,
     # which they should be if they're in KBase.
+    # source_obj_ref and source_obj_name will be None if done from upload.
     def interleave(self, source_obj_ref, source_obj_name, fwd_shock_filename,
                    fwd_shock_node, rev_shock_filename, rev_shock_node,
                    fwdpath, revpath, targetpath):
@@ -391,17 +399,21 @@ class ReadsUtils:
                     rrec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
                         rev_shock_filename, rev_shock_node, r)
+                    error_message_bindings = list()
                     if (not frec and rrec) or (frec and not rrec):
-                        error_message_bindings = [fwd_shock_node, fwd_shock_filename,
-                                                  rev_shock_node, rev_shock_filename]
                         error_message = 'Interleave failed - reads files do not have '\
                                         'an equal number of records. '
                         if source_obj_name is not None and source_obj_ref is not None:
-                            error_message += 'Workspace reads object {} ({}), '
+                            error_message += 'Workspace reads object {} ({}). '
                             error_message_bindings.insert(0, source_obj_ref)
                             error_message_bindings.insert(0, source_obj_name)
-                        error_message += 'forward Shock node {}, filename {}, ' \
-                                         'reverse Shock node {}, filename {}'
+                        if fwd_shock_node is not None and rev_shock_node is not None:
+                            error_message += 'forward Shock node {}, filename {}, ' \
+                                             'reverse Shock node {}, filename {}. '
+                            error_message_bindings.extend([fwd_shock_node, fwd_shock_filename,
+                                                           rev_shock_node, rev_shock_filename])
+                        error_message += 'Forward Path {}, Reverse Path {}.'
+                        error_message_bindings.extend([fwdpath, revpath])
                         raise ValueError(error_message.format(*error_message_bindings))
                     if not frec:  # not rrec is implied at this point
                         break
@@ -438,7 +450,6 @@ class ReadsUtils:
 
     def process_interleaved(self, source_obj_ref, source_obj_name,
                             handle, interleave, file_type=None):
-
         path, name = self._download_reads_from_shock(
             source_obj_ref, source_obj_name, handle, file_type)
 
@@ -529,6 +540,7 @@ class ReadsUtils:
 
         # lib1 = KBaseFile, handle_1 = KBaseAssembly
         if kbasefile:
+
             if single:
                 sreads = data['lib']['file']
                 type_ = data['lib']['type']
@@ -603,6 +615,7 @@ class ReadsUtils:
         return [out]
 
     def calculate_fq_stats(self, reads_object, file_path):
+        # TODO : Remove the ", service_ver='dev'" below once kb_ea_utils is released and this is released @IgnorePep8 # noqa
         eautils = kb_ea_utils(self.callback_url, service_ver='dev')
         ea_report = eautils.get_ea_utils_stats({'read_library_path': file_path})
 #        print "Full Report : {}".format(ea_report)
@@ -769,8 +782,6 @@ class ReadsUtils:
            parameters: rev_id - the shock node id containing the
            reverse/right reads for paired end, non-interleaved reads. - OR -
            rev_file - a local path to the reads data file containing the
-           reverse/right reads for paired end, non-interleaved reads, note the
-           reverse file will get interleaved with the forward file.
            single_genome - whether the reads are from a single genome or a
            metagenome. Default is single genome. strain - information about
            the organism strain that was sequenced. source - information about
@@ -877,17 +888,17 @@ class ReadsUtils:
             revpath = revid
             fwdname = None
             revname = None
-        shock = False
-        if revid:
+            fwdid = None
+            revid = None
+        if revpath:
             #now interleave the files
             intpath = os.path.join(self.scratch, self.get_file_prefix() + '.inter.fastq')
-            self.interleave(None, None, fwdname, fwdpath,
-                            revname, revpath, fwdpath, revpath, intpath)
+            self.interleave(None, None, fwdname, fwdid,
+                            revname, revid, fwdpath, revpath, intpath)
             fwdpath = intpath
-            revid = None
             revpath = None
 
-        interleaved = 1 if (not single_end and not revid) else 0
+        interleaved = 1 if not single_end else 0
 
         fhandle, rhandle, fsize, rsize = \
             self.process_files_for_upload(fwdpath, revpath, interleaved)

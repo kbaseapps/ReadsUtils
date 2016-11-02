@@ -1,28 +1,28 @@
-import unittest
-import time
-
-from os import environ
-import shutil
-import os
-from DataFileUtil.DataFileUtilClient import DataFileUtil
-import requests
-from pprint import pprint
-import subprocess
 import hashlib
 import inspect
+import os
+import shutil
+import subprocess
 import tempfile
+import time
+import unittest
+from os import environ
+from pprint import pprint
 from zipfile import ZipFile
+
+import requests
+from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
+from DataFileUtil.baseclient import ServerError as DFUError
+from DataFileUtil.DataFileUtilClient import DataFileUtil
+from ReadsUtils.ReadsUtilsImpl import ReadsUtils
+from ReadsUtils.ReadsUtilsServer import MethodContext
+from Workspace.baseclient import ServerError as WorkspaceError
+from Workspace.WorkspaceClient import Workspace
+
 try:
     from ConfigParser import ConfigParser  # py2 @UnusedImport
 except:
     from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
-
-from Workspace.WorkspaceClient import Workspace
-from Workspace.baseclient import ServerError as WorkspaceError
-from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
-from DataFileUtil.baseclient import ServerError as DFUError
-from ReadsUtils.ReadsUtilsImpl import ReadsUtils
-from ReadsUtils.ReadsUtilsServer import MethodContext
 
 
 class TestError(Exception):
@@ -348,7 +348,21 @@ class ReadsUtilsTest(unittest.TestCase):
              'sequencing_tech': 'IonTorrent',
              'read_count': 3,
              'read_size': 12,
-             'gc_content': 2.3
+             'gc_content': 2.3,
+             'total_bases': 250000,
+             'read_length_mean': 100,
+             'read_length_stdev': 10,
+             'phred_type': '33',
+             'number_of_duplicates': 100,
+             'qual_min': 10.0,
+             'qual_max': 51.3,
+             'qual_mean': 42.7,
+             'qual_stdev': 7.4,
+             'base_percentages': {'A': 32.3,
+                                  'C': 17.1,
+                                  'G': 15.1,
+                                  'T': 34.5,
+                                  'N': 1.0}
              },
             fwd_reads, single_end=True)
         cls.upload_assembly(
@@ -513,7 +527,17 @@ class ReadsUtilsTest(unittest.TestCase):
                      'sequencing_tech': u'fake data',
                      'single_genome': 'true',
                      'source': None,
-                     'strain': None
+                     'strain': None,
+                     'total_bases': None,
+                     'read_length_mean': None,
+                     'read_length_stdev': None,
+                     'phred_type': None,
+                     'number_of_duplicates': None,
+                     'qual_min': None,
+                     'qual_max': None,
+                     'qual_mean': None,
+                     'qual_stdev': None,
+                     'base_percentages': None
                      }
     STD_OBJ_KBF_S = dictmerge(STD_OBJ_KBF_P,
                               {'read_orientation_outward': None})
@@ -628,6 +652,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
         self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 
     def test_forward_reads_file(self):
         tf = 'Sample1.fastq'
@@ -672,6 +698,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual('strain' not in d, True)
         self.check_lib(d['lib'], 604, 'Sample5_noninterleaved.1.fastq.gz',
                        '140a61c7f183dd6a2b93ef195bb3ec63')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 
         # test saving with IDs only
         ref = self.impl.upload_reads(
@@ -692,6 +720,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual('strain' not in d, True)
         self.check_lib(d['lib'], 604, 'Sample5_noninterleaved.1.fastq.gz',
                        '140a61c7f183dd6a2b93ef195bb3ec63')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 
     def test_single_end_reads_genome_source_strain(self):
         # specify single genome, source, strain, use workspace id
@@ -741,6 +771,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["read_length_mean"], 50)
         self.assertEqual(d["read_length_stdev"], 0)
         self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 
     def test_paired_end_reads(self):
         # paired end non interlaced, minimum inputs
@@ -762,7 +794,7 @@ class ReadsUtilsTest(unittest.TestCase):
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
-        self.assertTrue(file_name.endswith("fastq.gz"))
+        self.assertTrue(file_name.endswith(".inter.fastq.gz"))
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
@@ -772,6 +804,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
         self.check_lib(d['lib1'], 2491520, file_name, '1c58d7d59c656db39cedcb431376514b')
+        node = d['lib1']['file']['id']
+        self.delete_shock_node(node)
 
     def test_paired_end_reads_file(self):
         # paired end non interlaced, minimum inputs
@@ -797,6 +831,9 @@ class ReadsUtilsTest(unittest.TestCase):
                         'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
+        self.assertTrue(file_name.endswith(".inter.fastq.gz"),
+                        "File name {} does not end with the {}".format(file_name,
+                                                                       ".inter.fast.gz"))
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
@@ -823,6 +860,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["read_length_mean"], 100)
         self.assertEqual(d["read_length_stdev"], 0)
         self.check_lib(d['lib1'], 2491520, file_name, '1c58d7d59c656db39cedcb431376514b')
+        node = d['lib1']['file']['id']
+        self.delete_shock_node(node)
 
     def test_interleaved_with_pe_inputs(self):
         # paired end interlaced with the 4 pe input set
@@ -872,6 +911,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["read_length_stdev"], 0)
         self.check_lib(d['lib1'], 1050, 'Sample5_interleaved.fastq.gz',
                        '971a5f445055c85fd45b17459e15e3ed')
+        node = d['lib1']['file']['id']
+        self.delete_shock_node(node)
 
     def check_lib(self, lib, size, filename, md5):
         shock_id = lib["file"]["id"]
@@ -896,10 +937,16 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(libfile['type'], 'shock')
         self.assertEqual(libfile['url'], self.shockURL)
 
-    def fail_upload_reads(self, params, error, exception=ValueError):
+    def fail_upload_reads(self, params, error, exception=ValueError, do_startswith=False):
         with self.assertRaises(exception) as context:
             self.impl.upload_reads(self.ctx, params)
-        self.assertEqual(error, str(context.exception.message))
+        if do_startswith:
+            self.assertTrue(str(context.exception.message).startswith(error),
+                            "Error message {} does not start with {}".format(
+                                str(context.exception.message),
+                                error))
+        else:
+            self.assertEqual(error, str(context.exception.message))
 
     def test_upload_fail_no_reads(self):
         self.fail_upload_reads(
@@ -1114,10 +1161,13 @@ class ReadsUtilsTest(unittest.TestCase):
                                 'interleaved': 0},
                                'Interleave failed - reads files do not have ' +
                                'an equal number of records. forward Shock node ' +
-                               '/kb/module/work/tmp/fwd/small.forward.fq, ' +
-                               'filename small.forward.fq, reverse Shock node ' +
-                               '/kb/module/work/tmp/rev/Sample5_noninterleaved.1.fastq, ' +
-                               'filename Sample5_noninterleaved.1.fastq')
+                               ret1['id'] +
+#                               '/kb/module/work/tmp/fwd/small.forward.fq, ' +
+                               ', filename small.forward.fq, reverse Shock node ' +
+                               ret2['id'] +
+#                               '/kb/module/work/tmp/rev/Sample5_noninterleaved.1.fastq, ' +
+                               ', filename Sample5_noninterleaved.1.fastq',
+                               do_startswith=True)
         self.delete_shock_node(ret1['id'])
         self.delete_shock_node(ret2['id'])
 
@@ -1132,8 +1182,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                 'interleaved': 0},
                                'Reading FASTQ record failed - non-blank lines are not a ' +
                                'multiple of four. ' +
-                               'Shock node /kb/module/work/tmp/fwd/Sample5_noninterleaved.1.' +
-                               'missing_line.fastq, Shock filename ' +
+                               'Shock node ' + ret1['id'] +
+                               ', Shock filename ' +
                                'Sample5_noninterleaved.1.missing_line.fastq')
         self.delete_shock_node(ret1['id'])
         self.delete_shock_node(ret2['id'])
@@ -1645,7 +1695,21 @@ class ReadsUtilsTest(unittest.TestCase):
                         'gc_content': 2.3,
                         'read_orientation_outward': None,
                         'insert_size_mean': None,
-                        'insert_size_std_dev': None
+                        'insert_size_std_dev': None,
+                        'total_bases': 250000,
+                        'read_length_mean': 100,
+                        'read_length_stdev': 10,
+                        'phred_type': '33',
+                        'number_of_duplicates': 100,
+                        'qual_min': 10.0,
+                        'qual_max': 51.3,
+                        'qual_mean': 42.7,
+                        'qual_stdev': 7.4,
+                        'base_percentages': {'A': 32.3,
+                                             'C': 17.1,
+                                             'G': 15.1,
+                                             'T': 34.5,
+                                             'N': 1.0}
                         }
                 }
              }
@@ -1675,7 +1739,17 @@ class ReadsUtilsTest(unittest.TestCase):
                         'gc_content': 2.4,
                         'read_orientation_outward': None,
                         'insert_size_mean': None,
-                        'insert_size_std_dev': None
+                        'insert_size_std_dev': None,
+                        'total_bases': None,
+                        'read_length_mean': None,
+                        'read_length_stdev': None,
+                        'phred_type': None,
+                        'number_of_duplicates': None,
+                        'qual_min': None,
+                        'qual_max': None,
+                        'qual_mean': None,
+                        'qual_stdev': None,
+                        'base_percentages': None
                         }
                 }
              }
@@ -1702,7 +1776,17 @@ class ReadsUtilsTest(unittest.TestCase):
                         'gc_content': None,
                         'read_orientation_outward': 'true',
                         'insert_size_mean': 42,
-                        'insert_size_std_dev': 1000000
+                        'insert_size_std_dev': 1000000,
+                        'total_bases': None,
+                        'read_length_mean': None,
+                        'read_length_stdev': None,
+                        'phred_type': None,
+                        'number_of_duplicates': None,
+                        'qual_min': None,
+                        'qual_max': None,
+                        'qual_mean': None,
+                        'qual_stdev': None,
+                        'base_percentages': None
                         }
                 }
              }
@@ -1729,7 +1813,17 @@ class ReadsUtilsTest(unittest.TestCase):
                         'gc_content': None,
                         'read_orientation_outward': 'false',
                         'insert_size_mean': 43,
-                        'insert_size_std_dev': 1000001
+                        'insert_size_std_dev': 1000001,
+                        'total_bases': None,
+                        'read_length_mean': None,
+                        'read_length_stdev': None,
+                        'phred_type': None,
+                        'number_of_duplicates': None,
+                        'qual_min': None,
+                        'qual_max': None,
+                        'qual_mean': None,
+                        'qual_stdev': None,
+                        'base_percentages': None
                         }
                 }
              }
@@ -1759,7 +1853,17 @@ class ReadsUtilsTest(unittest.TestCase):
                         'gc_content': 2.5,
                         'read_orientation_outward': 'true',
                         'insert_size_mean': 50,
-                        'insert_size_std_dev': 1000002
+                        'insert_size_std_dev': 1000002,
+                        'total_bases': None,
+                        'read_length_mean': None,
+                        'read_length_stdev': None,
+                        'phred_type': None,
+                        'number_of_duplicates': None,
+                        'qual_min': None,
+                        'qual_max': None,
+                        'qual_mean': None,
+                        'qual_stdev': None,
+                        'base_percentages': None
                         }
                 }
              }
@@ -1789,7 +1893,17 @@ class ReadsUtilsTest(unittest.TestCase):
                         'gc_content': 2.6,
                         'read_orientation_outward': 'false',
                         'insert_size_mean': 51,
-                        'insert_size_std_dev': 1000003
+                        'insert_size_std_dev': 1000003,
+                        'total_bases': None,
+                        'read_length_mean': None,
+                        'read_length_stdev': None,
+                        'phred_type': None,
+                        'number_of_duplicates': None,
+                        'qual_min': None,
+                        'qual_max': None,
+                        'qual_mean': None,
+                        'qual_stdev': None,
+                        'base_percentages': None
                         }
                 }
              }
@@ -1914,6 +2028,15 @@ class ReadsUtilsTest(unittest.TestCase):
                 self.staged['bad_ext']['ref'],
                 self.staged['bad_ext']['fwd_node_id']))
 
+#     def test_no_file_info(self):
+#
+#         self.download_error(
+#             [self.getWsName() + '/no_file_info'],
+#             ('Unable to determine file type from Shock or Workspace ' +
+#              'data. Reads object no_file_info ({}). Shock node {}').format(
+#                 self.staged['no_file_info']['ref'],
+#                 self.staged['no_file_info']['fwd_node_id']))
+
     def test_bad_shock_node(self):
 
         self.download_error(
@@ -1958,21 +2081,22 @@ class ReadsUtilsTest(unittest.TestCase):
             [self.getWsName() + '/fr_missing_rec_f'],
             ('Interleave failed - reads files do not have ' +
              'an equal number of records. Workspace reads ' +
-             'object fr_missing_rec_f ({}), ' +
+             'object fr_missing_rec_f ({}). ' +
              'forward Shock node {}, filename ' +
              'Sample5_noninterleaved.1.missing_rec.fastq, ' +
-             'reverse Shock node {}, filename Sample5_noninterleaved.2.fastq')
+             'reverse Shock node {}, filename Sample5_noninterleaved.2.fastq.')
             .format(self.staged['fr_missing_rec_f']['ref'],
                     self.staged['fr_missing_rec_f']['fwd_node_id'],
                     self.staged['fr_missing_rec_f']['rev_node_id']),
-            interleave='true')
+            interleave='true',
+            do_startswith=True)
 
     def test_bad_interleave_missing_record_rev(self):
         self.download_error(
             [self.getWsName() + '/fr_missing_rec_r'],
             ('Interleave failed - reads files do not have ' +
              'an equal number of records. Workspace reads ' +
-             'object fr_missing_rec_r ({}), ' +
+             'object fr_missing_rec_r ({}). ' +
              'forward Shock node {}, filename ' +
              'Sample5_noninterleaved.1.fastq, ' +
              'reverse Shock node {}, filename ' +
@@ -1980,10 +2104,11 @@ class ReadsUtilsTest(unittest.TestCase):
             .format(self.staged['fr_missing_rec_r']['ref'],
                     self.staged['fr_missing_rec_r']['fwd_node_id'],
                     self.staged['fr_missing_rec_r']['rev_node_id']),
-            interleave='true')
+            interleave='true',
+            do_startswith=True)
 
     def download_error(self, readnames, error,
-                       interleave=None, exception=ValueError):
+                       interleave=None, exception=ValueError, do_startswith=False):
 
         test_name = inspect.stack()[1][3]
         print('\n****** starting expected fail test: ' + test_name + ' ******')
@@ -1999,7 +2124,13 @@ class ReadsUtilsTest(unittest.TestCase):
 
         with self.assertRaises(exception) as context:
             self.impl.download_reads(self.ctx, params)
-        self.assertEqual(error, str(context.exception.message))
+        if do_startswith:
+            self.assertTrue(str(context.exception.message).startswith(error),
+                            "Error message {} does not start with {}".format(
+                                str(context.exception.message),
+                                error))
+        else:
+            self.assertEqual(error, str(context.exception.message))
 
     def download_success(self, testspecs, interleave=None):
         self.maxDiff = None

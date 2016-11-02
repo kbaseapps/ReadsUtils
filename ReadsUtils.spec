@@ -58,6 +58,10 @@ module ReadsUtils {
         
         Note that if a reverse read file is specified, it must be a local file
         if the forward reads file is a local file, or a shock id if not.
+
+        If a reverse file is specified the uploader will will automatically
+        intereave the forward and reverse files and store that in shock.
+        Additionally the statistics generated are on the resulting interleaved file.
         
         Required parameters:
         fwd_id - the id of the shock node containing the reads data file:
@@ -82,7 +86,8 @@ module ReadsUtils {
             paired end, non-interleaved reads.
         - OR -
         rev_file - a local path to the reads data file containing the
-            reverse/right reads for paired end, non-interleaved reads.
+            reverse/right reads for paired end, non-interleaved reads, note the
++           reverse file will get interleaved with the forward file.
         single_genome - whether the reads are from a single genome or a
             metagenome. Default is single genome.
         strain - information about the organism strain
@@ -193,6 +198,17 @@ module ReadsUtils {
             unavailable.
         float gc_content - the GC content of the reads. null if
             unavailable.
+        int total_bases - The total number of bases in all the reads
+        float read_length_mean - The mean read length. null if unavailable.
+        float read_length_stdev - The std dev of read length. null if unavailable.
+        string phred_type - Phred type: 33 or 64. null if unavailable.
+        int number_of_duplicates - Number of duplicate reads. null if unavailable.
+        float qual_min - Minimum Quality Score. null if unavailable.
+        float qual_max - Maximum Quality Score. null if unavailable.
+        float qual_mean - Mean Quality Score. null if unavailable.
+        float qual_stdev - Std dev of Quality Scores. null if unavailable.
+        mapping<string, float> base_percentages - percentage of total bases being 
+            a particular nucleotide.
      */
     typedef structure {
         ReadsFiles files;
@@ -207,6 +223,16 @@ module ReadsUtils {
         int read_count;
         int read_size;
         float gc_content;
+        int total_bases;
+        float read_length_mean;
+        float read_length_stdev;
+        string phred_type;
+        int number_of_duplicates;
+        float qual_min;
+        float qual_max;
+        float qual_mean;
+        float qual_stdev;
+        mapping<string, float> base_percentages;
     } DownloadedReadLibrary;
 
     /* The output of the download method.
