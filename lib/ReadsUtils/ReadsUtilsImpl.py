@@ -616,6 +616,7 @@ class ReadsUtils:
 
     def calculate_fq_stats(self, reads_object, file_path):
         # TODO : Remove the ", service_ver='dev'" below once kb_ea_utils is released and this is released @IgnorePep8 # noqa
+        # TODO : Once TASK-158 is complete the EA-utils report parsing should be moved out of here and use the data_structure returned instead @IgnorePep8 # noqa
         eautils = kb_ea_utils(self.callback_url, service_ver='dev')
         ea_report = eautils.get_ea_utils_stats({'read_library_path': file_path})
 #        print "Full Report : {}".format(ea_report)
