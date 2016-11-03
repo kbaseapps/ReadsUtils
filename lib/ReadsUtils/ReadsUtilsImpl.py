@@ -639,7 +639,7 @@ class ReadsUtils:
             line_key = " ".join(line_elements)
             line_key = line_key.strip()
             if line_key in report_to_object_mappings:
-                #print ":{}: = :{}:".format(report_to_object_mappings[line_key],line_value)
+                # print ":{}: = :{}:".format(report_to_object_mappings[line_key],line_value)
                 value_to_use = None
                 if line_key == 'phred':
                     value_to_use = line_value.strip()
@@ -653,7 +653,7 @@ class ReadsUtils:
                     reads_object['base_percentages'] = dict()
                 dict_key = line_key.strip("%")
                 reads_object['base_percentages'][dict_key] = float(line_value.strip())
-        #populate the GC content (as a value betwwen 0 and 1)
+        # populate the GC content (as a value betwwen 0 and 1)
         if 'base_percentages' in reads_object:
             gc_content = 0
             if "G" in reads_object['base_percentages']:
@@ -661,7 +661,7 @@ class ReadsUtils:
             if "C" in reads_object['base_percentages']:
                 gc_content += reads_object['base_percentages']["C"]
             reads_object["gc_content"] = gc_content / 100
-        #set number of dups if no dups, but read_count
+        # set number of dups if no dups, but read_count
         if 'read_count' in reads_object and 'number_of_duplicates' not in reads_object:
             reads_object["number_of_duplicates"] = 0
         return reads_object
@@ -862,12 +862,12 @@ class ReadsUtils:
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
             self._proc_upload_reads_params(params))
-        #IF from shock fwdid and revid are shock nodes, if not shock they are file paths
+        # IF from shock fwdid and revid are shock nodes, if not shock they are file paths
         dfu = DataFileUtil(self.callback_url)
         fwdpath = None
         revpath = None
         if shock:
-            #Grab files from Shock
+            # Grab files from Shock
             fileinput = [{'shock_id': fwdid,
                           'file_path': self.scratch + '/fwd/',
                           'unpack': 'uncompress'}]
@@ -877,14 +877,13 @@ class ReadsUtils:
                                   'unpack': 'uncompress'})
             self.log('downloading reads file(s) from Shock')
             files = dfu.shock_to_file_mass(fileinput)
-            shock = False
             fwdpath = files[0]["file_path"]
             fwdname = files[0]["node_file_name"]
             if revid:
                 revpath = files[1]["file_path"]
                 revname = files[1]["node_file_name"]
         else:
-            #Not shock
+            # Not shock
             fwdpath = fwdid
             revpath = revid
             fwdname = None
@@ -892,7 +891,7 @@ class ReadsUtils:
             fwdid = None
             revid = None
         if revpath:
-            #now interleave the files
+            # now interleave the files
             intpath = os.path.join(self.scratch, self.get_file_prefix() + '.inter.fastq')
             self.interleave(None, None, fwdname, fwdid,
                             revname, revid, fwdpath, revpath, intpath)
@@ -904,7 +903,7 @@ class ReadsUtils:
         fhandle, rhandle, fsize, rsize = \
             self.process_files_for_upload(fwdpath, revpath, interleaved)
 
-        #calculate the stats for fwd_file.
+        # calculate the stats for fwd_file.
         o = self.calculate_fq_stats(o, fwdpath)
 
         fwdfile = {'file': fhandle,

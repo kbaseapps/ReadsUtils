@@ -1162,10 +1162,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                'Interleave failed - reads files do not have ' +
                                'an equal number of records. forward Shock node ' +
                                ret1['id'] +
-#                               '/kb/module/work/tmp/fwd/small.forward.fq, ' +
                                ', filename small.forward.fq, reverse Shock node ' +
                                ret2['id'] +
-#                               '/kb/module/work/tmp/rev/Sample5_noninterleaved.1.fastq, ' +
                                ', filename Sample5_noninterleaved.1.fastq',
                                do_startswith=True)
         self.delete_shock_node(ret1['id'])
@@ -1187,6 +1185,40 @@ class ReadsUtilsTest(unittest.TestCase):
                                'Sample5_noninterleaved.1.missing_line.fastq')
         self.delete_shock_node(ret1['id'])
         self.delete_shock_node(ret2['id'])
+
+    def test_bad_paired_end_reads_file(self):
+        fwdtf = 'small.forward.fq'
+        revtf = 'Sample5_noninterleaved.1.fastq'
+        fwdtarget = os.path.join(self.scratch, fwdtf)
+        revtarget = os.path.join(self.scratch, revtf)
+        shutil.copy('data/' + fwdtf, fwdtarget)
+        shutil.copy('data/' + revtf, revtarget)
+        self.fail_upload_reads({'fwd_file': fwdtarget,
+                                'rev_file': revtarget,
+                                'sequencing_tech': 'seqtech-pr1',
+                                'wsname': self.ws_info[1],
+                                'name': 'pairedreads1',
+                                'interleaved': 0},
+                               'Interleave failed - reads files do not have ' +
+                               'an equal number of records. ',
+                               do_startswith=True)
+
+    def test_missing_line_paired_end_reads_file(self):
+        fwdtf = 'Sample5_noninterleaved.1.missing_line.fastq'
+        revtf = 'Sample5_noninterleaved.1.fastq'
+        fwdtarget = os.path.join(self.scratch, fwdtf)
+        revtarget = os.path.join(self.scratch, revtf)
+        shutil.copy('data/' + fwdtf, fwdtarget)
+        shutil.copy('data/' + revtf, revtarget)
+        self.fail_upload_reads({'fwd_file': fwdtarget,
+                                'rev_file': revtarget,
+                                'sequencing_tech': 'seqtech-pr1',
+                                'wsname': self.ws_info[1],
+                                'name': 'pairedreads1',
+                                'interleaved': 0},
+                               'Reading FASTQ record failed - non-blank lines are not a ' +
+                               'multiple of four.', 
+                               do_startswith=True) 
 
     # Download tests ########################################################
 

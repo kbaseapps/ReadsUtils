@@ -194,8 +194,9 @@ module ReadsUtils {
             genetic fragments. null if unavailable or single end reads.
         int read_count - the number of reads in the this dataset. null if
             unavailable.
-        int read_size - the total size of the reads, in bases. null if
-            unavailable.
+        int read_size - sequencing parameter defining the expected read length. 
+            For paired end reads, this is the expected length of the total of 
+            the two reads. null if unavailable.
         float gc_content - the GC content of the reads. null if
             unavailable.
         int total_bases - The total number of bases in all the reads
@@ -208,7 +209,7 @@ module ReadsUtils {
         float qual_mean - Mean Quality Score. null if unavailable.
         float qual_stdev - Std dev of Quality Scores. null if unavailable.
         mapping<string, float> base_percentages - percentage of total bases being 
-            a particular nucleotide.
+            a particular nucleotide.  Null if unavailable.
      */
     typedef structure {
         ReadsFiles files;
