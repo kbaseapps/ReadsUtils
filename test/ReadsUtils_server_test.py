@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import time
 import unittest
+import re
 from os import environ
 from pprint import pprint
 from zipfile import ZipFile
@@ -948,6 +949,17 @@ class ReadsUtilsTest(unittest.TestCase):
         else:
             self.assertEqual(error, str(context.exception.message))
 
+    def fail_upload_reads_regex(self, params, regex_test, exception=ValueError):
+        with self.assertRaises(exception) as context:
+            self.impl.upload_reads(self.ctx, params)
+        p = re.compile(regex_test)
+        result = p.match(str(context.exception.message))
+        self.assertIsNotNone(result,
+                             "Error message {} does not match the regex of {}".format(
+                                str(context.exception.message),
+                                regex_test
+                                ))
+
     def test_upload_fail_no_reads(self):
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
@@ -1125,7 +1137,9 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': ret['id'],
              'name': 'bar'
              },
-            'Invalid fasta file /kb/module/work/tmp/fwd/Sample1_invalid.fastq')
+            'Invalid FASTQ file - Path: /kb/module/work/tmp/fwd/Sample1_invalid.fastq. ' +
+            'Input Shock ID : ',
+            do_startswith=True)
         self.delete_shock_node(ret['id'])
 
     def test_upload_fail_bad_fastq_file(self):
@@ -1136,8 +1150,43 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_file': 'data/Sample1_invalid.fastq',
              'name': 'bar'
              },
-            'Invalid fasta file /kb/module/test/data/Sample1_invalid' +
-            '.fastq')
+            'Invalid FASTQ file - Path: /kb/module/test/data/Sample1_invalid.fastq.')
+
+    def test_upload_fail_paired_bad_fastq_file(self):
+        print('*** upload_fail_bad_fastq_file***')
+        self.fail_upload_reads_regex(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file': 'data/Sample1_invalid.fastq',
+             'rev_file': 'data/Sample_rev.fq',
+             'name': 'bar'
+             },
+            'Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
+            'Input Files Paths - FWD Path : /kb/module/test/data/Sample1_invalid.fastq, ' +
+            'REV Path : /kb/module/test/data/Sample_rev.fq.')
+
+    def test_upload_fail_paired_bad_fastq(self):
+        print('*** upload_fail_bad_fastq ***')
+        ret1 = self.upload_file_to_shock('data/Sample1_invalid.fastq')
+        ret2 = self.upload_file_to_shock('data/Sample_rev.fq')
+        self.fail_upload_reads_regex(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_id': ret1['id'],
+             'rev_id': ret2['id'],
+             'name': 'bar'
+             },
+            ('Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
+             'Input Shock IDs - FWD Shock ID : {}, ' +
+             'REV Shock ID : {}. ' +
+             'FWD File Name : Sample1_invalid.fastq. ' +
+             'REV File Name : Sample_rev.fq. ' +
+             'FWD Path : /kb/module/work/tmp/fwd/Sample1_invalid.fastq. ' +
+             'REV Path : /kb/module/work/tmp/rev/Sample_rev.fq.').format(
+                ret1['id'],
+                ret2['id']))
+        self.delete_shock_node(ret1['id'])
+        self.delete_shock_node(ret2['id'])
 
     def test_upload_fail_interleaved_for_single(self):
         ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
@@ -1147,7 +1196,9 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': ret['id'],
              'name': 'bar'
              },
-            'Invalid fasta file /kb/module/work/tmp/fwd/Sample5_interleaved.fastq')
+            'Invalid FASTQ file - Path: /kb/module/work/tmp/fwd/Sample5_interleaved.fastq. ' +
+            'Input Shock ID : ',
+            do_startswith=True)
         self.delete_shock_node(ret['id'])
 
     def test_bad_paired_end_reads(self):
@@ -1217,8 +1268,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                 'name': 'pairedreads1',
                                 'interleaved': 0},
                                'Reading FASTQ record failed - non-blank lines are not a ' +
-                               'multiple of four.', 
-                               do_startswith=True) 
+                               'multiple of four.',
+                               do_startswith=True)
 
     # Download tests ########################################################
 

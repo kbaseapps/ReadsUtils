@@ -120,11 +120,10 @@ class ReadsUtils:
         if not shock and revfile:
             revid = os.path.abspath(os.path.expanduser(revfile))
         interleaved = 0
-        if params.get('interleaved') or revid:
-            interleaved = 1
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
-        if interleaved or revid:
+        if params.get('interleaved') or revid:
+            interleaved = 1
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
         seqtype = params.get('sequencing_tech')
@@ -154,28 +153,6 @@ class ReadsUtils:
                       'read_orientation_outward': read_orientation_out
                       })
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
-
-    def process_files_for_upload(self, fwdfile, revfile, interleaved):
-        params = [{'file_path': fwdfile,
-                   'make_handle': 1,
-                   'pack': 'gzip'}]
-        if revfile:
-            params.append({'file_path': revfile,
-                           'make_handle': 1,
-                           'pack': 'gzip'})
-        self.log('validating files')
-        for f in params:
-            valid = self.validateFASTQ({}, [{'file_path': f['file_path'],
-                                       'interleaved': interleaved}])
-            if not valid[0][0]['validated']:
-                raise ValueError('Invalid fasta file ' + f['file_path'])
-        self.log('validation complete, uploading files to shock')
-        dfu = DataFileUtil(self.callback_url)
-        files = dfu.file_to_shock_mass(params)
-        if revfile:
-            return (files[0]['handle'], files[1]['handle'],
-                    files[0]['size'], files[1]['size'])
-        return files[0]['handle'], None, files[0]['size'], None
 
     def process_ternary(self, params, boolname):
         if params.get(boolname) is None:
@@ -890,21 +867,46 @@ class ReadsUtils:
             revname = None
             fwdid = None
             revid = None
+
+        actualpath = fwdpath
         if revpath:
             # now interleave the files
-            intpath = os.path.join(self.scratch, self.get_file_prefix() + '.inter.fastq')
+            actualpath = os.path.join(self.scratch, self.get_file_prefix() + '.inter.fastq')
             self.interleave(None, None, fwdname, fwdid,
-                            revname, revid, fwdpath, revpath, intpath)
-            fwdpath = intpath
-            revpath = None
+                            revname, revid, fwdpath, revpath, actualpath)
 
         interleaved = 1 if not single_end else 0
+        file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
+                                        'interleaved': interleaved}])
+        if not file_valid[0][0]['validated']:
+            validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
+            if shock:
+                if revid:
+                    validation_error_message += (
+                        " Input Shock IDs - FWD Shock ID : " +
+                        fwdid + ", REV Shock ID : " + revid +
+                        ". FWD File Name : " + fwdname +
+                        ". REV File Name : " + revname +
+                        ". FWD Path : " + fwdpath +
+                        ". REV Path : " + revpath + ".")
+                else:
+                    validation_error_message += (" Input Shock ID : " + fwdid +
+                                                 ". File Name : " + fwdname + ".")
+            elif revpath:
+                validation_error_message += (" Input Files Paths - FWD Path : " +
+                                             fwdpath + ", REV Path : " + revpath + ".")
+            raise ValueError(validation_error_message)
 
-        fhandle, rhandle, fsize, rsize = \
-            self.process_files_for_upload(fwdpath, revpath, interleaved)
+        self.log('validation complete, uploading files to shock')
 
-        # calculate the stats for fwd_file.
-        o = self.calculate_fq_stats(o, fwdpath)
+        uploadedfile = dfu.file_to_shock({'file_path': actualpath,
+                                          'make_handle': 1,
+                                          'pack': 'gzip'})
+        fhandle = uploadedfile['handle']
+        fsize = uploadedfile['size']
+
+        # calculate the stats for file.
+        o = self.calculate_fq_stats(o, actualpath)
 
         fwdfile = {'file': fhandle,
                    'encoding': 'ascii',
@@ -915,12 +917,6 @@ class ReadsUtils:
             o['lib'] = fwdfile
         else:
             o['lib1'] = fwdfile
-            if rhandle:
-                o['lib2'] = {'file': rhandle,
-                             'encoding': 'ascii',
-                             'size': rsize,
-                             'type': 'fq'
-                             }
 
         so = {'type': kbtype,
               'data': o
