@@ -12,7 +12,7 @@ from pprint import pprint
 from zipfile import ZipFile
 
 import requests
-from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
+from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport
 from DataFileUtil.baseclient import ServerError as DFUError
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
@@ -1138,8 +1138,8 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'bar'
              },
             'Invalid FASTQ file - Path: /kb/module/work/tmp/fwd/Sample1_invalid.fastq. ' +
-            'Input Shock ID : ',
-            do_startswith=True)
+            'Input Shock ID : ' + ret['id'] +
+            '. File Name : Sample1_invalid.fastq.')
         self.delete_shock_node(ret['id'])
 
     def test_upload_fail_bad_fastq_file(self):
@@ -1197,8 +1197,8 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'bar'
              },
             'Invalid FASTQ file - Path: /kb/module/work/tmp/fwd/Sample5_interleaved.fastq. ' +
-            'Input Shock ID : ',
-            do_startswith=True)
+            'Input Shock ID : ' + ret['id'] +
+            '. File Name : Sample5_interleaved.fastq.')
         self.delete_shock_node(ret['id'])
 
     def test_bad_paired_end_reads(self):
@@ -1251,8 +1251,9 @@ class ReadsUtilsTest(unittest.TestCase):
                                 'name': 'pairedreads1',
                                 'interleaved': 0},
                                'Interleave failed - reads files do not have ' +
-                               'an equal number of records. ',
-                               do_startswith=True)
+                               'an equal number of records. Forward Path ' +
+                               '/kb/module/work/tmp/small.forward.fq, ' +
+                               'Reverse Path /kb/module/work/tmp/Sample5_noninterleaved.1.fastq.')
 
     def test_missing_line_paired_end_reads_file(self):
         fwdtf = 'Sample5_noninterleaved.1.missing_line.fastq'
@@ -1269,7 +1270,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                 'interleaved': 0},
                                'Reading FASTQ record failed - non-blank lines are not a ' +
                                'multiple of four.',
-                               do_startswith=True)
+                               do_startswith=True
+                               )
 
     # Download tests ########################################################
 

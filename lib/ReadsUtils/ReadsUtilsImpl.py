@@ -836,6 +836,7 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
+        del ctx
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
             self._proc_upload_reads_params(params))
