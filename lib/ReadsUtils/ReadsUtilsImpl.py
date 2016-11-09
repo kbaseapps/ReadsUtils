@@ -8,6 +8,7 @@ import shutil
 from pprint import pformat
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from DataFileUtil.baseclient import ServerError as DFUError
+from kb_ea_utils.kb_ea_utilsClient import kb_ea_utils
 from Workspace.WorkspaceClient import Workspace
 from Workspace.baseclient import ServerError as WorkspaceError
 from numbers import Number
@@ -34,7 +35,7 @@ class ReadsUtils:
     VERSION = "0.1.1"
     GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
     GIT_COMMIT_HASH = "43386a99be668244c08048afbe190fdbde3245f6"
-    
+
     #BEGIN_CLASS_HEADER
 
     TRUE = 'true'
@@ -118,14 +119,13 @@ class ReadsUtils:
                              'with a local forward reads file')
         if not shock and revfile:
             revid = os.path.abspath(os.path.expanduser(revfile))
-        interleaved = 1 if params.get('interleaved') else 0
+        interleaved = 0
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
-        if interleaved or revid:
+        if params.get('interleaved') or revid:
+            interleaved = 1
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
-        if revid:
-            interleaved = 0
         seqtype = params.get('sequencing_tech')
         if not seqtype:
             raise ValueError('The sequencing technology must be provided')
@@ -146,66 +146,13 @@ class ReadsUtils:
         issd = params.get('insert_size_std_dev')
         self._check_pos(issd, 'insert_size_std_dev')
         if not single_end:
+            read_orientation_out = 1 if params.get('read_orientation_outward') else 0
             o.update({'insert_size_mean': ism,
                       'insert_size_std_dev': issd,
                       'interleaved': interleaved,
-                      'read_orientation_outward': 1 if params.get(
-                            'read_orientation_outward') else 0
+                      'read_orientation_outward': read_orientation_out
                       })
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
-
-    def process_shock_ids_for_upload(self, fwdid, revid, interleaved):
-        fileinput = [{'shock_id': fwdid,
-                      'file_path': self.scratch + '/fwd/',
-                      'unpack': 'uncompress'}]
-        if revid:
-            fileinput.append({'shock_id': revid,
-                              'file_path': self.scratch + '/rev/',
-                              'unpack': 'uncompress'})
-        dfu = DataFileUtil(self.callback_url)
-        self.log('downloading reads files from Shock')
-        files = dfu.shock_to_file_mass(fileinput)
-        self.log('download complete, validating files')
-        for f, i in zip(files, fileinput):
-            if not self.validateFASTQ(
-                    {}, [{'file_path': f['file_path'],
-                          'interleaved': interleaved
-                          }])[0][0]['validated']:
-                raise ValueError('Invalid fasta file {} from Shock node {}'
-                                 .format(f['file_path'], i['shock_id']))
-        self.log('file validation complete')
-        self.log('coercing forward reads node to my control, muhahahaha!')
-        fwdr = dfu.own_shock_node({'shock_id': fwdid, 'make_handle': 1})
-        self.log('coercing complete, my evil schemes know no bounds')
-        if revid:
-            self.log('coercing reverse reads node to my control, muhahahaha!')
-            revr = dfu.own_shock_node({'shock_id': revid, 'make_handle': 1})
-            self.log('coercing complete. Will I stop at nothing?')
-            return (fwdr['handle'], revr['handle'],
-                    files[0]['size'], files[1]['size'])
-        return fwdr['handle'], None, files[0]['size'], None
-
-    def process_files_for_upload(self, fwdfile, revfile, interleaved):
-        params = [{'file_path': fwdfile,
-                   'make_handle': 1,
-                   'pack': 'gzip'}]
-        if revfile:
-            params.append({'file_path': revfile,
-                           'make_handle': 1,
-                           'pack': 'gzip'})
-        self.log('validating files')
-        for f in params:
-            if not self.validateFASTQ(
-                {}, [{'file_path': f['file_path'], 'interleaved': interleaved}]
-                    )[0][0]['validated']:
-                raise ValueError('Invalid fasta file ' + f['file_path'])
-        self.log('validation complete, uploading files to shock')
-        dfu = DataFileUtil(self.callback_url)
-        files = dfu.file_to_shock_mass(params)
-        if revfile:
-            return (files[0]['handle'], files[1]['handle'],
-                    files[0]['size'], files[1]['size'])
-        return files[0]['handle'], None, files[0]['size'], None
 
     def process_ternary(self, params, boolname):
         if params.get(boolname) is None:
@@ -297,6 +244,16 @@ class ReadsUtils:
         self.copy_field(data, 'read_count', ret)
         self.copy_field(data, 'read_size', ret)
         self.copy_field(data, 'gc_content', ret)
+        self.copy_field(data, 'total_bases', ret)
+        self.copy_field(data, 'read_length_mean', ret)
+        self.copy_field(data, 'read_length_stdev', ret)
+        self.copy_field(data, 'phred_type', ret)
+        self.copy_field(data, 'number_of_duplicates', ret)
+        self.copy_field(data, 'qual_min', ret)
+        self.copy_field(data, 'qual_max', ret)
+        self.copy_field(data, 'qual_mean', ret)
+        self.copy_field(data, 'qual_stdev', ret)
+        self.copy_field(data, 'base_percentages', ret)
 
         return ret
 
@@ -325,9 +282,9 @@ class ReadsUtils:
                   'unpack': 'uncompress',
                   'file_path': os.path.join(self.scratch, handle['id'])
                   }
-        # TODO LATER may want to do dl en masse, but that means if there's a bad file it won't be caught until everythings dl'd @IgnorePep8
-        # TODO LATER add method to DFU to get shock attribs and check filename prior to download @IgnorePep8
-        # TODO LATER at least check handle filename & file type are ok before download @IgnorePep8
+        # TODO LATER may want to do dl en masse, but that means if there's a bad file it won't be caught until everythings dl'd @IgnorePep8 # noqa
+        # TODO LATER add method to DFU to get shock attribs and check filename prior to download @IgnorePep8 # noqa
+        # TODO LATER at least check handle filename & file type are ok before download
         dfu = DataFileUtil(self.callback_url)
         ret = dfu.shock_to_file(params)
         fn = ret['node_file_name']
@@ -345,7 +302,7 @@ class ReadsUtils:
                          'object {} ({}). Shock node {}')
                         .format(n, f, obj_name, ref, handle['id']))
                 ok = True
-        # TODO this is untested. You have to try pretty hard to upload a file without a name to Shock. @IgnorePep8
+        # TODO this is untested. You have to try pretty hard to upload a file without a name to Shock. @IgnorePep8 # noqa
         if not ok:
             raise ValueError(
                 'Unable to determine file type from Shock or Workspace ' +
@@ -388,12 +345,15 @@ class ReadsUtils:
                 l = f.readline()
             if not l:  # EOF
                 if i != 0:
-                    raise ValueError(
-                        ('Reading FASTQ record failed - non-blank lines ' +
-                         'are not a multiple of four. Workspace reads ' +
-                         'object {} ({}), Shock node {}, Shock filename {}')
-                        .format(source_obj_name, source_obj_ref,
-                                shock_node, shock_filename))
+                    error_message_bindings = [shock_node, shock_filename]
+                    error_message = 'Reading FASTQ record failed - non-blank lines are ' \
+                                    'not a multiple of four. '
+                    if source_obj_ref is not None and source_obj_name is not None:
+                        error_message += 'Workspace reads object {} ({}), '
+                        error_message_bindings.insert(0, source_obj_ref)
+                        error_message_bindings.insert(0, source_obj_name)
+                    error_message += 'Shock node {}, Shock filename {}'
+                    raise ValueError(error_message.format(*error_message_bindings))
                 else:
                     return ''
             r = r + l
@@ -401,6 +361,7 @@ class ReadsUtils:
 
     # this assumes that the FASTQ files are properly formatted and matched,
     # which they should be if they're in KBase.
+    # source_obj_ref and source_obj_name will be None if done from upload.
     def interleave(self, source_obj_ref, source_obj_name, fwd_shock_filename,
                    fwd_shock_node, rev_shock_filename, rev_shock_node,
                    fwdpath, revpath, targetpath):
@@ -415,16 +376,22 @@ class ReadsUtils:
                     rrec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
                         rev_shock_filename, rev_shock_node, r)
+                    error_message_bindings = list()
                     if (not frec and rrec) or (frec and not rrec):
-                        raise ValueError(
-                            ('Interleave failed - reads files do not have ' +
-                             'an equal number of records. Workspace reads ' +
-                             'object {} ({}), ' +
-                             'forward Shock node {}, filename {}, ' +
-                             'reverse Shock node {}, filename {}')
-                            .format(source_obj_name, source_obj_ref,
-                                    fwd_shock_node, fwd_shock_filename,
-                                    rev_shock_node, rev_shock_filename))
+                        error_message = 'Interleave failed - reads files do not have '\
+                                        'an equal number of records. '
+                        if source_obj_name is not None and source_obj_ref is not None:
+                            error_message += 'Workspace reads object {} ({}). '
+                            error_message_bindings.insert(0, source_obj_ref)
+                            error_message_bindings.insert(0, source_obj_name)
+                        if fwd_shock_node is not None and rev_shock_node is not None:
+                            error_message += 'forward Shock node {}, filename {}, ' \
+                                             'reverse Shock node {}, filename {}. '
+                            error_message_bindings.extend([fwd_shock_node, fwd_shock_filename,
+                                                           rev_shock_node, rev_shock_filename])
+                        error_message += 'Forward Path {}, Reverse Path {}.'
+                        error_message_bindings.extend([fwdpath, revpath])
+                        raise ValueError(error_message.format(*error_message_bindings))
                     if not frec:  # not rrec is implied at this point
                         break
                     t.write(frec)
@@ -460,7 +427,6 @@ class ReadsUtils:
 
     def process_interleaved(self, source_obj_ref, source_obj_name,
                             handle, interleave, file_type=None):
-
         path, name = self._download_reads_from_shock(
             source_obj_ref, source_obj_name, handle, file_type)
 
@@ -504,9 +470,8 @@ class ReadsUtils:
             # we expect the job runner to clean up for us
             intpath = os.path.join(self.scratch, self.get_file_prefix() +
                                    '.inter.fastq')
-            self.interleave(
-                    source_obj_ref, source_obj_name, fwdname, fwdhandle['id'],
-                    revname, revhandle['id'], fwdpath, revpath, intpath)
+            self.interleave(source_obj_ref, source_obj_name, fwdname, fwdhandle['id'],
+                            revname, revhandle['id'], fwdpath, revpath, intpath)
             ret = {'fwd': intpath,
                    'fwd_name': fwdname,
                    'rev': None,
@@ -552,6 +517,7 @@ class ReadsUtils:
 
         # lib1 = KBaseFile, handle_1 = KBaseAssembly
         if kbasefile:
+
             if single:
                 sreads = data['lib']['file']
                 type_ = data['lib']['type']
@@ -605,9 +571,9 @@ class ReadsUtils:
         # TODO per transform service notes, we need a better fasta validator
         # a good start would be not calling FVTester but writing our own
         # wrapper (Py4J?) that takes options for types etc.
-        # see https://github.com/jwaldman/FastaValidator/blob/master/src/demo/FVTester.java @IgnorePep8
+        # see https://github.com/jwaldman/FastaValidator/blob/master/src/demo/FVTester.java
         # note the version in jars returns non-zero error codes:
-        # https://github.com/srividya22/FastaValidator/commit/67e2d860f1869b9a76033e71fb2aaff910b7c2e3 @IgnorePep8
+        # https://github.com/srividya22/FastaValidator/commit/67e2d860f1869b9a76033e71fb2aaff910b7c2e3
         # Better yet, move this to a Java SDK module, don't make a system
         # call and expose useful options.
         retcode = subprocess.call(
@@ -625,6 +591,58 @@ class ReadsUtils:
         # return the results
         return [out]
 
+    def calculate_fq_stats(self, reads_object, file_path):
+        # TODO : Remove the ", service_ver='dev'" below once kb_ea_utils is released and this is released @IgnorePep8 # noqa
+        # TODO : Once TASK-158 is complete the EA-utils report parsing should be moved out of here and use the data_structure returned instead @IgnorePep8 # noqa
+        eautils = kb_ea_utils(self.callback_url, service_ver='dev')
+        ea_report = eautils.get_ea_utils_stats({'read_library_path': file_path})
+#        print "Full Report : {}".format(ea_report)
+
+        report_lines = ea_report.splitlines()
+        report_to_object_mappings = {'reads': 'read_count',
+                                     'total bases': 'total_bases',
+                                     'len mean': 'read_length_mean',
+                                     'len stdev': 'read_length_stdev',
+                                     'phred': 'phred_type',
+                                     'dups': 'number_of_duplicates',
+                                     'qual min': 'qual_min',
+                                     'qual max': 'qual_max',
+                                     'qual mean': 'qual_mean',
+                                     'qual stdev': 'qual_stdev'}
+        integer_fields = ['read_count', 'total_bases', 'number_of_duplicates']
+        for line in report_lines:
+            line_elements = line.split()
+            line_value = line_elements.pop()
+            line_key = " ".join(line_elements)
+            line_key = line_key.strip()
+            if line_key in report_to_object_mappings:
+                # print ":{}: = :{}:".format(report_to_object_mappings[line_key],line_value)
+                value_to_use = None
+                if line_key == 'phred':
+                    value_to_use = line_value.strip()
+                elif report_to_object_mappings[line_key] in integer_fields:
+                    value_to_use = int(line_value.strip())
+                else:
+                    value_to_use = float(line_value.strip())
+                reads_object[report_to_object_mappings[line_key]] = value_to_use
+            elif line_key.startswith("%") and not line_key.startswith("%dup"):
+                if 'base_percentages' not in reads_object:
+                    reads_object['base_percentages'] = dict()
+                dict_key = line_key.strip("%")
+                reads_object['base_percentages'][dict_key] = float(line_value.strip())
+        # populate the GC content (as a value betwwen 0 and 1)
+        if 'base_percentages' in reads_object:
+            gc_content = 0
+            if "G" in reads_object['base_percentages']:
+                gc_content += reads_object['base_percentages']["G"]
+            if "C" in reads_object['base_percentages']:
+                gc_content += reads_object['base_percentages']["C"]
+            reads_object["gc_content"] = gc_content / 100
+        # set number of dups if no dups, but read_count
+        if 'read_count' in reads_object and 'number_of_duplicates' not in reads_object:
+            reads_object["number_of_duplicates"] = 0
+        return reads_object
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -636,7 +654,6 @@ class ReadsUtils:
         self.ws_url = config['workspace-url']
         #END_CONSTRUCTOR
         pass
-    
 
     def validateFASTQ(self, ctx, params):
         """
@@ -743,7 +760,6 @@ class ReadsUtils:
            parameters: rev_id - the shock node id containing the
            reverse/right reads for paired end, non-interleaved reads. - OR -
            rev_file - a local path to the reads data file containing the
-           reverse/right reads for paired end, non-interleaved reads.
            single_genome - whether the reads are from a single genome or a
            metagenome. Default is single genome. strain - information about
            the organism strain that was sequenced. source - information about
@@ -820,18 +836,79 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
+        del ctx
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
             self._proc_upload_reads_params(params))
-        interleaved = 1 if (not single_end and not revid) else 0
+        # IF from shock fwdid and revid are shock nodes, if not shock they are file paths
+        dfu = DataFileUtil(self.callback_url)
+        fwdpath = None
+        revpath = None
         if shock:
-            fhandle, rhandle, fsize, rsize = self.process_shock_ids_for_upload(
-                fwdid, revid, interleaved)
+            # Grab files from Shock
+            fileinput = [{'shock_id': fwdid,
+                          'file_path': self.scratch + '/fwd/',
+                          'unpack': 'uncompress'}]
+            if revid:
+                fileinput.append({'shock_id': revid,
+                                  'file_path': self.scratch + '/rev/',
+                                  'unpack': 'uncompress'})
+            self.log('downloading reads file(s) from Shock')
+            files = dfu.shock_to_file_mass(fileinput)
+            fwdpath = files[0]["file_path"]
+            fwdname = files[0]["node_file_name"]
+            if revid:
+                revpath = files[1]["file_path"]
+                revname = files[1]["node_file_name"]
         else:
-            fhandle, rhandle, fsize, rsize = self.process_files_for_upload(
-                fwdid, revid, interleaved)
+            # Not shock
+            fwdpath = fwdid
+            revpath = revid
+            fwdname = None
+            revname = None
+            fwdid = None
+            revid = None
 
-        # TODO calculate gc content, read size, read_count (find a program)
+        actualpath = fwdpath
+        if revpath:
+            # now interleave the files
+            actualpath = os.path.join(self.scratch, self.get_file_prefix() + '.inter.fastq')
+            self.interleave(None, None, fwdname, fwdid,
+                            revname, revid, fwdpath, revpath, actualpath)
+
+        interleaved = 1 if not single_end else 0
+        file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
+                                        'interleaved': interleaved}])
+        if not file_valid[0][0]['validated']:
+            validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
+            if shock:
+                if revid:
+                    validation_error_message += (
+                        " Input Shock IDs - FWD Shock ID : " +
+                        fwdid + ", REV Shock ID : " + revid +
+                        ". FWD File Name : " + fwdname +
+                        ". REV File Name : " + revname +
+                        ". FWD Path : " + fwdpath +
+                        ". REV Path : " + revpath + ".")
+                else:
+                    validation_error_message += (" Input Shock ID : " + fwdid +
+                                                 ". File Name : " + fwdname + ".")
+            elif revpath:
+                validation_error_message += (" Input Files Paths - FWD Path : " +
+                                             fwdpath + ", REV Path : " + revpath + ".")
+            raise ValueError(validation_error_message)
+
+        self.log('validation complete, uploading files to shock')
+
+        uploadedfile = dfu.file_to_shock({'file_path': actualpath,
+                                          'make_handle': 1,
+                                          'pack': 'gzip'})
+        fhandle = uploadedfile['handle']
+        fsize = uploadedfile['size']
+
+        # calculate the stats for file.
+        o = self.calculate_fq_stats(o, actualpath)
+
         fwdfile = {'file': fhandle,
                    'encoding': 'ascii',
                    'size': fsize,
@@ -841,12 +918,6 @@ class ReadsUtils:
             o['lib'] = fwdfile
         else:
             o['lib1'] = fwdfile
-            if rhandle:
-                o['lib2'] = {'file': rhandle,
-                             'encoding': 'ascii',
-                             'size': rsize,
-                             'type': 'fq'
-                             }
 
         so = {'type': kbtype,
               'data': o
@@ -856,7 +927,7 @@ class ReadsUtils:
         else:
             so['objid'] = objid
         self.log('saving workspace object')
-        dfu = DataFileUtil(self.callback_url)
+
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
         self.log('save complete')
 
