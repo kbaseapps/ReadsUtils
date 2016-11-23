@@ -2036,7 +2036,9 @@ class ReadsUtilsTest(unittest.TestCase):
         self.download_error(
             [self.getWsName() + '/foo'],
             'No object with name foo exists in workspace ' +
-            str(self.ws_info[0]), exception=DFUError)
+            str(self.ws_info[0]) + ' (name ' +
+            self.getWsName() + ')',
+            exception=DFUError)
 
     def test_no_libs(self):
 

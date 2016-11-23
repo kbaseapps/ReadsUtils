@@ -107,13 +107,56 @@ class kb_ea_utils(object):
 
     def get_ea_utils_stats(self, input_params, context=None):
         """
-        This function should be used for getting statistics on fastq files. Input is string of file path
+        This function should be used for getting statistics on fastq files. Input is string of file path.
+        Output is a report string.
         :param input_params: instance of type "ea_utils_params"
            (read_library_path : absolute path of fastq files) -> structure:
            parameter "read_library_path" of String
         :returns: instance of String
         """
         job_id = self._get_ea_utils_stats_submit(input_params, context)
+        async_job_check_time = self._client.async_job_check_time
+        while True:
+            time.sleep(async_job_check_time)
+            async_job_check_time = (async_job_check_time *
+                self._client.async_job_check_time_scale_percent / 100.0)
+            if async_job_check_time > self._client.async_job_check_max_time:
+                async_job_check_time = self._client.async_job_check_max_time
+            job_state = self._check_job(job_id)
+            if job_state['finished']:
+                return job_state['result'][0]
+
+    def _calculate_fastq_stats_submit(self, input_params, context=None):
+        return self._client._submit_job(
+             'kb_ea_utils.calculate_fastq_stats', [input_params],
+             self._service_ver, context)
+
+    def calculate_fastq_stats(self, input_params, context=None):
+        """
+        This function should be used for getting statistics on fastq files. Input is string of file path.
+        Output is a data structure with different fields.
+        :param input_params: instance of type "ea_utils_params"
+           (read_library_path : absolute path of fastq files) -> structure:
+           parameter "read_library_path" of String
+        :returns: instance of type "ea_report" (read_count - the number of
+           reads in the this dataset total_bases - the total number of bases
+           for all the the reads in this library. gc_content - the GC content
+           of the reads. read_length_mean - The average read length size
+           read_length_stdev - The standard deviation read lengths phred_type
+           - The scale of phred scores number_of_duplicates - The number of
+           reads that are duplicates qual_min - min quality scores qual_max -
+           max quality scores qual_mean - mean quality scores qual_stdev -
+           stdev of quality scores base_percentages - The per base percentage
+           breakdown) -> structure: parameter "read_count" of Long, parameter
+           "total_bases" of Long, parameter "gc_content" of Double, parameter
+           "read_length_mean" of Double, parameter "read_length_stdev" of
+           Double, parameter "phred_type" of String, parameter
+           "number_of_duplicates" of Long, parameter "qual_min" of Double,
+           parameter "qual_max" of Double, parameter "qual_mean" of Double,
+           parameter "qual_stdev" of Double, parameter "base_percentages" of
+           mapping from String to Double
+        """
+        job_id = self._calculate_fastq_stats_submit(input_params, context)
         async_job_check_time = self._client.async_job_check_time
         while True:
             time.sleep(async_job_check_time)

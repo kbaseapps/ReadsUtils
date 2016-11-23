@@ -591,56 +591,12 @@ class ReadsUtils:
         # return the results
         return [out]
 
-    def calculate_fq_stats(self, reads_object, file_path):
+    def get_fq_stats(self, reads_object, file_path):
         # TODO : Remove the ", service_ver='dev'" below once kb_ea_utils is released and this is released @IgnorePep8 # noqa
-        # TODO : Once TASK-158 is complete the EA-utils report parsing should be moved out of here and use the data_structure returned instead @IgnorePep8 # noqa
         eautils = kb_ea_utils(self.callback_url, service_ver='dev')
-        ea_report = eautils.get_ea_utils_stats({'read_library_path': file_path})
-#        print "Full Report : {}".format(ea_report)
-
-        report_lines = ea_report.splitlines()
-        report_to_object_mappings = {'reads': 'read_count',
-                                     'total bases': 'total_bases',
-                                     'len mean': 'read_length_mean',
-                                     'len stdev': 'read_length_stdev',
-                                     'phred': 'phred_type',
-                                     'dups': 'number_of_duplicates',
-                                     'qual min': 'qual_min',
-                                     'qual max': 'qual_max',
-                                     'qual mean': 'qual_mean',
-                                     'qual stdev': 'qual_stdev'}
-        integer_fields = ['read_count', 'total_bases', 'number_of_duplicates']
-        for line in report_lines:
-            line_elements = line.split()
-            line_value = line_elements.pop()
-            line_key = " ".join(line_elements)
-            line_key = line_key.strip()
-            if line_key in report_to_object_mappings:
-                # print ":{}: = :{}:".format(report_to_object_mappings[line_key],line_value)
-                value_to_use = None
-                if line_key == 'phred':
-                    value_to_use = line_value.strip()
-                elif report_to_object_mappings[line_key] in integer_fields:
-                    value_to_use = int(line_value.strip())
-                else:
-                    value_to_use = float(line_value.strip())
-                reads_object[report_to_object_mappings[line_key]] = value_to_use
-            elif line_key.startswith("%") and not line_key.startswith("%dup"):
-                if 'base_percentages' not in reads_object:
-                    reads_object['base_percentages'] = dict()
-                dict_key = line_key.strip("%")
-                reads_object['base_percentages'][dict_key] = float(line_value.strip())
-        # populate the GC content (as a value betwwen 0 and 1)
-        if 'base_percentages' in reads_object:
-            gc_content = 0
-            if "G" in reads_object['base_percentages']:
-                gc_content += reads_object['base_percentages']["G"]
-            if "C" in reads_object['base_percentages']:
-                gc_content += reads_object['base_percentages']["C"]
-            reads_object["gc_content"] = gc_content / 100
-        # set number of dups if no dups, but read_count
-        if 'read_count' in reads_object and 'number_of_duplicates' not in reads_object:
-            reads_object["number_of_duplicates"] = 0
+        ea_stats_dict = eautils.calculate_fastq_stats({'read_library_path': file_path})
+        for key in ea_stats_dict:
+            reads_object[key] = ea_stats_dict[key]
         return reads_object
 
     #END_CLASS_HEADER
@@ -907,7 +863,7 @@ class ReadsUtils:
         fsize = uploadedfile['size']
 
         # calculate the stats for file.
-        o = self.calculate_fq_stats(o, actualpath)
+        o = self.get_fq_stats(o, actualpath)
 
         fwdfile = {'file': fhandle,
                    'encoding': 'ascii',
