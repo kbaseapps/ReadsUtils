@@ -592,8 +592,7 @@ class ReadsUtils:
         return [out]
 
     def get_fq_stats(self, reads_object, file_path):
-        # TODO : Remove the ", service_ver='dev'" below once kb_ea_utils is released and this is released @IgnorePep8 # noqa
-        eautils = kb_ea_utils(self.callback_url, service_ver='dev')
+        eautils = kb_ea_utils(self.callback_url)
         ea_stats_dict = eautils.calculate_fastq_stats({'read_library_path': file_path})
         for key in ea_stats_dict:
             reads_object[key] = ea_stats_dict[key]
