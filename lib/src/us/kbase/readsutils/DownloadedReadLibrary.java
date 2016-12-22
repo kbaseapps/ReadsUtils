@@ -36,10 +36,22 @@ import us.kbase.kbasecommon.StrainInfo;
  *     genetic fragments. null if unavailable or single end reads.
  * int read_count - the number of reads in the this dataset. null if
  *     unavailable.
- * int read_size - the total size of the reads, in bases. null if
- *     unavailable.
+ * int read_size - sequencing parameter defining the expected read length. 
+ *     For paired end reads, this is the expected length of the total of 
+ *     the two reads. null if unavailable.
  * float gc_content - the GC content of the reads. null if
  *     unavailable.
+ * int total_bases - The total number of bases in all the reads
+ * float read_length_mean - The mean read length. null if unavailable.
+ * float read_length_stdev - The std dev of read length. null if unavailable.
+ * string phred_type - Phred type: 33 or 64. null if unavailable.
+ * int number_of_duplicates - Number of duplicate reads. null if unavailable.
+ * float qual_min - Minimum Quality Score. null if unavailable.
+ * float qual_max - Maximum Quality Score. null if unavailable.
+ * float qual_mean - Mean Quality Score. null if unavailable.
+ * float qual_stdev - Std dev of Quality Scores. null if unavailable.
+ * mapping<string, float> base_percentages - percentage of total bases being 
+ *     a particular nucleotide.  Null if unavailable.
  * </pre>
  * 
  */
@@ -57,7 +69,17 @@ import us.kbase.kbasecommon.StrainInfo;
     "insert_size_std_dev",
     "read_count",
     "read_size",
-    "gc_content"
+    "gc_content",
+    "total_bases",
+    "read_length_mean",
+    "read_length_stdev",
+    "phred_type",
+    "number_of_duplicates",
+    "qual_min",
+    "qual_max",
+    "qual_mean",
+    "qual_stdev",
+    "base_percentages"
 })
 public class DownloadedReadLibrary {
 
@@ -84,13 +106,13 @@ public class DownloadedReadLibrary {
     @JsonProperty("files")
     private ReadsFiles files;
     @JsonProperty("ref")
-    private String ref;
+    private java.lang.String ref;
     @JsonProperty("single_genome")
-    private String singleGenome;
+    private java.lang.String singleGenome;
     @JsonProperty("read_orientation_outward")
-    private String readOrientationOutward;
+    private java.lang.String readOrientationOutward;
     @JsonProperty("sequencing_tech")
-    private String sequencingTech;
+    private java.lang.String sequencingTech;
     /**
      * <p>Original spec-file type: StrainInfo</p>
      * <pre>
@@ -125,16 +147,36 @@ public class DownloadedReadLibrary {
     @JsonProperty("source")
     private SourceInfo source;
     @JsonProperty("insert_size_mean")
-    private Double insertSizeMean;
+    private java.lang.Double insertSizeMean;
     @JsonProperty("insert_size_std_dev")
-    private Double insertSizeStdDev;
+    private java.lang.Double insertSizeStdDev;
     @JsonProperty("read_count")
     private Long readCount;
     @JsonProperty("read_size")
     private Long readSize;
     @JsonProperty("gc_content")
-    private Double gcContent;
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private java.lang.Double gcContent;
+    @JsonProperty("total_bases")
+    private Long totalBases;
+    @JsonProperty("read_length_mean")
+    private java.lang.Double readLengthMean;
+    @JsonProperty("read_length_stdev")
+    private java.lang.Double readLengthStdev;
+    @JsonProperty("phred_type")
+    private java.lang.String phredType;
+    @JsonProperty("number_of_duplicates")
+    private Long numberOfDuplicates;
+    @JsonProperty("qual_min")
+    private java.lang.Double qualMin;
+    @JsonProperty("qual_max")
+    private java.lang.Double qualMax;
+    @JsonProperty("qual_mean")
+    private java.lang.Double qualMean;
+    @JsonProperty("qual_stdev")
+    private java.lang.Double qualStdev;
+    @JsonProperty("base_percentages")
+    private Map<String, Double> basePercentages;
+    private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     /**
      * <p>Original spec-file type: ReadsFiles</p>
@@ -192,61 +234,61 @@ public class DownloadedReadLibrary {
     }
 
     @JsonProperty("ref")
-    public String getRef() {
+    public java.lang.String getRef() {
         return ref;
     }
 
     @JsonProperty("ref")
-    public void setRef(String ref) {
+    public void setRef(java.lang.String ref) {
         this.ref = ref;
     }
 
-    public DownloadedReadLibrary withRef(String ref) {
+    public DownloadedReadLibrary withRef(java.lang.String ref) {
         this.ref = ref;
         return this;
     }
 
     @JsonProperty("single_genome")
-    public String getSingleGenome() {
+    public java.lang.String getSingleGenome() {
         return singleGenome;
     }
 
     @JsonProperty("single_genome")
-    public void setSingleGenome(String singleGenome) {
+    public void setSingleGenome(java.lang.String singleGenome) {
         this.singleGenome = singleGenome;
     }
 
-    public DownloadedReadLibrary withSingleGenome(String singleGenome) {
+    public DownloadedReadLibrary withSingleGenome(java.lang.String singleGenome) {
         this.singleGenome = singleGenome;
         return this;
     }
 
     @JsonProperty("read_orientation_outward")
-    public String getReadOrientationOutward() {
+    public java.lang.String getReadOrientationOutward() {
         return readOrientationOutward;
     }
 
     @JsonProperty("read_orientation_outward")
-    public void setReadOrientationOutward(String readOrientationOutward) {
+    public void setReadOrientationOutward(java.lang.String readOrientationOutward) {
         this.readOrientationOutward = readOrientationOutward;
     }
 
-    public DownloadedReadLibrary withReadOrientationOutward(String readOrientationOutward) {
+    public DownloadedReadLibrary withReadOrientationOutward(java.lang.String readOrientationOutward) {
         this.readOrientationOutward = readOrientationOutward;
         return this;
     }
 
     @JsonProperty("sequencing_tech")
-    public String getSequencingTech() {
+    public java.lang.String getSequencingTech() {
         return sequencingTech;
     }
 
     @JsonProperty("sequencing_tech")
-    public void setSequencingTech(String sequencingTech) {
+    public void setSequencingTech(java.lang.String sequencingTech) {
         this.sequencingTech = sequencingTech;
     }
 
-    public DownloadedReadLibrary withSequencingTech(String sequencingTech) {
+    public DownloadedReadLibrary withSequencingTech(java.lang.String sequencingTech) {
         this.sequencingTech = sequencingTech;
         return this;
     }
@@ -340,31 +382,31 @@ public class DownloadedReadLibrary {
     }
 
     @JsonProperty("insert_size_mean")
-    public Double getInsertSizeMean() {
+    public java.lang.Double getInsertSizeMean() {
         return insertSizeMean;
     }
 
     @JsonProperty("insert_size_mean")
-    public void setInsertSizeMean(Double insertSizeMean) {
+    public void setInsertSizeMean(java.lang.Double insertSizeMean) {
         this.insertSizeMean = insertSizeMean;
     }
 
-    public DownloadedReadLibrary withInsertSizeMean(Double insertSizeMean) {
+    public DownloadedReadLibrary withInsertSizeMean(java.lang.Double insertSizeMean) {
         this.insertSizeMean = insertSizeMean;
         return this;
     }
 
     @JsonProperty("insert_size_std_dev")
-    public Double getInsertSizeStdDev() {
+    public java.lang.Double getInsertSizeStdDev() {
         return insertSizeStdDev;
     }
 
     @JsonProperty("insert_size_std_dev")
-    public void setInsertSizeStdDev(Double insertSizeStdDev) {
+    public void setInsertSizeStdDev(java.lang.Double insertSizeStdDev) {
         this.insertSizeStdDev = insertSizeStdDev;
     }
 
-    public DownloadedReadLibrary withInsertSizeStdDev(Double insertSizeStdDev) {
+    public DownloadedReadLibrary withInsertSizeStdDev(java.lang.Double insertSizeStdDev) {
         this.insertSizeStdDev = insertSizeStdDev;
         return this;
     }
@@ -400,33 +442,183 @@ public class DownloadedReadLibrary {
     }
 
     @JsonProperty("gc_content")
-    public Double getGcContent() {
+    public java.lang.Double getGcContent() {
         return gcContent;
     }
 
     @JsonProperty("gc_content")
-    public void setGcContent(Double gcContent) {
+    public void setGcContent(java.lang.Double gcContent) {
         this.gcContent = gcContent;
     }
 
-    public DownloadedReadLibrary withGcContent(Double gcContent) {
+    public DownloadedReadLibrary withGcContent(java.lang.Double gcContent) {
         this.gcContent = gcContent;
         return this;
     }
 
+    @JsonProperty("total_bases")
+    public Long getTotalBases() {
+        return totalBases;
+    }
+
+    @JsonProperty("total_bases")
+    public void setTotalBases(Long totalBases) {
+        this.totalBases = totalBases;
+    }
+
+    public DownloadedReadLibrary withTotalBases(Long totalBases) {
+        this.totalBases = totalBases;
+        return this;
+    }
+
+    @JsonProperty("read_length_mean")
+    public java.lang.Double getReadLengthMean() {
+        return readLengthMean;
+    }
+
+    @JsonProperty("read_length_mean")
+    public void setReadLengthMean(java.lang.Double readLengthMean) {
+        this.readLengthMean = readLengthMean;
+    }
+
+    public DownloadedReadLibrary withReadLengthMean(java.lang.Double readLengthMean) {
+        this.readLengthMean = readLengthMean;
+        return this;
+    }
+
+    @JsonProperty("read_length_stdev")
+    public java.lang.Double getReadLengthStdev() {
+        return readLengthStdev;
+    }
+
+    @JsonProperty("read_length_stdev")
+    public void setReadLengthStdev(java.lang.Double readLengthStdev) {
+        this.readLengthStdev = readLengthStdev;
+    }
+
+    public DownloadedReadLibrary withReadLengthStdev(java.lang.Double readLengthStdev) {
+        this.readLengthStdev = readLengthStdev;
+        return this;
+    }
+
+    @JsonProperty("phred_type")
+    public java.lang.String getPhredType() {
+        return phredType;
+    }
+
+    @JsonProperty("phred_type")
+    public void setPhredType(java.lang.String phredType) {
+        this.phredType = phredType;
+    }
+
+    public DownloadedReadLibrary withPhredType(java.lang.String phredType) {
+        this.phredType = phredType;
+        return this;
+    }
+
+    @JsonProperty("number_of_duplicates")
+    public Long getNumberOfDuplicates() {
+        return numberOfDuplicates;
+    }
+
+    @JsonProperty("number_of_duplicates")
+    public void setNumberOfDuplicates(Long numberOfDuplicates) {
+        this.numberOfDuplicates = numberOfDuplicates;
+    }
+
+    public DownloadedReadLibrary withNumberOfDuplicates(Long numberOfDuplicates) {
+        this.numberOfDuplicates = numberOfDuplicates;
+        return this;
+    }
+
+    @JsonProperty("qual_min")
+    public java.lang.Double getQualMin() {
+        return qualMin;
+    }
+
+    @JsonProperty("qual_min")
+    public void setQualMin(java.lang.Double qualMin) {
+        this.qualMin = qualMin;
+    }
+
+    public DownloadedReadLibrary withQualMin(java.lang.Double qualMin) {
+        this.qualMin = qualMin;
+        return this;
+    }
+
+    @JsonProperty("qual_max")
+    public java.lang.Double getQualMax() {
+        return qualMax;
+    }
+
+    @JsonProperty("qual_max")
+    public void setQualMax(java.lang.Double qualMax) {
+        this.qualMax = qualMax;
+    }
+
+    public DownloadedReadLibrary withQualMax(java.lang.Double qualMax) {
+        this.qualMax = qualMax;
+        return this;
+    }
+
+    @JsonProperty("qual_mean")
+    public java.lang.Double getQualMean() {
+        return qualMean;
+    }
+
+    @JsonProperty("qual_mean")
+    public void setQualMean(java.lang.Double qualMean) {
+        this.qualMean = qualMean;
+    }
+
+    public DownloadedReadLibrary withQualMean(java.lang.Double qualMean) {
+        this.qualMean = qualMean;
+        return this;
+    }
+
+    @JsonProperty("qual_stdev")
+    public java.lang.Double getQualStdev() {
+        return qualStdev;
+    }
+
+    @JsonProperty("qual_stdev")
+    public void setQualStdev(java.lang.Double qualStdev) {
+        this.qualStdev = qualStdev;
+    }
+
+    public DownloadedReadLibrary withQualStdev(java.lang.Double qualStdev) {
+        this.qualStdev = qualStdev;
+        return this;
+    }
+
+    @JsonProperty("base_percentages")
+    public Map<String, Double> getBasePercentages() {
+        return basePercentages;
+    }
+
+    @JsonProperty("base_percentages")
+    public void setBasePercentages(Map<String, Double> basePercentages) {
+        this.basePercentages = basePercentages;
+    }
+
+    public DownloadedReadLibrary withBasePercentages(Map<String, Double> basePercentages) {
+        this.basePercentages = basePercentages;
+        return this;
+    }
+
     @JsonAnyGetter
-    public Map<String, Object> getAdditionalProperties() {
+    public Map<java.lang.String, Object> getAdditionalProperties() {
         return this.additionalProperties;
     }
 
     @JsonAnySetter
-    public void setAdditionalProperties(String name, Object value) {
+    public void setAdditionalProperties(java.lang.String name, Object value) {
         this.additionalProperties.put(name, value);
     }
 
     @Override
-    public String toString() {
-        return ((((((((((((((((((((((((((("DownloadedReadLibrary"+" [files=")+ files)+", ref=")+ ref)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
+    public java.lang.String toString() {
+        return ((((((((((((((((((((((((((((((((((((((((((((((("DownloadedReadLibrary"+" [files=")+ files)+", ref=")+ ref)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", totalBases=")+ totalBases)+", readLengthMean=")+ readLengthMean)+", readLengthStdev=")+ readLengthStdev)+", phredType=")+ phredType)+", numberOfDuplicates=")+ numberOfDuplicates)+", qualMin=")+ qualMin)+", qualMax=")+ qualMax)+", qualMean=")+ qualMean)+", qualStdev=")+ qualStdev)+", basePercentages=")+ basePercentages)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

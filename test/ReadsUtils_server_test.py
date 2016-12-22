@@ -915,6 +915,180 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
+    def test_single_end_obj_as_input(self):
+        # GET initial object in.
+        # First load source single ends reads file.
+        tf = 'Sample1.fastq'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_file': target,
+                       'sequencing_tech': 'illumina',
+                       'wsname': self.ws_info[1],
+                       'single_genome': 0,
+                       'name': 'fileReadsSingleSource'})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/fileReadsSingleSource']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'illumina')
+        self.assertEqual(d['single_genome'], 0)
+        node = d['lib']['file']['id']
+        # Now upload another reads file to propogate properties.
+        resultsRef = self.impl.upload_reads(
+            self.ctx, {'fwd_file': target,
+                       'wsname': self.ws_info[1],
+                       'source_reads_ref': ref[0]['obj_ref'],
+                       'name': 'fileReadsSingleResult'})
+        resultsObj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/fileReadsSingleResult']})['data'][0]
+        self.assertEqual(resultsRef[0]['obj_ref'], self.make_ref(resultsObj['info']))
+        self.assertEqual(resultsObj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        resultsD = resultsObj['data']
+        self.assertEqual(resultsD['sequencing_tech'], 'illumina')
+        self.assertEqual(resultsD['single_genome'], 0)
+        resultsNode = resultsD['lib']['file']['id']
+        self.delete_shock_node(node)
+        self.delete_shock_node(resultsNode)
+
+    def test_single_end_obj_as_input_wrong_parameter(self):
+        # GET initial object in.
+        # First load source single ends reads file.
+        tf = 'Sample1.fastq'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_file': target,
+                       'sequencing_tech': 'illumina',
+                       'wsname': self.ws_info[1],
+                       'single_genome': 0,
+                       'name': 'fileReadsSingleSource2'})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/fileReadsSingleSource2']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'illumina')
+        self.assertEqual(d['single_genome'], 0)
+        node = d['lib']['file']['id']
+        # Now upload another reads file to propogate properties.
+        self.fail_upload_reads(
+            {'fwd_file': target,
+             'sequencing_tech': 'BAD.SHOULD_NOT_HERE',
+             'wsname': self.ws_info[1],
+             'source_reads_ref': ref[0]['obj_ref'],
+             'name': 'foo'
+             },
+            ("'source_reads_ref' was passed, making the following list of parameters : " +
+             "insert_size_mean, insert_size_std_dev, sequencing_tech, strain, source, " +
+             "read_orientation_outward erroneous to include"))
+        self.delete_shock_node(node)
+
+    def test_paired_end_obj_as_input(self):
+        # GET initial object in.
+        # First load source paired ends reads file.
+        fwdtf = 'small.forward.fq'
+        revtf = 'small.reverse.fq'
+        fwdtarget = os.path.join(self.scratch, fwdtf)
+        revtarget = os.path.join(self.scratch, revtf)
+        shutil.copy('data/' + fwdtf, fwdtarget)
+        shutil.copy('data/' + revtf, revtarget)
+
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_file': fwdtarget,
+                       'rev_file': revtarget,
+                       'sequencing_tech': 'illumina',
+                       'wsname': self.ws_info[1],
+                       'single_genome': 0,
+                       'name': 'pairedreadssource',
+                       'insert_size_mean': 99.9,
+                       'insert_size_std_dev': 10.1,
+                       'read_orientation_outward': 1,
+                       'interleaved': 0})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/pairedreadssource']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.PairedEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'illumina')
+        self.assertEqual(d['single_genome'], 0)
+        node = d['lib1']['file']['id']
+        # Now upload another reads file to propogate properties.
+        resultsRef = self.impl.upload_reads(
+            self.ctx, {'fwd_file': fwdtarget,
+                       'rev_file': revtarget,
+                       'wsname': self.ws_info[1],
+                       'source_reads_ref': ref[0]['obj_ref'],
+                       'name': 'pairedreadsResult'})
+        resultsObj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/pairedreadsResult']})['data'][0]
+        self.assertEqual(resultsRef[0]['obj_ref'], self.make_ref(resultsObj['info']))
+        self.assertEqual(resultsObj['info'][2].startswith(
+                        'KBaseFile.PairedEndLibrary'), True)
+        resultsD = resultsObj['data']
+        self.assertEqual(resultsD['sequencing_tech'], 'illumina')
+        self.assertEqual(resultsD['single_genome'], 0)
+        self.assertEqual(resultsD['insert_size_mean'], 99.9)
+        self.assertEqual(resultsD['insert_size_std_dev'], 10.1)
+        self.assertEqual(resultsD['read_orientation_outward'], 1)
+        self.assertEqual(resultsD['interleaved'], 1)
+        resultsNode = resultsD['lib1']['file']['id']
+        # Now check single end uploaded from paired end source (singletons case)
+        singleResultsRef = self.impl.upload_reads(
+            self.ctx, {'fwd_file': fwdtarget,
+                       'wsname': self.ws_info[1],
+                       'source_reads_ref': ref[0]['obj_ref'],
+                       'name': 'paired2SingleResult'})
+        singleResultsObj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/paired2SingleResult']})['data'][0]
+        self.assertEqual(singleResultsRef[0]['obj_ref'], self.make_ref(singleResultsObj['info']))
+        self.assertEqual(singleResultsObj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        singleResultsD = singleResultsObj['data']
+        self.assertEqual(singleResultsD['sequencing_tech'], 'illumina')
+        self.assertEqual(singleResultsD['single_genome'], 0)
+        # CHECK THEY DO NOT EXIST. NOT APPROPRIATE FOR SINGLE END
+        self.assertEqual('insert_size_mean' not in singleResultsD, True)
+        self.assertEqual('insert_size_std_dev' not in singleResultsD, True)
+        self.assertEqual('read_orientation_outward' not in singleResultsD, True)
+        singleResultsNode = singleResultsD['lib']['file']['id']
+        self.delete_shock_node(node)
+        self.delete_shock_node(resultsNode)
+        self.delete_shock_node(singleResultsNode)
+
+    def test_wrong_obj_as_input(self):
+        # GET initial object in.
+        # First load source single ends reads file.
+        tf = 'Sample1.fastq'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        bad_object_type = {'type': 'Empty.AType',
+                           'data': {"foo": 3},
+                           'name': "bad_object"
+                           }
+        bad_object = self.dfu.save_objects({'id': self.ws_info[0],
+                                            'objects':
+                                            [bad_object_type]})[0]
+
+        bad_object_ref = str(bad_object[6]) + '/' + str(bad_object[0]) + \
+            '/' + str(bad_object[4])
+        # Now try upload of reads with ref to wrong object
+        self.fail_upload_reads(
+            {'fwd_file': target,
+             'wsname': self.ws_info[1],
+             'source_reads_ref': bad_object_ref,
+             'name': 'foo'
+             },
+            ("Invalid type for object {} (bad_object). Supported types: " +
+            "KBaseFile.SingleEndLibrary KBaseFile.PairedEndLibrary " +
+            "KBaseAssembly.SingleEndLibrary " +
+            "KBaseAssembly.PairedEndLibrary").format(bad_object_ref))
+
     def check_lib(self, lib, size, filename, md5):
         shock_id = lib["file"]["id"]
         print "LIB: {}".format(str(lib))
