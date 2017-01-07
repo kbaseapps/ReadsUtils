@@ -70,43 +70,44 @@ class ReadsUtils(object):
            of the shock node containing the reads data file: either single
            end reads, forward/left reads, or interleaved reads. - OR -
            fwd_file - a local path to the reads data file: either single end
-           reads, forward/left reads, or interleaved reads. One of: wsid -
-           the id of the workspace where the reads will be saved (preferred).
-           wsname - the name of the workspace where the reads will be saved.
-           One of: objid - the id of the workspace object to save over name -
-           the name to which the workspace object will be saved Optional
-           parameters: rev_id - the shock node id containing the
-           reverse/right reads for paired end, non-interleaved reads. - OR -
-           rev_file - a local path to the reads data file containing the
-           reverse/right reads for paired end, non-interleaved reads, note
-           the reverse file will get interleaved with the forward file.
-           single_genome - whether the reads are from a single genome or a
-           metagenome. Default is single genome. strain - information about
-           the organism strain that was sequenced. source - information about
-           the organism source. interleaved - specify that the fwd reads file
-           is an interleaved paired end reads file as opposed to a single end
-           reads file. Default true, ignored if rev_id is specified.
-           read_orientation_outward - whether the read orientation is outward
-           from the set of primers. Default is false and is ignored for
-           single end reads. insert_size_mean - the mean size of the genetic
-           fragments. Ignored for single end reads. insert_size_std_dev - the
-           standard deviation of the size of the genetic fragments. Ignored
-           for single end reads. sequencing_tech - the sequencing technology
-           used to produce the reads. (Is required if source_reads_ref is not
-           specified) source_reads_ref - A workspace reference to a source
-           reads object. This is used to propogate user defined info from the
-           source reads object to the new reads object (used for filtering or
-           trimming services). Note this causes a passed in insert_size_mean,
-           insert_size_std_dev, sequencing_tech, read_orientation_outward,
-           strain, source and/or single_genome to throw an error.) ->
-           structure: parameter "fwd_id" of String, parameter "fwd_file" of
-           String, parameter "wsid" of Long, parameter "wsname" of String,
-           parameter "objid" of Long, parameter "name" of String, parameter
-           "rev_id" of String, parameter "rev_file" of String, parameter
-           "sequencing_tech" of String, parameter "single_genome" of type
-           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1)),
-           parameter "strain" of type "StrainInfo" (Information about a
-           strain. genetic_code - the genetic code of the strain. See
+           reads, forward/left reads, or interleaved reads. sequencing_tech -
+           the sequencing technology used to produce the reads. (If
+           source_reads_ref is specified then sequencing_tech must not be
+           specified) One of: wsid - the id of the workspace where the reads
+           will be saved (preferred). wsname - the name of the workspace
+           where the reads will be saved. One of: objid - the id of the
+           workspace object to save over name - the name to which the
+           workspace object will be saved Optional parameters: rev_id - the
+           shock node id containing the reverse/right reads for paired end,
+           non-interleaved reads. - OR - rev_file - a local path to the reads
+           data file containing the reverse/right reads for paired end,
+           non-interleaved reads, note the reverse file will get interleaved
+           with the forward file. single_genome - whether the reads are from
+           a single genome or a metagenome. Default is single genome. strain
+           - information about the organism strain that was sequenced. source
+           - information about the organism source. interleaved - specify
+           that the fwd reads file is an interleaved paired end reads file as
+           opposed to a single end reads file. Default true, ignored if
+           rev_id is specified. read_orientation_outward - whether the read
+           orientation is outward from the set of primers. Default is false
+           and is ignored for single end reads. insert_size_mean - the mean
+           size of the genetic fragments. Ignored for single end reads.
+           insert_size_std_dev - the standard deviation of the size of the
+           genetic fragments. Ignored for single end reads. source_reads_ref
+           - A workspace reference to a source reads object. This is used to
+           propogate user defined info from the source reads object to the
+           new reads object (used for filtering or trimming services). Note
+           this causes a passed in insert_size_mean, insert_size_std_dev,
+           sequencing_tech, read_orientation_outward, strain, source and/or
+           single_genome to throw an error.) -> structure: parameter "fwd_id"
+           of String, parameter "fwd_file" of String, parameter "wsid" of
+           Long, parameter "wsname" of String, parameter "objid" of Long,
+           parameter "name" of String, parameter "rev_id" of String,
+           parameter "rev_file" of String, parameter "sequencing_tech" of
+           String, parameter "single_genome" of type "boolean" (A boolean - 0
+           for false, 1 for true. @range (0, 1)), parameter "strain" of type
+           "StrainInfo" (Information about a strain. genetic_code - the
+           genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information

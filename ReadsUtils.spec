@@ -70,7 +70,10 @@ module ReadsUtils {
         fwd_file - a local path to the reads data file: either single end
             reads, forward/left reads, or interleaved reads.
         
-        
+        sequencing_tech - the sequencing technology used to produce the
+            reads. (If source_reads_ref is specified then sequencing_tech
+            must not be specified)
+
         One of:
         wsid - the id of the workspace where the reads will be saved
             (preferred).
@@ -103,8 +106,6 @@ module ReadsUtils {
             single end reads.
         insert_size_std_dev - the standard deviation of the size of the
             genetic fragments. Ignored for single end reads.
-        sequencing_tech - the sequencing technology used to produce the
-            reads. (Is required if source_reads_ref is not specified)
         source_reads_ref - A workspace reference to a source reads object.
             This is used to propogate user defined info from the source reads
             object to the new reads object (used for filtering or 

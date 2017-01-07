@@ -34,7 +34,7 @@ class ReadsUtils:
     ######################################### noqa
     VERSION = "0.3.0"
     GIT_URL = "https://github.com/jkbaumohl/ReadsUtils"
-    GIT_COMMIT_HASH = "42c1373f156a144d497b9bafee89509df3b266ed"
+    GIT_COMMIT_HASH = "8fc208db6e60297b68c8c70ae5fb32b4b6d061be"
 
     #BEGIN_CLASS_HEADER
 
@@ -130,14 +130,6 @@ class ReadsUtils:
         source_reads_ref = params.get('source_reads_ref')
         if source_reads_ref:
             # Means the uploaded reads is a result of an input reads object being filtered/trimmed
-            try:
-                source_reads_object = dfu.get_objects({'object_refs':
-                                                       [source_reads_ref]})['data'][0]
-            except DFUError as e:
-                self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
-                          'Logging stacktrace from workspace exception:' +
-                          '\n{}').format(source_reads_ref, e.data))
-                raise
             # Make sure that no non file related parameters are set. If so throw error.
             parameters_should_unfilled = ['insert_size_mean', 'insert_size_std_dev',
                                           'sequencing_tech', 'strain',
@@ -149,15 +141,21 @@ class ReadsUtils:
                 raise ValueError(("'source_reads_ref' was passed, making the following list of " +
                                   "parameters : {} erroneous to " +
                                   "include").format(", ".join(parameters_should_unfilled)))
+            try:
+                source_reads_object = dfu.get_objects({'object_refs':
+                                                       [source_reads_ref]})['data'][0]
+            except DFUError as e:
+                self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
+                          'Logging stacktrace from workspace exception:' +
+                          '\n{}').format(source_reads_ref, e.data))
+                raise
             # Check that it is a reads object. If not throw an eror.
             single_input, kbasefile = self.check_reads(source_reads_object)
             o = {'sequencing_tech': source_reads_object['data'].get("sequencing_tech"),
                  'single_genome': source_reads_object['data'].get("single_genome")
                  }
-            if 'strain' in source_reads_object['data']:
-                o['strain'] = source_reads_object['data']['strain']
-            if 'source' in source_reads_object['data']:
-                o['source'] = source_reads_object['data']['source']
+            self._add_field(o, source_reads_object['data'], 'strain')
+            self._add_field(o, source_reads_object['data'], 'source')
             if not single_input and not single_end:
                 # is a paired end input and trying to upload a filtered/trimmed
                 # paired end ReadsUtils. need to check for more fields.
@@ -753,43 +751,44 @@ class ReadsUtils:
            of the shock node containing the reads data file: either single
            end reads, forward/left reads, or interleaved reads. - OR -
            fwd_file - a local path to the reads data file: either single end
-           reads, forward/left reads, or interleaved reads. One of: wsid -
-           the id of the workspace where the reads will be saved (preferred).
-           wsname - the name of the workspace where the reads will be saved.
-           One of: objid - the id of the workspace object to save over name -
-           the name to which the workspace object will be saved Optional
-           parameters: rev_id - the shock node id containing the
-           reverse/right reads for paired end, non-interleaved reads. - OR -
-           rev_file - a local path to the reads data file containing the
-           reverse/right reads for paired end, non-interleaved reads, note
-           the reverse file will get interleaved with the forward file.
-           single_genome - whether the reads are from a single genome or a
-           metagenome. Default is single genome. strain - information about
-           the organism strain that was sequenced. source - information about
-           the organism source. interleaved - specify that the fwd reads file
-           is an interleaved paired end reads file as opposed to a single end
-           reads file. Default true, ignored if rev_id is specified.
-           read_orientation_outward - whether the read orientation is outward
-           from the set of primers. Default is false and is ignored for
-           single end reads. insert_size_mean - the mean size of the genetic
-           fragments. Ignored for single end reads. insert_size_std_dev - the
-           standard deviation of the size of the genetic fragments. Ignored
-           for single end reads. sequencing_tech - the sequencing technology
-           used to produce the reads. (Is required if source_reads_ref is not
-           specified) source_reads_ref - A workspace reference to a source
-           reads object. This is used to propogate user defined info from the
-           source reads object to the new reads object (used for filtering or
-           trimming services). Note this causes a passed in insert_size_mean,
-           insert_size_std_dev, sequencing_tech, read_orientation_outward,
-           strain, source and/or single_genome to throw an error.) ->
-           structure: parameter "fwd_id" of String, parameter "fwd_file" of
-           String, parameter "wsid" of Long, parameter "wsname" of String,
-           parameter "objid" of Long, parameter "name" of String, parameter
-           "rev_id" of String, parameter "rev_file" of String, parameter
-           "sequencing_tech" of String, parameter "single_genome" of type
-           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1)),
-           parameter "strain" of type "StrainInfo" (Information about a
-           strain. genetic_code - the genetic code of the strain. See
+           reads, forward/left reads, or interleaved reads. sequencing_tech -
+           the sequencing technology used to produce the reads. (If
+           source_reads_ref is specified then sequencing_tech must not be
+           specified) One of: wsid - the id of the workspace where the reads
+           will be saved (preferred). wsname - the name of the workspace
+           where the reads will be saved. One of: objid - the id of the
+           workspace object to save over name - the name to which the
+           workspace object will be saved Optional parameters: rev_id - the
+           shock node id containing the reverse/right reads for paired end,
+           non-interleaved reads. - OR - rev_file - a local path to the reads
+           data file containing the reverse/right reads for paired end,
+           non-interleaved reads, note the reverse file will get interleaved
+           with the forward file. single_genome - whether the reads are from
+           a single genome or a metagenome. Default is single genome. strain
+           - information about the organism strain that was sequenced. source
+           - information about the organism source. interleaved - specify
+           that the fwd reads file is an interleaved paired end reads file as
+           opposed to a single end reads file. Default true, ignored if
+           rev_id is specified. read_orientation_outward - whether the read
+           orientation is outward from the set of primers. Default is false
+           and is ignored for single end reads. insert_size_mean - the mean
+           size of the genetic fragments. Ignored for single end reads.
+           insert_size_std_dev - the standard deviation of the size of the
+           genetic fragments. Ignored for single end reads. source_reads_ref
+           - A workspace reference to a source reads object. This is used to
+           propogate user defined info from the source reads object to the
+           new reads object (used for filtering or trimming services). Note
+           this causes a passed in insert_size_mean, insert_size_std_dev,
+           sequencing_tech, read_orientation_outward, strain, source and/or
+           single_genome to throw an error.) -> structure: parameter "fwd_id"
+           of String, parameter "fwd_file" of String, parameter "wsid" of
+           Long, parameter "wsname" of String, parameter "objid" of Long,
+           parameter "name" of String, parameter "rev_id" of String,
+           parameter "rev_file" of String, parameter "sequencing_tech" of
+           String, parameter "single_genome" of type "boolean" (A boolean - 0
+           for false, 1 for true. @range (0, 1)), parameter "strain" of type
+           "StrainInfo" (Information about a strain. genetic_code - the
+           genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information
