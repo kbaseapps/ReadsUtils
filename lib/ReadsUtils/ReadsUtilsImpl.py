@@ -129,44 +129,8 @@ class ReadsUtils:
 
         source_reads_ref = params.get('source_reads_ref')
         if source_reads_ref:
-            # Means the uploaded reads is a result of an input reads object being filtered/trimmed
-            # Make sure that no non file related parameters are set. If so throw error.
-            parameters_should_unfilled = ['insert_size_mean', 'insert_size_std_dev',
-                                          'sequencing_tech', 'strain',
-                                          'source', 'read_orientation_outward']
-            if any(x in params for x in parameters_should_unfilled):
-                self.log(("'source_reads_ref' was passed, making the following list of " +
-                          "parameters {} erroneous to " +
-                          "include").format(",".join(parameters_should_unfilled)))
-                raise ValueError(("'source_reads_ref' was passed, making the following list of " +
-                                  "parameters : {} erroneous to " +
-                                  "include").format(", ".join(parameters_should_unfilled)))
-            try:
-                source_reads_object = dfu.get_objects({'object_refs':
-                                                       [source_reads_ref]})['data'][0]
-            except DFUError as e:
-                self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
-                          'Logging stacktrace from workspace exception:' +
-                          '\n{}').format(source_reads_ref, e.data))
-                raise
-            # Check that it is a reads object. If not throw an eror.
-            single_input, kbasefile = self.check_reads(source_reads_object)
-            o = {'sequencing_tech': source_reads_object['data'].get("sequencing_tech"),
-                 'single_genome': source_reads_object['data'].get("single_genome")
-                 }
-            self._add_field(o, source_reads_object['data'], 'strain')
-            self._add_field(o, source_reads_object['data'], 'source')
-            if not single_input and not single_end:
-                # is a paired end input and trying to upload a filtered/trimmed
-                # paired end ReadsUtils. need to check for more fields.
-                ism = source_reads_object['data'].get('insert_size_mean')
-                issd = source_reads_object['data'].get('insert_size_std_dev')
-                read_orientation_out = source_reads_object['data'].get('read_orientation_outward')
-                o.update({'insert_size_mean': ism,
-                          'insert_size_std_dev': issd,
-                          'interleaved': interleaved,
-                          'read_orientation_outward': read_orientation_out
-                          })
+            o = self._propagate_reference_reads_info(params, dfu, source_reads_ref,
+                                                     interleaved, single_end)
         else:
             seqtype = params.get('sequencing_tech')
             if not seqtype:
@@ -195,6 +159,48 @@ class ReadsUtils:
                           'read_orientation_outward': read_orientation_out
                           })
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
+
+    def _propagate_reference_reads_info(self, params, dfu, source_reads_ref,
+                                        interleaved, single_end):
+        # Means the uploaded reads is a result of an input reads object being filtered/trimmed
+        # Make sure that no non file related parameters are set. If so throw error.
+        parameters_should_unfilled = ['insert_size_mean', 'insert_size_std_dev',
+                                      'sequencing_tech', 'strain',
+                                      'source', 'read_orientation_outward']
+        if any(x in params for x in parameters_should_unfilled):
+            self.log(("'source_reads_ref' was passed, making the following list of " +
+                      "parameters {} erroneous to " +
+                      "include").format(",".join(parameters_should_unfilled)))
+            raise ValueError(("'source_reads_ref' was passed, making the following list of " +
+                              "parameters : {} erroneous to " +
+                              "include").format(", ".join(parameters_should_unfilled)))
+        try:
+            source_reads_object = dfu.get_objects({'object_refs':
+                                                  [source_reads_ref]})['data'][0]
+        except DFUError as e:
+            self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
+                      'Logging stacktrace from workspace exception:' +
+                      '\n{}').format(source_reads_ref, e.data))
+            raise
+        # Check that it is a reads object. If not throw an eror.
+        single_input, kbasefile = self.check_reads(source_reads_object)
+        o = {'sequencing_tech': source_reads_object['data'].get("sequencing_tech"),
+             'single_genome': source_reads_object['data'].get("single_genome")
+             }
+        self._add_field(o, source_reads_object['data'], 'strain')
+        self._add_field(o, source_reads_object['data'], 'source')
+        if not single_input and not single_end:
+            # is a paired end input and trying to upload a filtered/trimmed
+            # paired end ReadsUtils. need to check for more fields.
+            ism = source_reads_object['data'].get('insert_size_mean')
+            issd = source_reads_object['data'].get('insert_size_std_dev')
+            read_orientation_out = source_reads_object['data'].get('read_orientation_outward')
+            o.update({'insert_size_mean': ism,
+                      'insert_size_std_dev': issd,
+                      'interleaved': interleaved,
+                      'read_orientation_outward': read_orientation_out
+                      })
+        return o
 
     def process_ternary(self, params, boolname):
         if params.get(boolname) is None:
