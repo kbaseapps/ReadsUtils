@@ -132,32 +132,7 @@ class ReadsUtils:
             o = self._propagate_reference_reads_info(params, dfu, source_reads_ref,
                                                      interleaved, single_end)
         else:
-            seqtype = params.get('sequencing_tech')
-            if not seqtype:
-                raise ValueError('The sequencing technology must be provided')
-            sg = 1
-            if 'single_genome' in params and not params['single_genome']:
-                sg = 0
-            o = {'sequencing_tech': seqtype,
-                 'single_genome': sg
-                 # ,
-                 # 'read_count': params.get('read_count'),
-                 # 'read_size': params.get('read_size'),
-                 # 'gc_content': params.get('gc_content')
-                 }
-            self._add_field(o, params, 'strain')
-            self._add_field(o, params, 'source')
-            ism = params.get('insert_size_mean')
-            self._check_pos(ism, 'insert_size_mean')
-            issd = params.get('insert_size_std_dev')
-            self._check_pos(issd, 'insert_size_std_dev')
-            if not single_end:
-                read_orientation_out = 1 if params.get('read_orientation_outward') else 0
-                o.update({'insert_size_mean': ism,
-                          'insert_size_std_dev': issd,
-                          'interleaved': interleaved,
-                          'read_orientation_outward': read_orientation_out
-                          })
+            o = self._build_up_reads_data(params, single_end)
         return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
 
     def _propagate_reference_reads_info(self, params, dfu, source_reads_ref,
@@ -184,20 +159,38 @@ class ReadsUtils:
             raise
         # Check that it is a reads object. If not throw an eror.
         single_input, kbasefile = self.check_reads(source_reads_object)
-        o = {'sequencing_tech': source_reads_object['data'].get("sequencing_tech"),
-             'single_genome': source_reads_object['data'].get("single_genome")
-             }
-        self._add_field(o, source_reads_object['data'], 'strain')
-        self._add_field(o, source_reads_object['data'], 'source')
         if not single_input and not single_end:
+            is_single_end = False
+        else:
+            is_single_end = True
+        return self._build_up_reads_data(source_reads_object['data'], is_single_end)
+
+    def _build_up_reads_data(self, params, is_single_end):
+        seqtype = params.get('sequencing_tech')
+        if not seqtype:
+            raise ValueError('The sequencing technology must be provided')
+        sg = 1
+        if 'single_genome' in params and not params['single_genome']:
+            sg = 0
+        o = {'sequencing_tech': seqtype,
+             'single_genome': sg
+             }
+        self._add_field(o, params, 'strain')
+        self._add_field(o, params, 'source')
+        if not is_single_end:
             # is a paired end input and trying to upload a filtered/trimmed
             # paired end ReadsUtils. need to check for more fields.
-            ism = source_reads_object['data'].get('insert_size_mean')
-            issd = source_reads_object['data'].get('insert_size_std_dev')
-            read_orientation_out = source_reads_object['data'].get('read_orientation_outward')
+            ism = params.get('insert_size_mean')
+            self._check_pos(ism, 'insert_size_mean')
+            issd = params.get('insert_size_std_dev')
+            self._check_pos(issd, 'insert_size_std_dev')
+            if params.get('read_orientation_outward'):
+                read_orientation_out = int(params.get('read_orientation_outward'))
+            else:
+                read_orientation_out = 0
             o.update({'insert_size_mean': ism,
                       'insert_size_std_dev': issd,
-                      'interleaved': interleaved,
+                      'interleaved': 1,
                       'read_orientation_outward': read_orientation_out
                       })
         return o

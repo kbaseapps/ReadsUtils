@@ -873,7 +873,7 @@ class ReadsUtilsTest(unittest.TestCase):
                        'wsname': self.ws_info[1],
                        'name': 'pairedreads2',
                        'interleaved': 1,
-                       'read_orientation_outward': 'a',
+                       'read_orientation_outward': 1,
                        'insert_size_mean': 72.1,
                        'insert_size_std_dev': 84.0
                        })
@@ -1267,6 +1267,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
              'fwd_id': 'bar',
+             'rev_id': 'bar2',
              'name': 'foo',
              'insert_size_mean': 'foo'
              },
@@ -1277,6 +1278,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
              'fwd_id': 'bar',
+             'rev_id': 'bar2',
              'name': 'foo',
              'insert_size_std_dev': 'foo'
              },
@@ -1287,6 +1289,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
              'fwd_id': 'bar',
+             'rev_id': 'bar2',
              'name': 'foo',
              'insert_size_mean': 0
              },
@@ -1297,6 +1300,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
              'fwd_id': 'bar',
+             'rev_id': 'bar2',
              'name': 'foo',
              'insert_size_std_dev': 0
              },
