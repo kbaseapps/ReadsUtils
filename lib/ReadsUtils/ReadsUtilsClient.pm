@@ -235,6 +235,7 @@ UploadReadsParams is a reference to a hash where the following keys are defined:
 	read_orientation_outward has a value which is a ReadsUtils.boolean
 	insert_size_mean has a value which is a float
 	insert_size_std_dev has a value which is a float
+	source_reads_ref has a value which is a string
 boolean is an int
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
@@ -285,6 +286,7 @@ UploadReadsParams is a reference to a hash where the following keys are defined:
 	read_orientation_outward has a value which is a ReadsUtils.boolean
 	insert_size_mean has a value which is a float
 	insert_size_std_dev has a value which is a float
+	source_reads_ref has a value which is a string
 boolean is an int
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
@@ -402,6 +404,16 @@ DownloadedReadLibrary is a reference to a hash where the following keys are defi
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
+	total_bases has a value which is an int
+	read_length_mean has a value which is a float
+	read_length_stdev has a value which is a float
+	phred_type has a value which is a string
+	number_of_duplicates has a value which is an int
+	qual_min has a value which is a float
+	qual_max has a value which is a float
+	qual_mean has a value which is a float
+	qual_stdev has a value which is a float
+	base_percentages has a value which is a reference to a hash where the key is a string and the value is a float
 ReadsFiles is a reference to a hash where the following keys are defined:
 	fwd has a value which is a string
 	fwd_name has a value which is a string
@@ -459,6 +471,16 @@ DownloadedReadLibrary is a reference to a hash where the following keys are defi
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
+	total_bases has a value which is an int
+	read_length_mean has a value which is a float
+	read_length_stdev has a value which is a float
+	phred_type has a value which is a string
+	number_of_duplicates has a value which is an int
+	qual_min has a value which is a float
+	qual_max has a value which is a float
+	qual_mean has a value which is a float
+	qual_stdev has a value which is a float
+	base_percentages has a value which is a reference to a hash where the key is a string and the value is a float
 ReadsFiles is a reference to a hash where the following keys are defined:
 	fwd has a value which is a string
 	fwd_name has a value which is a string
@@ -921,14 +943,20 @@ Files will be gzipped prior to upload.
 Note that if a reverse read file is specified, it must be a local file
 if the forward reads file is a local file, or a shock id if not.
 
+If a reverse file is specified the uploader will will automatically
+intereave the forward and reverse files and store that in shock.
+Additionally the statistics generated are on the resulting interleaved file.
+
 Required parameters:
 fwd_id - the id of the shock node containing the reads data file:
     either single end reads, forward/left reads, or interleaved reads.
 - OR -
 fwd_file - a local path to the reads data file: either single end
     reads, forward/left reads, or interleaved reads.
+
 sequencing_tech - the sequencing technology used to produce the
-    reads.
+    reads. (If source_reads_ref is specified then sequencing_tech
+    must not be specified)
 
 One of:
 wsid - the id of the workspace where the reads will be saved
@@ -944,7 +972,9 @@ rev_id - the shock node id containing the reverse/right reads for
     paired end, non-interleaved reads.
 - OR -
 rev_file - a local path to the reads data file containing the
-    reverse/right reads for paired end, non-interleaved reads.
+    reverse/right reads for paired end, non-interleaved reads, 
+    note the reverse file will get interleaved 
+    with the forward file.
 single_genome - whether the reads are from a single genome or a
     metagenome. Default is single genome.
 strain - information about the organism strain
@@ -960,6 +990,13 @@ insert_size_mean - the mean size of the genetic fragments. Ignored for
     single end reads.
 insert_size_std_dev - the standard deviation of the size of the
     genetic fragments. Ignored for single end reads.
+source_reads_ref - A workspace reference to a source reads object.
+    This is used to propogate user defined info from the source reads
+    object to the new reads object (used for filtering or 
+    trimming services). Note this causes a passed in 
+    insert_size_mean, insert_size_std_dev, sequencing_tech,
+    read_orientation_outward, strain, source and/or 
+    single_genome to throw an error.
 
 
 =item Definition
@@ -984,6 +1021,7 @@ interleaved has a value which is a ReadsUtils.boolean
 read_orientation_outward has a value which is a ReadsUtils.boolean
 insert_size_mean has a value which is a float
 insert_size_std_dev has a value which is a float
+source_reads_ref has a value which is a string
 
 </pre>
 
@@ -1008,6 +1046,7 @@ interleaved has a value which is a ReadsUtils.boolean
 read_orientation_outward has a value which is a ReadsUtils.boolean
 insert_size_mean has a value which is a float
 insert_size_std_dev has a value which is a float
+source_reads_ref has a value which is a string
 
 
 =end text
@@ -1184,10 +1223,22 @@ float insert_size_std_dev - the standard deviation of the size of the
     genetic fragments. null if unavailable or single end reads.
 int read_count - the number of reads in the this dataset. null if
     unavailable.
-int read_size - the total size of the reads, in bases. null if
-    unavailable.
+int read_size - sequencing parameter defining the expected read length. 
+    For paired end reads, this is the expected length of the total of 
+    the two reads. null if unavailable.
 float gc_content - the GC content of the reads. null if
     unavailable.
+int total_bases - The total number of bases in all the reads
+float read_length_mean - The mean read length. null if unavailable.
+float read_length_stdev - The std dev of read length. null if unavailable.
+string phred_type - Phred type: 33 or 64. null if unavailable.
+int number_of_duplicates - Number of duplicate reads. null if unavailable.
+float qual_min - Minimum Quality Score. null if unavailable.
+float qual_max - Maximum Quality Score. null if unavailable.
+float qual_mean - Mean Quality Score. null if unavailable.
+float qual_stdev - Std dev of Quality Scores. null if unavailable.
+mapping<string, float> base_percentages - percentage of total bases being 
+    a particular nucleotide.  Null if unavailable.
 
 
 =item Definition
@@ -1208,6 +1259,16 @@ insert_size_std_dev has a value which is a float
 read_count has a value which is an int
 read_size has a value which is an int
 gc_content has a value which is a float
+total_bases has a value which is an int
+read_length_mean has a value which is a float
+read_length_stdev has a value which is a float
+phred_type has a value which is a string
+number_of_duplicates has a value which is an int
+qual_min has a value which is a float
+qual_max has a value which is a float
+qual_mean has a value which is a float
+qual_stdev has a value which is a float
+base_percentages has a value which is a reference to a hash where the key is a string and the value is a float
 
 </pre>
 
@@ -1228,6 +1289,16 @@ insert_size_std_dev has a value which is a float
 read_count has a value which is an int
 read_size has a value which is an int
 gc_content has a value which is a float
+total_bases has a value which is an int
+read_length_mean has a value which is a float
+read_length_stdev has a value which is a float
+phred_type has a value which is a string
+number_of_duplicates has a value which is an int
+qual_min has a value which is a float
+qual_max has a value which is a float
+qual_mean has a value which is a float
+qual_stdev has a value which is a float
+base_percentages has a value which is a reference to a hash where the key is a string and the value is a float
 
 
 =end text

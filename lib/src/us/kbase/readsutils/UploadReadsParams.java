@@ -21,6 +21,9 @@ import us.kbase.kbasecommon.StrainInfo;
  * Files will be gzipped prior to upload.
  * Note that if a reverse read file is specified, it must be a local file
  * if the forward reads file is a local file, or a shock id if not.
+ * If a reverse file is specified the uploader will will automatically
+ * intereave the forward and reverse files and store that in shock.
+ * Additionally the statistics generated are on the resulting interleaved file.
  * Required parameters:
  * fwd_id - the id of the shock node containing the reads data file:
  *     either single end reads, forward/left reads, or interleaved reads.
@@ -28,7 +31,8 @@ import us.kbase.kbasecommon.StrainInfo;
  * fwd_file - a local path to the reads data file: either single end
  *     reads, forward/left reads, or interleaved reads.
  * sequencing_tech - the sequencing technology used to produce the
- *     reads.
+ *     reads. (If source_reads_ref is specified then sequencing_tech
+ *     must not be specified)
  * One of:
  * wsid - the id of the workspace where the reads will be saved
  *     (preferred).
@@ -42,7 +46,9 @@ import us.kbase.kbasecommon.StrainInfo;
  *     paired end, non-interleaved reads.
  * - OR -
  * rev_file - a local path to the reads data file containing the
- *     reverse/right reads for paired end, non-interleaved reads.
+ *     reverse/right reads for paired end, non-interleaved reads, 
+ *     note the reverse file will get interleaved 
+ *     with the forward file.
  * single_genome - whether the reads are from a single genome or a
  *     metagenome. Default is single genome.
  * strain - information about the organism strain
@@ -58,6 +64,13 @@ import us.kbase.kbasecommon.StrainInfo;
  *     single end reads.
  * insert_size_std_dev - the standard deviation of the size of the
  *     genetic fragments. Ignored for single end reads.
+ * source_reads_ref - A workspace reference to a source reads object.
+ *     This is used to propogate user defined info from the source reads
+ *     object to the new reads object (used for filtering or 
+ *     trimming services). Note this causes a passed in 
+ *     insert_size_mean, insert_size_std_dev, sequencing_tech,
+ *     read_orientation_outward, strain, source and/or 
+ *     single_genome to throw an error.
  * </pre>
  * 
  */
@@ -79,7 +92,8 @@ import us.kbase.kbasecommon.StrainInfo;
     "interleaved",
     "read_orientation_outward",
     "insert_size_mean",
-    "insert_size_std_dev"
+    "insert_size_std_dev",
+    "source_reads_ref"
 })
 public class UploadReadsParams {
 
@@ -144,6 +158,8 @@ public class UploadReadsParams {
     private Double insertSizeMean;
     @JsonProperty("insert_size_std_dev")
     private Double insertSizeStdDev;
+    @JsonProperty("source_reads_ref")
+    private String sourceReadsRef;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     @JsonProperty("fwd_id")
@@ -444,6 +460,21 @@ public class UploadReadsParams {
         return this;
     }
 
+    @JsonProperty("source_reads_ref")
+    public String getSourceReadsRef() {
+        return sourceReadsRef;
+    }
+
+    @JsonProperty("source_reads_ref")
+    public void setSourceReadsRef(String sourceReadsRef) {
+        this.sourceReadsRef = sourceReadsRef;
+    }
+
+    public UploadReadsParams withSourceReadsRef(String sourceReadsRef) {
+        this.sourceReadsRef = sourceReadsRef;
+        return this;
+    }
+
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -456,7 +487,7 @@ public class UploadReadsParams {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", fwdFile=")+ fwdFile)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", revFile=")+ revFile)+", sequencingTech=")+ sequencingTech)+", singleGenome=")+ singleGenome)+", strain=")+ strain)+", source=")+ source)+", interleaved=")+ interleaved)+", readOrientationOutward=")+ readOrientationOutward)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", fwdFile=")+ fwdFile)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", revFile=")+ revFile)+", sequencingTech=")+ sequencingTech)+", singleGenome=")+ singleGenome)+", strain=")+ strain)+", source=")+ source)+", interleaved=")+ interleaved)+", readOrientationOutward=")+ readOrientationOutward)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", sourceReadsRef=")+ sourceReadsRef)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

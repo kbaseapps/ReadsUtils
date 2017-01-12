@@ -26,15 +26,15 @@ class ReadsUtils:
     Utilities for handling reads files.
     '''
 
-    ######## WARNING FOR GEVENT USERS #######
+    ######## WARNING FOR GEVENT USERS ####### noqa
     # Since asynchronous IO can lead to methods - even the same method -
     # interrupting each other, you must be *very* careful when using global
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
-    #########################################
-    VERSION = "0.1.1"
-    GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "43386a99be668244c08048afbe190fdbde3245f6"
+    ######################################### noqa
+    VERSION = "0.3.1"
+    GIT_URL = "https://github.com/jkbaumohl/ReadsUtils"
+    GIT_COMMIT_HASH = "a37c74d57dac41271aaf480df5e97375e10cd1b0"
 
     #BEGIN_CLASS_HEADER
 
@@ -126,33 +126,77 @@ class ReadsUtils:
             interleaved = 1
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
+
+        source_reads_ref = params.get('source_reads_ref')
+        if source_reads_ref:
+            o = self._propagate_reference_reads_info(params, dfu, source_reads_ref,
+                                                     interleaved, single_end)
+        else:
+            o = self._build_up_reads_data(params, single_end)
+        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
+
+    def _propagate_reference_reads_info(self, params, dfu, source_reads_ref,
+                                        interleaved, single_end):
+        # Means the uploaded reads is a result of an input reads object being filtered/trimmed
+        # Make sure that no non file related parameters are set. If so throw error.
+        parameters_should_unfilled = ['insert_size_mean', 'insert_size_std_dev',
+                                      'sequencing_tech', 'strain',
+                                      'source', 'read_orientation_outward']
+        if any(x in params for x in parameters_should_unfilled):
+            self.log(("'source_reads_ref' was passed, making the following list of " +
+                      "parameters {} erroneous to " +
+                      "include").format(",".join(parameters_should_unfilled)))
+            raise ValueError(("'source_reads_ref' was passed, making the following list of " +
+                              "parameters : {} erroneous to " +
+                              "include").format(", ".join(parameters_should_unfilled)))
+        try:
+            source_reads_object = dfu.get_objects({'object_refs':
+                                                  [source_reads_ref]})['data'][0]
+        except DFUError as e:
+            self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
+                      'Logging stacktrace from workspace exception:' +
+                      '\n{}').format(source_reads_ref, e.data))
+            raise
+        # Check that it is a reads object. If not throw an eror.
+        single_input, kbasefile = self.check_reads(source_reads_object)
+        if not single_input and not single_end:
+            is_single_end = False
+        elif single_input and not single_end:
+            raise ValueError(("The input reference reads is single end, that should not " +
+                              "give rise to a paired end object."))
+        else:
+            is_single_end = True
+        return self._build_up_reads_data(source_reads_object['data'], is_single_end)
+
+    def _build_up_reads_data(self, params, is_single_end):
         seqtype = params.get('sequencing_tech')
         if not seqtype:
             raise ValueError('The sequencing technology must be provided')
-
         sg = 1
         if 'single_genome' in params and not params['single_genome']:
             sg = 0
         o = {'sequencing_tech': seqtype,
-             'single_genome': sg,
-             # 'read_count': params.get('read_count'),
-             # 'read_size': params.get('read_size'),
-             # 'gc_content': params.get('gc_content')
+             'single_genome': sg
              }
         self._add_field(o, params, 'strain')
         self._add_field(o, params, 'source')
-        ism = params.get('insert_size_mean')
-        self._check_pos(ism, 'insert_size_mean')
-        issd = params.get('insert_size_std_dev')
-        self._check_pos(issd, 'insert_size_std_dev')
-        if not single_end:
-            read_orientation_out = 1 if params.get('read_orientation_outward') else 0
+        if not is_single_end:
+            # is a paired end input and trying to upload a filtered/trimmed
+            # paired end ReadsUtils. need to check for more fields.
+            ism = params.get('insert_size_mean')
+            self._check_pos(ism, 'insert_size_mean')
+            issd = params.get('insert_size_std_dev')
+            self._check_pos(issd, 'insert_size_std_dev')
+            if params.get('read_orientation_outward'):
+                read_orientation_out = 1
+            else:
+                read_orientation_out = 0
             o.update({'insert_size_mean': ism,
                       'insert_size_std_dev': issd,
-                      'interleaved': interleaved,
+                      'interleaved': 1,
                       'read_orientation_outward': read_orientation_out
                       })
-        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
+        return o
 
     def process_ternary(self, params, boolname):
         if params.get(boolname) is None:
@@ -702,37 +746,49 @@ class ReadsUtils:
            they must be uncompressed. Files will be gzipped prior to upload.
            Note that if a reverse read file is specified, it must be a local
            file if the forward reads file is a local file, or a shock id if
-           not. Required parameters: fwd_id - the id of the shock node
-           containing the reads data file: either single end reads,
-           forward/left reads, or interleaved reads. - OR - fwd_file - a
-           local path to the reads data file: either single end reads,
-           forward/left reads, or interleaved reads. sequencing_tech - the
-           sequencing technology used to produce the reads. One of: wsid -
-           the id of the workspace where the reads will be saved (preferred).
-           wsname - the name of the workspace where the reads will be saved.
-           One of: objid - the id of the workspace object to save over name -
-           the name to which the workspace object will be saved Optional
-           parameters: rev_id - the shock node id containing the
-           reverse/right reads for paired end, non-interleaved reads. - OR -
-           rev_file - a local path to the reads data file containing the
-           single_genome - whether the reads are from a single genome or a
-           metagenome. Default is single genome. strain - information about
-           the organism strain that was sequenced. source - information about
-           the organism source. interleaved - specify that the fwd reads file
-           is an interleaved paired end reads file as opposed to a single end
-           reads file. Default true, ignored if rev_id is specified.
-           read_orientation_outward - whether the read orientation is outward
-           from the set of primers. Default is false and is ignored for
-           single end reads. insert_size_mean - the mean size of the genetic
-           fragments. Ignored for single end reads. insert_size_std_dev - the
-           standard deviation of the size of the genetic fragments. Ignored
-           for single end reads.) -> structure: parameter "fwd_id" of String,
-           parameter "fwd_file" of String, parameter "wsid" of Long,
-           parameter "wsname" of String, parameter "objid" of Long, parameter
-           "name" of String, parameter "rev_id" of String, parameter
-           "rev_file" of String, parameter "sequencing_tech" of String,
-           parameter "single_genome" of type "boolean" (A boolean - 0 for
-           false, 1 for true. @range (0, 1)), parameter "strain" of type
+           not. If a reverse file is specified the uploader will will
+           automatically intereave the forward and reverse files and store
+           that in shock. Additionally the statistics generated are on the
+           resulting interleaved file. Required parameters: fwd_id - the id
+           of the shock node containing the reads data file: either single
+           end reads, forward/left reads, or interleaved reads. - OR -
+           fwd_file - a local path to the reads data file: either single end
+           reads, forward/left reads, or interleaved reads. sequencing_tech -
+           the sequencing technology used to produce the reads. (If
+           source_reads_ref is specified then sequencing_tech must not be
+           specified) One of: wsid - the id of the workspace where the reads
+           will be saved (preferred). wsname - the name of the workspace
+           where the reads will be saved. One of: objid - the id of the
+           workspace object to save over name - the name to which the
+           workspace object will be saved Optional parameters: rev_id - the
+           shock node id containing the reverse/right reads for paired end,
+           non-interleaved reads. - OR - rev_file - a local path to the reads
+           data file containing the reverse/right reads for paired end,
+           non-interleaved reads, note the reverse file will get interleaved
+           with the forward file. single_genome - whether the reads are from
+           a single genome or a metagenome. Default is single genome. strain
+           - information about the organism strain that was sequenced. source
+           - information about the organism source. interleaved - specify
+           that the fwd reads file is an interleaved paired end reads file as
+           opposed to a single end reads file. Default true, ignored if
+           rev_id is specified. read_orientation_outward - whether the read
+           orientation is outward from the set of primers. Default is false
+           and is ignored for single end reads. insert_size_mean - the mean
+           size of the genetic fragments. Ignored for single end reads.
+           insert_size_std_dev - the standard deviation of the size of the
+           genetic fragments. Ignored for single end reads. source_reads_ref
+           - A workspace reference to a source reads object. This is used to
+           propogate user defined info from the source reads object to the
+           new reads object (used for filtering or trimming services). Note
+           this causes a passed in insert_size_mean, insert_size_std_dev,
+           sequencing_tech, read_orientation_outward, strain, source and/or
+           single_genome to throw an error.) -> structure: parameter "fwd_id"
+           of String, parameter "fwd_file" of String, parameter "wsid" of
+           Long, parameter "wsname" of String, parameter "objid" of Long,
+           parameter "name" of String, parameter "rev_id" of String,
+           parameter "rev_file" of String, parameter "sequencing_tech" of
+           String, parameter "single_genome" of type "boolean" (A boolean - 0
+           for false, 1 for true. @range (0, 1)), parameter "strain" of type
            "StrainInfo" (Information about a strain. genetic_code - the
            genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
@@ -781,7 +837,8 @@ class ReadsUtils:
            0 for false, 1 for true. @range (0, 1)), parameter
            "read_orientation_outward" of type "boolean" (A boolean - 0 for
            false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
-           Double, parameter "insert_size_std_dev" of Double
+           Double, parameter "insert_size_std_dev" of Double, parameter
+           "source_reads_ref" of String
         :returns: instance of type "UploadReadsOutput" (The output of the
            upload_reads function. obj_ref - a reference to the new Workspace
            object in the form X/Y/Z, where X is the workspace ID, Y is the
@@ -940,30 +997,43 @@ class ReadsUtils:
            deviation of the size of the genetic fragments. null if
            unavailable or single end reads. int read_count - the number of
            reads in the this dataset. null if unavailable. int read_size -
-           the total size of the reads, in bases. null if unavailable. float
-           gc_content - the GC content of the reads. null if unavailable.) ->
-           structure: parameter "files" of type "ReadsFiles" (Reads file
-           information. Note that the file names provided are those *prior
-           to* interleaving or deinterleaving the reads. string fwd - the
-           path to the forward / left reads. string fwd_name - the name of
-           the forwards reads file from Shock, or if not available, from the
-           Shock handle. string rev - the path to the reverse / right reads.
-           null if the reads are single end or interleaved. string rev_name -
-           the name of the reverse reads file from Shock, or if not
-           available, from the Shock handle. null if the reads are single end
-           or interleaved. string otype - the original type of the reads. One
-           of 'single', 'paired', or 'interleaved'. string type - one of
-           'single', 'paired', or 'interleaved'.) -> structure: parameter
-           "fwd" of String, parameter "fwd_name" of String, parameter "rev"
-           of String, parameter "rev_name" of String, parameter "otype" of
-           String, parameter "type" of String, parameter "ref" of String,
-           parameter "single_genome" of type "tern" (A ternary. Allowed
+           sequencing parameter defining the expected read length. For paired
+           end reads, this is the expected length of the total of the two
+           reads. null if unavailable. float gc_content - the GC content of
+           the reads. null if unavailable. int total_bases - The total number
+           of bases in all the reads float read_length_mean - The mean read
+           length. null if unavailable. float read_length_stdev - The std dev
+           of read length. null if unavailable. string phred_type - Phred
+           type: 33 or 64. null if unavailable. int number_of_duplicates -
+           Number of duplicate reads. null if unavailable. float qual_min -
+           Minimum Quality Score. null if unavailable. float qual_max -
+           Maximum Quality Score. null if unavailable. float qual_mean - Mean
+           Quality Score. null if unavailable. float qual_stdev - Std dev of
+           Quality Scores. null if unavailable. mapping<string, float>
+           base_percentages - percentage of total bases being a particular
+           nucleotide.  Null if unavailable.) -> structure: parameter "files"
+           of type "ReadsFiles" (Reads file information. Note that the file
+           names provided are those *prior to* interleaving or deinterleaving
+           the reads. string fwd - the path to the forward / left reads.
+           string fwd_name - the name of the forwards reads file from Shock,
+           or if not available, from the Shock handle. string rev - the path
+           to the reverse / right reads. null if the reads are single end or
+           interleaved. string rev_name - the name of the reverse reads file
+           from Shock, or if not available, from the Shock handle. null if
+           the reads are single end or interleaved. string otype - the
+           original type of the reads. One of 'single', 'paired', or
+           'interleaved'. string type - one of 'single', 'paired', or
+           'interleaved'.) -> structure: parameter "fwd" of String, parameter
+           "fwd_name" of String, parameter "rev" of String, parameter
+           "rev_name" of String, parameter "otype" of String, parameter
+           "type" of String, parameter "ref" of String, parameter
+           "single_genome" of type "tern" (A ternary. Allowed values are
+           'false', 'true', or null. Any other value is invalid.), parameter
+           "read_orientation_outward" of type "tern" (A ternary. Allowed
            values are 'false', 'true', or null. Any other value is invalid.),
-           parameter "read_orientation_outward" of type "tern" (A ternary.
-           Allowed values are 'false', 'true', or null. Any other value is
-           invalid.), parameter "sequencing_tech" of String, parameter
-           "strain" of type "StrainInfo" (Information about a strain.
-           genetic_code - the genetic code of the strain. See
+           parameter "sequencing_tech" of String, parameter "strain" of type
+           "StrainInfo" (Information about a strain. genetic_code - the
+           genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information
@@ -1008,7 +1078,13 @@ class ReadsUtils:
            for a project encompassing a piece of data at its source. @id
            external), parameter "insert_size_mean" of Double, parameter
            "insert_size_std_dev" of Double, parameter "read_count" of Long,
-           parameter "read_size" of Long, parameter "gc_content" of Double
+           parameter "read_size" of Long, parameter "gc_content" of Double,
+           parameter "total_bases" of Long, parameter "read_length_mean" of
+           Double, parameter "read_length_stdev" of Double, parameter
+           "phred_type" of String, parameter "number_of_duplicates" of Long,
+           parameter "qual_min" of Double, parameter "qual_max" of Double,
+           parameter "qual_mean" of Double, parameter "qual_stdev" of Double,
+           parameter "base_percentages" of mapping from String to Double
         """
         # ctx is the context object
         # return variables are: output

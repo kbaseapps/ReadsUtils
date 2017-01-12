@@ -17,7 +17,6 @@ import requests as _requests
 import random as _random
 import os
 from ReadsUtils.authclient import KBaseAuth as _KBaseAuth
-from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 
 DEPLOY = 'KB_DEPLOYMENT_CONFIG'
 SERVICE = 'KB_SERVICE_NAME'
@@ -46,6 +45,7 @@ def get_config():
 
 config = get_config()
 
+from ReadsUtils.ReadsUtilsImpl import ReadsUtils  # noqa @IgnorePep8
 impl_ReadsUtils = ReadsUtils(config)
 
 
@@ -171,7 +171,7 @@ class JSONRPCServiceCustom(JSONRPCService):
 
     def _handle_request(self, ctx, request):
         """Handles given request and returns its response."""
-        if 'types' in self.method_data[request['method']]:
+        if self.method_data[request['method']].has_key('types'):  # noqa @IgnorePep8
             self._validate_params_types(request['method'], request['params'])
 
         result = self._call_method(ctx, request)
@@ -332,19 +332,19 @@ class Application(object):
         self.rpc_service.add(impl_ReadsUtils.validateFASTQ,
                              name='ReadsUtils.validateFASTQ',
                              types=[list])
-        self.method_authentication['ReadsUtils.validateFASTQ'] = 'required'
+        self.method_authentication['ReadsUtils.validateFASTQ'] = 'required' # noqa
         self.rpc_service.add(impl_ReadsUtils.upload_reads,
                              name='ReadsUtils.upload_reads',
                              types=[dict])
-        self.method_authentication['ReadsUtils.upload_reads'] = 'required'
+        self.method_authentication['ReadsUtils.upload_reads'] = 'required' # noqa
         self.rpc_service.add(impl_ReadsUtils.download_reads,
                              name='ReadsUtils.download_reads',
                              types=[dict])
-        self.method_authentication['ReadsUtils.download_reads'] = 'required'
+        self.method_authentication['ReadsUtils.download_reads'] = 'required' # noqa
         self.rpc_service.add(impl_ReadsUtils.export_reads,
                              name='ReadsUtils.export_reads',
                              types=[dict])
-        self.method_authentication['ReadsUtils.export_reads'] = 'required'
+        self.method_authentication['ReadsUtils.export_reads'] = 'required' # noqa
         self.rpc_service.add(impl_ReadsUtils.status,
                              name='ReadsUtils.status',
                              types=[dict])
@@ -400,7 +400,8 @@ class Application(object):
                         if token is None and auth_req == 'required':
                             err = JSONServerError()
                             err.data = (
-                                'Authentication required for ReadsUtils ' +
+                                'Authentication required for ' +
+                                'ReadsUtils ' +
                                 'but no authentication header was passed')
                             raise err
                         elif token is None and auth_req == 'optional':
@@ -432,7 +433,7 @@ class Application(object):
                            }
                     trace = jre.trace if hasattr(jre, 'trace') else None
                     rpc_result = self.process_error(err, ctx, req, trace)
-                except Exception, e:
+                except Exception:
                     err = {'error': {'code': 0,
                                      'name': 'Unexpected Server Error',
                                      'message': 'An unexpected server error ' +
@@ -442,10 +443,10 @@ class Application(object):
                     rpc_result = self.process_error(err, ctx, req,
                                                     traceback.format_exc())
 
-        # print 'The request method was %s\n' % environ['REQUEST_METHOD']
-        # print 'The environment dictionary is:\n%s\n' % pprint.pformat(environ) @IgnorePep8
-        # print 'The request body was: %s' % request_body
-        # print 'The result from the method call is:\n%s\n' % \
+        # print 'Request method was %s\n' % environ['REQUEST_METHOD']
+        # print 'Environment dictionary is:\n%s\n' % pprint.pformat(environ)
+        # print 'Request body was: %s' % request_body
+        # print 'Result from the method call is:\n%s\n' % \
         #    pprint.pformat(rpc_result)
 
         if rpc_result:
@@ -481,11 +482,12 @@ class Application(object):
         return json.dumps(error)
 
     def now_in_utc(self):
-        # noqa Taken from http://stackoverflow.com/questions/3401428/how-to-get-an-isoformat-datetime-string-including-the-default-timezone @IgnorePEP8
+        # noqa Taken from http://stackoverflow.com/questions/3401428/how-to-get-an-isoformat-datetime-string-including-the-default-timezone @IgnorePep8
         dtnow = datetime.datetime.now()
         dtutcnow = datetime.datetime.utcnow()
         delta = dtnow - dtutcnow
-        hh, mm = divmod((delta.days * 24 * 60 * 60 + delta.seconds + 30) // 60, 60)
+        hh, mm = divmod((delta.days * 24 * 60 * 60 + delta.seconds + 30) // 60,
+                        60)
         return "%s%+02d:%02d" % (dtnow.isoformat(), hh, mm)
 
 application = Application()

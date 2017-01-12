@@ -69,9 +69,11 @@ module ReadsUtils {
         - OR -
         fwd_file - a local path to the reads data file: either single end
             reads, forward/left reads, or interleaved reads.
-        sequencing_tech - the sequencing technology used to produce the
-            reads.
         
+        sequencing_tech - the sequencing technology used to produce the
+            reads. (If source_reads_ref is specified then sequencing_tech
+            must not be specified)
+
         One of:
         wsid - the id of the workspace where the reads will be saved
             (preferred).
@@ -86,8 +88,9 @@ module ReadsUtils {
             paired end, non-interleaved reads.
         - OR -
         rev_file - a local path to the reads data file containing the
-            reverse/right reads for paired end, non-interleaved reads, note the
-+           reverse file will get interleaved with the forward file.
+            reverse/right reads for paired end, non-interleaved reads, 
+            note the reverse file will get interleaved 
+            with the forward file.
         single_genome - whether the reads are from a single genome or a
             metagenome. Default is single genome.
         strain - information about the organism strain
@@ -103,6 +106,13 @@ module ReadsUtils {
             single end reads.
         insert_size_std_dev - the standard deviation of the size of the
             genetic fragments. Ignored for single end reads.
+        source_reads_ref - A workspace reference to a source reads object.
+            This is used to propogate user defined info from the source reads
+            object to the new reads object (used for filtering or 
+            trimming services). Note this causes a passed in 
+            insert_size_mean, insert_size_std_dev, sequencing_tech,
+            read_orientation_outward, strain, source and/or 
+            single_genome to throw an error.
     */
     typedef structure {
         string fwd_id;
@@ -121,6 +131,7 @@ module ReadsUtils {
         boolean read_orientation_outward;
         float insert_size_mean;
         float insert_size_std_dev;
+        string source_reads_ref;
     } UploadReadsParams;
     
     /* The output of the upload_reads function.
