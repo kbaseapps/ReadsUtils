@@ -1120,6 +1120,19 @@ class ReadsUtilsTest(unittest.TestCase):
              "give rise to a paired end object."))
         self.delete_shock_node(node)
 
+    def test_bad_reference_as_source(self):
+        tf = 'Sample1.fastq'
+        target = os.path.join(self.scratch, tf)
+        self.fail_upload_reads(
+            {'fwd_file': target,
+             'wsname': self.ws_info[1],
+             'source_reads_ref': str(self.ws_info[0]) + '/99999999/9999999',
+             'name': 'foo'
+             },
+            "No object with id 99999999 exists in workspace {} (name {})".format(
+             self.ws_info[0], self.ws_info[1]),
+            exception=DFUError)
+
     def check_lib(self, lib, size, filename, md5):
         shock_id = lib["file"]["id"]
         print "LIB: {}".format(str(lib))
