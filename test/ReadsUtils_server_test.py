@@ -1085,9 +1085,9 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'foo'
              },
             ("Invalid type for object {} (bad_object). Supported types: " +
-            "KBaseFile.SingleEndLibrary KBaseFile.PairedEndLibrary " +
-            "KBaseAssembly.SingleEndLibrary " +
-            "KBaseAssembly.PairedEndLibrary").format(bad_object_ref))
+             "KBaseFile.SingleEndLibrary KBaseFile.PairedEndLibrary " +
+             "KBaseAssembly.SingleEndLibrary " +
+             "KBaseAssembly.PairedEndLibrary").format(bad_object_ref))
 
     def test_single_end_obj_to_paired_end_error(self):
         # GET initial object in.
