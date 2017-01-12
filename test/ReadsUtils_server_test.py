@@ -873,7 +873,7 @@ class ReadsUtilsTest(unittest.TestCase):
                        'wsname': self.ws_info[1],
                        'name': 'pairedreads2',
                        'interleaved': 1,
-                       'read_orientation_outward': 1,
+                       'read_orientation_outward': 'a',
                        'insert_size_mean': 72.1,
                        'insert_size_std_dev': 84.0
                        })
@@ -1088,6 +1088,37 @@ class ReadsUtilsTest(unittest.TestCase):
             "KBaseFile.SingleEndLibrary KBaseFile.PairedEndLibrary " +
             "KBaseAssembly.SingleEndLibrary " +
             "KBaseAssembly.PairedEndLibrary").format(bad_object_ref))
+
+    def test_single_end_obj_to_paired_end_error(self):
+        # GET initial object in.
+        # First load source single ends reads file.
+        tf = 'Sample1.fastq'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.impl.upload_reads(
+            self.ctx, {'fwd_file': target,
+                       'sequencing_tech': 'illumina',
+                       'wsname': self.ws_info[1],
+                       'single_genome': 0,
+                       'name': 'fileReadsSingleSource'})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/fileReadsSingleSource']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        node = d['lib']['file']['id']
+        # Now upload fail a paired end upload with a single end source
+        self.fail_upload_reads(
+            {'fwd_file': target,
+             'interleaved': 1,
+             'wsname': self.ws_info[1],
+             'source_reads_ref': ref[0]['obj_ref'],
+             'name': 'foo'
+             },
+            ("The input reference reads is single end, that should not " +
+             "give rise to a paired end object."))
+        self.delete_shock_node(node)
 
     def check_lib(self, lib, size, filename, md5):
         shock_id = lib["file"]["id"]

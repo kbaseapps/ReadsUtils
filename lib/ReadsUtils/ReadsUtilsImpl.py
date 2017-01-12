@@ -161,6 +161,9 @@ class ReadsUtils:
         single_input, kbasefile = self.check_reads(source_reads_object)
         if not single_input and not single_end:
             is_single_end = False
+        elif single_input and not single_end:
+            raise ValueError(("The input reference reads is single end, that should not " +
+                              "give rise to a paired end object."))
         else:
             is_single_end = True
         return self._build_up_reads_data(source_reads_object['data'], is_single_end)
@@ -185,7 +188,7 @@ class ReadsUtils:
             issd = params.get('insert_size_std_dev')
             self._check_pos(issd, 'insert_size_std_dev')
             if params.get('read_orientation_outward'):
-                read_orientation_out = int(params.get('read_orientation_outward'))
+                read_orientation_out = 1
             else:
                 read_orientation_out = 0
             o.update({'insert_size_mean': ism,
@@ -650,7 +653,6 @@ class ReadsUtils:
         self.ws_url = config['workspace-url']
         #END_CONSTRUCTOR
         pass
-
 
     def validateFASTQ(self, ctx, params):
         """
@@ -1183,6 +1185,7 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
+
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx
