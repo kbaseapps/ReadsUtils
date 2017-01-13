@@ -653,8 +653,8 @@ class ReadsUtils:
     directory pattern: /data/bulk/user_name/file_name
 
     """
-    def _get_file_path(self, upload_file_name):
-        return '/data/bulk/%s/%s' % (self.token_user, upload_file_name)
+    def _get_file_path(self, token_user, upload_file_name):
+        return '/data/bulk/%s/%s' % (token_user, upload_file_name)
 
     """
     _download_file: download execution distributor
@@ -827,7 +827,6 @@ class ReadsUtils:
         self.scratch = config['scratch']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.ws_url = config['workspace-url']
-        self.token_user = os.environ['KB_AUTH_TOKEN'].split('client_id=')[1].split('|')[0]
         #END_CONSTRUCTOR
         pass
 
@@ -1472,9 +1471,10 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: output
         #BEGIN upload_reads_from_staging_area
-        del ctx
+
+        token_user = ctx['token'].split('client_id=')[1].split('|')[0]
         fwd_file_name = params.get('staging_fwd_file_name')
-        fwd_file_path = self._get_file_path(fwd_file_name)
+        fwd_file_path = self._get_file_path(token_user, fwd_file_name)
 
         # copy single-end fastq or forward/left paired-end fastq file from starging area to local tmp folder
         dstdir = os.path.join(self.scratch, 'tmp')
@@ -1489,7 +1489,7 @@ class ReadsUtils:
         # copy reverse/right paired-end fastq file from starging area to local tmp folder
         rev_file_name = params.get('staging_rev_file_name')
         if rev_file_name:
-            rev_file_path = self._get_file_path(rev_file_name)
+            rev_file_path = self._get_file_path(token_user, rev_file_name)
             shutil.copy2(rev_file_path, dstdir)
             copy_rev_file_path = os.path.join(dstdir, rev_file_name)
             self.log('--->\ncopied file from: %s to: %s\n' % (rev_file_path, copy_rev_file_path))
@@ -1617,6 +1617,7 @@ class ReadsUtils:
         # return variables are: output
         #BEGIN upload_reads_from_web
         # prepare local copy file path for fwd_file
+        del ctx
         tmp_fwd_file_name = 'tmp_fwd_fastq.fq'
         dstdir = os.path.join(self.scratch, 'tmp')
         if not os.path.exists(dstdir):
