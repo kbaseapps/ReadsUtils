@@ -238,6 +238,40 @@ public class ReadsUtilsClient {
         return res.get(0);
     }
 
+    /**
+     * <p>Original spec-file function name: upload_reads_from_staging_area</p>
+     * <pre>
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.readsutils.UploadStagingParams UploadStagingParams}
+     * @return   parameter "output" of type {@link us.kbase.readsutils.UploadReadsOutput UploadReadsOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public UploadReadsOutput uploadReadsFromStagingArea(UploadStagingParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<UploadReadsOutput>> retType = new TypeReference<List<UploadReadsOutput>>() {};
+        List<UploadReadsOutput> res = caller.jsonrpcCall("ReadsUtils.upload_reads_from_staging_area", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
+    /**
+     * <p>Original spec-file function name: upload_reads_from_web</p>
+     * <pre>
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.readsutils.UploadWebParams UploadWebParams}
+     * @return   parameter "output" of type {@link us.kbase.readsutils.UploadReadsOutput UploadReadsOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public UploadReadsOutput uploadReadsFromWeb(UploadWebParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<UploadReadsOutput>> retType = new TypeReference<List<UploadReadsOutput>>() {};
+        List<UploadReadsOutput> res = caller.jsonrpcCall("ReadsUtils.upload_reads_from_web", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
     public Map<String, Object> status(RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         TypeReference<List<Map<String, Object>>> retType = new TypeReference<List<Map<String, Object>>>() {};

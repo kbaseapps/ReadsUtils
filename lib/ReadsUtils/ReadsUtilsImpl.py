@@ -14,6 +14,11 @@ from Workspace.baseclient import ServerError as WorkspaceError
 from numbers import Number
 import six
 import uuid
+import urllib2
+from contextlib import closing
+import ftplib
+import re
+import gzip
 #END_HEADER
 
 
@@ -642,6 +647,177 @@ class ReadsUtils:
             reads_object[key] = ea_stats_dict[key]
         return reads_object
 
+    """
+    _get_file_path: return staging area file path
+
+    directory pattern: /data/bulk/user_name/file_name
+
+    """
+    def _get_file_path(self, upload_file_name):
+        return '/data/bulk/%s/%s' % (self.token_user, upload_file_name)
+
+    """
+    _download_file: download execution distributor
+
+    params:
+    download_type: download type for web source fastq file
+    file_url: file URL
+    copy_file_path: output file saving path
+    
+    """
+    def _download_file(self, download_type, file_url, copy_file_path):
+        if download_type == 'Direct Download':
+            self._download_direct_download_link(file_url, copy_file_path)
+        elif download_type == 'DropBox':
+            self._download_dropbox_link(file_url, copy_file_path)
+        elif download_type == 'FTP':
+            self._download_ftp_link(file_url, copy_file_path)
+        elif download_type == 'Google Drive':
+            self._download_google_drive_link(file_url, copy_file_path)
+    
+    """
+    _download_direct_download_link: direct download link handler 
+
+    params:
+    file_url: direct download URL
+    copy_file_path: output file saving path
+
+    """
+    def _download_direct_download_link(self, file_url, copy_file_path):
+        try: online_file = urllib2.urlopen(file_url)
+        except urllib2.HTTPError as e:
+            raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
+        except urllib2.URLError as e:
+            raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
+        else:
+            with closing(online_file):
+                with open(copy_file_path, 'wb') as output:
+                    shutil.copyfileobj(online_file, output)
+
+    """
+    _download_dropbox_link: dropbox download link handler
+                            file needs to be shared publicly 
+
+    params:
+    file_url: dropbox download link
+    copy_file_path: output file saving path
+
+    """
+    def _download_dropbox_link(self, file_url, copy_file_path):
+        # translate dropbox URL for direct download
+        if "?" not in file_url:
+            force_download_link = file_url + '?raw=1'
+        else:
+            force_download_link = file_url.partition('?')[0] + '?raw=1'
+
+        try: online_file = urllib2.urlopen(force_download_link)
+        except urllib2.HTTPError as e:
+            raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
+        except urllib2.URLError as e:
+            raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
+        else:
+            with closing(online_file):
+                with open(copy_file_path, 'wb') as output:
+                    shutil.copyfileobj(online_file, output)
+
+    """
+    _download_ftp_link: FTP download link handler
+                        URL fomat: ftp://user_name:password@ftp_link or ftp://ftp_link
+                        defualt user_name: 'anonymous'
+                                password: 'anonymous@domain.com'
+
+    params:
+    file_url: FTP download link
+    copy_file_path: output file saving path
+
+    """
+    def _download_ftp_link(self, file_url, copy_file_path):
+
+        # process ftp credentials 
+        ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
+        if ftp_url_format:
+            self.ftp_user_name = re.search('ftp://(.+?):', file_url).group(1)
+            self.ftp_password = file_url.rpartition('@')[0].rpartition(':')[-1]
+            self.ftp_domain = re.search('ftp://.*:.*@(.+?)/', file_url).group(1)
+            self.ftp_file_path = file_url.partition('ftp://')[-1].partition('/')[-1].rpartition('/')[0]
+            self.ftp_file_name = re.search('ftp://.*:.*@.*/(.+$)', file_url).group(1)
+        else:
+            self.ftp_user_name = 'anonymous'
+            self.ftp_password = 'anonymous@domain.com'
+            self.ftp_domain = re.search('ftp://(.+?)/', file_url).group(1)
+            self.ftp_file_path = file_url.partition('ftp://')[-1].partition('/')[-1].rpartition('/')[0]
+            self.ftp_file_name = re.search('ftp://.*/(.+$)', file_url).group(1)
+
+        self._check_ftp_connection(self.ftp_user_name, self.ftp_password, self.ftp_domain, self.ftp_file_path, self.ftp_file_name)
+        
+        ftp_connection = ftplib.FTP(self.ftp_domain)
+        ftp_connection.login(self.ftp_user_name, self.ftp_password)
+        ftp_connection.cwd(self.ftp_file_path)
+
+        # .gz file handler 
+        # TODO: create separate zip file handler for all download types 
+        if self.ftp_file_name.endswith('.gz'):
+            with open(copy_file_path + '.gz', 'wb') as output:
+                ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
+            with gzip.open(copy_file_path + '.gz', 'rb') as in_file:
+                with open(copy_file_path, 'w') as f:
+                    f.write(in_file.read())
+        else:
+            with open(copy_file_path, 'wb') as output:
+                ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
+
+    """
+    _check_ftp_connection: ftp connection checker
+
+    params:
+    user_name: FTP user name
+    password: FTP user password
+    domain: FTP domain
+    file_path: target file directory
+    file_name: target file name 
+
+    """
+    def _check_ftp_connection(self, user_name, password, domain, file_path, file_name):
+
+        try: ftp = ftplib.FTP(domain)
+        except ftplib.all_errors, error:
+            raise ValueError("Cannot connect: %s" % error)
+        else:
+            try: ftp.login(user_name, password)
+            except ftplib.all_errors, error:
+                raise ValueError("Cannot login: %s" % error)
+            else:
+                ftp.cwd(file_path)
+                if file_name in ftp.nlst():
+                    pass
+                else:
+                    raise ValueError("File %s does NOT exist in FTP path: %s" % (file_name, domain + '/' + file_path))
+
+    """
+    _download_google_drive_link: Google Drive download link handler
+                                 file needs to be shared publicly 
+
+    params:
+    file_url: Google Drive download link
+    copy_file_path: output file saving path
+
+    """
+    def _download_google_drive_link(self, file_url, copy_file_path):
+        # translate Google Drive URL for direct download
+        force_download_link_prefix = 'https://drive.google.com/uc?export=download&id='
+        file_id = file_url.partition('/d/')[-1].partition('/')[0]
+        force_download_link = force_download_link_prefix + file_id
+
+        try: online_file = urllib2.urlopen(force_download_link)
+        except urllib2.HTTPError as e:
+            raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
+        except urllib2.URLError as e:
+            raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
+        else:
+            with closing(online_file):
+                with open(copy_file_path, 'wb') as output:
+                    shutil.copyfileobj(online_file, output)
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -651,6 +827,7 @@ class ReadsUtils:
         self.scratch = config['scratch']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.ws_url = config['workspace-url']
+        self.token_user = os.environ['KB_AUTH_TOKEN'].split('client_id=')[1].split('|')[0]
         #END_CONSTRUCTOR
         pass
 
@@ -1182,6 +1359,284 @@ class ReadsUtils:
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
             raise ValueError('Method export_reads return value ' +
+                             'output is not type dict as required.')
+        # return the results
+        return [output]
+
+
+
+    def upload_reads_from_staging_area(self, ctx, params):
+        """
+        upload_reads_from_staging_area: upload file from user's staging area as reads 
+
+        :param params: instance of type "UploadStagingParams" (Input to the
+           upload_reads_from_staging_area function. If local files are
+           specified for upload, they must be uncompressed. Files will be
+           gzipped prior to upload. Note that if a reverse read file is
+           specified, it must be a local file if the forward reads file is a
+           local file, or a shock id if not. If a reverse file is specified
+           the uploader will will automatically intereave the forward and
+           reverse files and store that in shock. Additionally the statistics
+           generated are on the resulting interleaved file. Required
+           parameters: staging_fwd_file_name - the file name in staging area:
+           either single end reads, forward/left reads, or interleaved reads.
+           sequencing_tech - the sequencing technology used to produce the
+           reads. (If source_reads_ref is specified then sequencing_tech must
+           not be specified) One of: wsid - the id of the workspace where the
+           reads will be saved (preferred). wsname - the name of the
+           workspace where the reads will be saved. One of: objid - the id of
+           the workspace object to save over name - the name to which the
+           workspace object will be saved Optional parameters:
+           staging_rev_file_name - the file name in staging area: the file
+           containing the reverse/right reads for paired end, non-interleaved
+           reads, note the reverse file will get interleaved with the forward
+           file. single_genome - whether the reads are from a single genome
+           or a metagenome. Default is single genome. strain - information
+           about the organism strain that was sequenced. source - information
+           about the organism source. interleaved - specify that the fwd
+           reads file is an interleaved paired end reads file as opposed to a
+           single end reads file. Default true, ignored if rev_id is
+           specified. read_orientation_outward - whether the read orientation
+           is outward from the set of primers. Default is false and is
+           ignored for single end reads. insert_size_mean - the mean size of
+           the genetic fragments. Ignored for single end reads.
+           insert_size_std_dev - the standard deviation of the size of the
+           genetic fragments. Ignored for single end reads. source_reads_ref
+           - A workspace reference to a source reads object. This is used to
+           propogate user defined info from the source reads object to the
+           new reads object (used for filtering or trimming services). Note
+           this causes a passed in insert_size_mean, insert_size_std_dev,
+           sequencing_tech, read_orientation_outward, strain, source and/or
+           single_genome to throw an error.) -> structure: parameter
+           "staging_fwd_file_name" of String, parameter "wsid" of Long,
+           parameter "wsname" of String, parameter "objid" of Long, parameter
+           "name" of String, parameter "staging_rev_file_name" of String,
+           parameter "sequencing_tech" of String, parameter "single_genome"
+           of type "boolean" (A boolean - 0 for false, 1 for true. @range (0,
+           1)), parameter "strain" of type "StrainInfo" (Information about a
+           strain. genetic_code - the genetic code of the strain. See
+           http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
+           genus - the genus of the strain species - the species of the
+           strain strain - the identifier for the strain source - information
+           about the source of the strain organelle - the organelle of
+           interest for the related data (e.g. mitochondria) ncbi_taxid - the
+           NCBI taxonomy ID of the strain location - the location from which
+           the strain was collected @optional genetic_code source ncbi_taxid
+           organelle location) -> structure: parameter "genetic_code" of
+           Long, parameter "genus" of String, parameter "species" of String,
+           parameter "strain" of String, parameter "organelle" of String,
+           parameter "source" of type "SourceInfo" (Information about the
+           source of a piece of data. source - the name of the source (e.g.
+           NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "ncbi_taxid" of Long, parameter "location" of
+           type "Location" (Information about a location. lat - latitude of
+           the site, recorded as a decimal number. North latitudes are
+           positive values and south latitudes are negative numbers. lon -
+           longitude of the site, recorded as a decimal number. West
+           longitudes are positive values and east longitudes are negative
+           numbers. elevation - elevation of the site, expressed in meters
+           above sea level. Negative values are allowed. date - date of an
+           event at this location (for example, sample collection), expressed
+           in the format YYYY-MM-DDThh:mm:ss.SSSZ description - a free text
+           description of the location and, if applicable, the associated
+           event. @optional date description) -> structure: parameter "lat"
+           of Double, parameter "lon" of Double, parameter "elevation" of
+           Double, parameter "date" of String, parameter "description" of
+           String, parameter "source" of type "SourceInfo" (Information about
+           the source of a piece of data. source - the name of the source
+           (e.g. NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "interleaved" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1)), parameter
+           "read_orientation_outward" of type "boolean" (A boolean - 0 for
+           false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
+           Double, parameter "insert_size_std_dev" of Double, parameter
+           "source_reads_ref" of String
+        :returns: instance of type "UploadReadsOutput" (The output of the
+           upload_reads function. obj_ref - a reference to the new Workspace
+           object in the form X/Y/Z, where X is the workspace ID, Y is the
+           object ID, and Z is the version.) -> structure: parameter
+           "obj_ref" of String
+        """
+        # ctx is the context object
+        # return variables are: output
+        #BEGIN upload_reads_from_staging_area
+        del ctx
+        fwd_file_name = params.get('staging_fwd_file_name')
+        fwd_file_path = self._get_file_path(fwd_file_name)
+
+        # copy single-end fastq or forward/left paired-end fastq file from starging area to local tmp folder
+        dstdir = os.path.join(self.scratch, 'tmp')
+        if not os.path.exists(dstdir):
+            os.makedirs(dstdir)
+        shutil.copy2(fwd_file_path, dstdir)
+        copy_fwd_file_path = os.path.join(dstdir, fwd_file_name)
+        self.log('--->\ncopied file from: %s to: %s\n' % (fwd_file_path, copy_fwd_file_path))
+
+        params['fwd_file'] = copy_fwd_file_path
+ 
+        # copy reverse/right paired-end fastq file from starging area to local tmp folder
+        rev_file_name = params.get('staging_rev_file_name')
+        if rev_file_name:
+            rev_file_path = self._get_file_path(rev_file_name)
+            shutil.copy2(rev_file_path, dstdir)
+            copy_rev_file_path = os.path.join(dstdir, rev_file_name)
+            self.log('--->\ncopied file from: %s to: %s\n' % (rev_file_path, copy_rev_file_path))
+            params['rev_file'] = copy_rev_file_path
+
+        output = self.upload_reads({}, params)[0]
+        #END upload_reads_from_staging_area
+
+        # At some point might do deeper type checking...
+        if not isinstance(output, dict):
+            raise ValueError('Method upload_reads_from_staging_area return value ' +
+                             'output is not type dict as required.')
+        # return the results
+        return [output]
+
+    def upload_reads_from_web(self, ctx, params):
+        """
+        upload_reads_from_web: upload file from web as reads
+
+        :param params: instance of type "UploadWebParams" (Input to the
+           upload_reads_from_web function. If local files are specified for
+           upload, they must be uncompressed. Files will be gzipped prior to
+           upload. Note that if a reverse read file is specified, it must be
+           a local file if the forward reads file is a local file, or a shock
+           id if not. If a reverse file is specified the uploader will will
+           automatically intereave the forward and reverse files and store
+           that in shock. Additionally the statistics generated are on the
+           resulting interleaved file. Required parameters: fwd_file_url -
+           the file URL ('Direct Download', 'FTP', 'DropBox', 'Google
+           Drive'): either single end reads, forward/left reads, or
+           interleaved reads. sequencing_tech - the sequencing technology
+           used to produce the reads. (If source_reads_ref is specified then
+           sequencing_tech must not be specified) One of: wsid - the id of
+           the workspace where the reads will be saved (preferred). wsname -
+           the name of the workspace where the reads will be saved. One of:
+           objid - the id of the workspace object to save over name - the
+           name to which the workspace object will be saved Optional
+           parameters: rev_file_url - the file URL ('Direct Download', 'FTP',
+           'DropBox', 'Google Drive'): the file containing the reverse/right
+           reads for paired end, non-interleaved reads, note the reverse file
+           will get interleaved with the forward file. single_genome -
+           whether the reads are from a single genome or a metagenome.
+           Default is single genome. strain - information about the organism
+           strain that was sequenced. source - information about the organism
+           source. interleaved - specify that the fwd reads file is an
+           interleaved paired end reads file as opposed to a single end reads
+           file. Default true, ignored if rev_id is specified.
+           read_orientation_outward - whether the read orientation is outward
+           from the set of primers. Default is false and is ignored for
+           single end reads. insert_size_mean - the mean size of the genetic
+           fragments. Ignored for single end reads. insert_size_std_dev - the
+           standard deviation of the size of the genetic fragments. Ignored
+           for single end reads. source_reads_ref - A workspace reference to
+           a source reads object. This is used to propogate user defined info
+           from the source reads object to the new reads object (used for
+           filtering or trimming services). Note this causes a passed in
+           insert_size_mean, insert_size_std_dev, sequencing_tech,
+           read_orientation_outward, strain, source and/or single_genome to
+           throw an error.) -> structure: parameter "fwd_file_url" of String,
+           parameter "wsid" of Long, parameter "wsname" of String, parameter
+           "objid" of Long, parameter "name" of String, parameter
+           "rev_file_url" of String, parameter "sequencing_tech" of String,
+           parameter "single_genome" of type "boolean" (A boolean - 0 for
+           false, 1 for true. @range (0, 1)), parameter "strain" of type
+           "StrainInfo" (Information about a strain. genetic_code - the
+           genetic code of the strain. See
+           http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
+           genus - the genus of the strain species - the species of the
+           strain strain - the identifier for the strain source - information
+           about the source of the strain organelle - the organelle of
+           interest for the related data (e.g. mitochondria) ncbi_taxid - the
+           NCBI taxonomy ID of the strain location - the location from which
+           the strain was collected @optional genetic_code source ncbi_taxid
+           organelle location) -> structure: parameter "genetic_code" of
+           Long, parameter "genus" of String, parameter "species" of String,
+           parameter "strain" of String, parameter "organelle" of String,
+           parameter "source" of type "SourceInfo" (Information about the
+           source of a piece of data. source - the name of the source (e.g.
+           NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "ncbi_taxid" of Long, parameter "location" of
+           type "Location" (Information about a location. lat - latitude of
+           the site, recorded as a decimal number. North latitudes are
+           positive values and south latitudes are negative numbers. lon -
+           longitude of the site, recorded as a decimal number. West
+           longitudes are positive values and east longitudes are negative
+           numbers. elevation - elevation of the site, expressed in meters
+           above sea level. Negative values are allowed. date - date of an
+           event at this location (for example, sample collection), expressed
+           in the format YYYY-MM-DDThh:mm:ss.SSSZ description - a free text
+           description of the location and, if applicable, the associated
+           event. @optional date description) -> structure: parameter "lat"
+           of Double, parameter "lon" of Double, parameter "elevation" of
+           Double, parameter "date" of String, parameter "description" of
+           String, parameter "source" of type "SourceInfo" (Information about
+           the source of a piece of data. source - the name of the source
+           (e.g. NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "interleaved" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1)), parameter
+           "read_orientation_outward" of type "boolean" (A boolean - 0 for
+           false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
+           Double, parameter "insert_size_std_dev" of Double, parameter
+           "source_reads_ref" of String
+        :returns: instance of type "UploadReadsOutput" (The output of the
+           upload_reads function. obj_ref - a reference to the new Workspace
+           object in the form X/Y/Z, where X is the workspace ID, Y is the
+           object ID, and Z is the version.) -> structure: parameter
+           "obj_ref" of String
+        """
+        # ctx is the context object
+        # return variables are: output
+        #BEGIN upload_reads_from_web
+        # prepare local copy file path for fwd_file
+        tmp_fwd_file_name = 'tmp_fwd_fastq.fq'
+        dstdir = os.path.join(self.scratch, 'tmp')
+        if not os.path.exists(dstdir):
+            os.makedirs(dstdir)
+        copy_fwd_file_path = os.path.join(dstdir, tmp_fwd_file_name)
+
+        self._download_file(params.get('download_type'), params.get('fwd_file_url'), copy_fwd_file_path)
+
+        params['fwd_file'] = copy_fwd_file_path
+
+        if params.get('rev_file_url'):
+            # prepare local copy file path for rev_file
+            tmp_rev_file_name = 'tmp_rev_fastq.fq'
+            copy_rev_file_path = os.path.join(dstdir, tmp_rev_file_name)
+            self._download_file(params.get('download_type'), params.get('rev_file_url'), copy_rev_file_path)
+            params['rev_file'] = copy_rev_file_path
+
+        output = self.upload_reads({}, params)[0]
+        #END upload_reads_from_web
+
+        # At some point might do deeper type checking...
+        if not isinstance(output, dict):
+            raise ValueError('Method upload_reads_from_web return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]

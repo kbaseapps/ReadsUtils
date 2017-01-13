@@ -277,4 +277,162 @@ module ReadsUtils {
      */
     funcdef export_reads(ExportParams params)
                 returns (ExportOutput output) authentication required;
+
+
+    /* Input to the upload_reads_from_staging_area function.
+        
+        If local files are specified for upload, they must be uncompressed.
+        Files will be gzipped prior to upload.
+        
+        Note that if a reverse read file is specified, it must be a local file
+        if the forward reads file is a local file, or a shock id if not.
+
+        If a reverse file is specified the uploader will will automatically
+        intereave the forward and reverse files and store that in shock.
+        Additionally the statistics generated are on the resulting interleaved file.
+        
+        Required parameters:
+        staging_fwd_file_name - the file name in staging area:
+            either single end reads, forward/left reads, or interleaved reads.
+        
+        sequencing_tech - the sequencing technology used to produce the
+            reads. (If source_reads_ref is specified then sequencing_tech
+            must not be specified)
+
+        One of:
+        wsid - the id of the workspace where the reads will be saved
+            (preferred).
+        wsname - the name of the workspace where the reads will be saved.
+        
+        One of:
+        objid - the id of the workspace object to save over
+        name - the name to which the workspace object will be saved
+            
+        Optional parameters:
+        staging_rev_file_name - the file name in staging area: the file containing the
+            reverse/right reads for paired end, non-interleaved reads, 
+            note the reverse file will get interleaved 
+            with the forward file.
+        single_genome - whether the reads are from a single genome or a
+            metagenome. Default is single genome.
+        strain - information about the organism strain
+            that was sequenced.
+        source - information about the organism source.
+        interleaved - specify that the fwd reads file is an interleaved paired
+            end reads file as opposed to a single end reads file. Default true,
+            ignored if rev_id is specified.
+        read_orientation_outward - whether the read orientation is outward
+            from the set of primers. Default is false and is ignored for
+            single end reads.
+        insert_size_mean - the mean size of the genetic fragments. Ignored for
+            single end reads.
+        insert_size_std_dev - the standard deviation of the size of the
+            genetic fragments. Ignored for single end reads.
+        source_reads_ref - A workspace reference to a source reads object.
+            This is used to propogate user defined info from the source reads
+            object to the new reads object (used for filtering or 
+            trimming services). Note this causes a passed in 
+            insert_size_mean, insert_size_std_dev, sequencing_tech,
+            read_orientation_outward, strain, source and/or 
+            single_genome to throw an error.
+    */
+    typedef structure {
+        string staging_fwd_file_name;
+        int wsid;
+        string wsname;
+        int objid;
+        string name;
+        string staging_rev_file_name;
+        string sequencing_tech;
+        boolean single_genome;
+        KBaseCommon.StrainInfo strain;
+        KBaseCommon.SourceInfo source;
+        boolean interleaved;
+        boolean read_orientation_outward;
+        float insert_size_mean;
+        float insert_size_std_dev;
+        string source_reads_ref;
+    } UploadStagingParams;
+
+    /* Input to the upload_reads_from_web function.
+        
+        If local files are specified for upload, they must be uncompressed.
+        Files will be gzipped prior to upload.
+        
+        Note that if a reverse read file is specified, it must be a local file
+        if the forward reads file is a local file, or a shock id if not.
+
+        If a reverse file is specified the uploader will will automatically
+        intereave the forward and reverse files and store that in shock.
+        Additionally the statistics generated are on the resulting interleaved file.
+        
+        Required parameters:
+        fwd_file_url - the file URL ('Direct Download', 'FTP', 'DropBox', 'Google Drive'):
+            either single end reads, forward/left reads, or interleaved reads.
+        
+        sequencing_tech - the sequencing technology used to produce the
+            reads. (If source_reads_ref is specified then sequencing_tech
+            must not be specified)
+
+        One of:
+        wsid - the id of the workspace where the reads will be saved
+            (preferred).
+        wsname - the name of the workspace where the reads will be saved.
+        
+        One of:
+        objid - the id of the workspace object to save over
+        name - the name to which the workspace object will be saved
+            
+        Optional parameters:
+        rev_file_url - the file URL ('Direct Download', 'FTP', 'DropBox', 'Google Drive'):
+            the file containing the reverse/right reads for paired end, non-interleaved reads, 
+            note the reverse file will get interleaved 
+            with the forward file.
+        single_genome - whether the reads are from a single genome or a
+            metagenome. Default is single genome.
+        strain - information about the organism strain
+            that was sequenced.
+        source - information about the organism source.
+        interleaved - specify that the fwd reads file is an interleaved paired
+            end reads file as opposed to a single end reads file. Default true,
+            ignored if rev_id is specified.
+        read_orientation_outward - whether the read orientation is outward
+            from the set of primers. Default is false and is ignored for
+            single end reads.
+        insert_size_mean - the mean size of the genetic fragments. Ignored for
+            single end reads.
+        insert_size_std_dev - the standard deviation of the size of the
+            genetic fragments. Ignored for single end reads.
+        source_reads_ref - A workspace reference to a source reads object.
+            This is used to propogate user defined info from the source reads
+            object to the new reads object (used for filtering or 
+            trimming services). Note this causes a passed in 
+            insert_size_mean, insert_size_std_dev, sequencing_tech,
+            read_orientation_outward, strain, source and/or 
+            single_genome to throw an error.
+    */
+    typedef structure {
+        string fwd_file_url;
+        int wsid;
+        string wsname;
+        int objid;
+        string name;
+        string rev_file_url;
+        string sequencing_tech;
+        boolean single_genome;
+        KBaseCommon.StrainInfo strain;
+        KBaseCommon.SourceInfo source;
+        boolean interleaved;
+        boolean read_orientation_outward;
+        float insert_size_mean;
+        float insert_size_std_dev;
+        string source_reads_ref;
+    } UploadWebParams;
+
+    funcdef upload_reads_from_staging_area(UploadStagingParams params)
+        returns (UploadReadsOutput output) authentication required;
+
+    funcdef upload_reads_from_web(UploadWebParams params)
+        returns (UploadReadsOutput output) authentication required;
+
 };
