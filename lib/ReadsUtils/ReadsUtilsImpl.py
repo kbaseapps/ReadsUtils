@@ -1496,6 +1496,9 @@ class ReadsUtils:
             params['rev_file'] = copy_rev_file_path
 
         output = self.upload_reads({}, params)[0]
+
+        self.log('--->\nremoving folder: %s' % dstdir)
+        shutil.rmtree(dstdir)
         #END upload_reads_from_staging_area
 
         # At some point might do deeper type checking...
@@ -1632,6 +1635,9 @@ class ReadsUtils:
             params['rev_file'] = copy_rev_file_path
 
         output = self.upload_reads({}, params)[0]
+
+        self.log('--->\nremoving folder: %s' % dstdir)
+        shutil.rmtree(dstdir)
         #END upload_reads_from_web
 
         # At some point might do deeper type checking...
