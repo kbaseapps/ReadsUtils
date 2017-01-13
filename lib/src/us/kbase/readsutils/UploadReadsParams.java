@@ -30,6 +30,13 @@ import us.kbase.kbasecommon.StrainInfo;
  * - OR -
  * fwd_file - a local path to the reads data file: either single end
  *     reads, forward/left reads, or interleaved reads.
+ * - OR - 
+ * fwd_file_url - a download link that contains reads data file:
+ *     either single end reads, forward/left reads, or interleaved reads.
+ * download_type - download type ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
+ * - OR - 
+ * fwd_staging_file_name - reads data file name in staging area:
+ *     either single end reads, forward/left reads, or interleaved reads.
  * sequencing_tech - the sequencing technology used to produce the
  *     reads. (If source_reads_ref is specified then sequencing_tech
  *     must not be specified)
@@ -49,6 +56,12 @@ import us.kbase.kbasecommon.StrainInfo;
  *     reverse/right reads for paired end, non-interleaved reads, 
  *     note the reverse file will get interleaved 
  *     with the forward file.
+ * - OR - 
+ * rev_file_url - a download link that contains reads data file:
+ *     reverse/right reads for paired end, non-interleaved reads.
+ * - OR - 
+ * rev_staging_file_name - reads data file name in staging area:
+ *     reverse/right reads for paired end, non-interleaved reads.
  * single_genome - whether the reads are from a single genome or a
  *     metagenome. Default is single genome.
  * strain - information about the organism strain
@@ -93,7 +106,12 @@ import us.kbase.kbasecommon.StrainInfo;
     "read_orientation_outward",
     "insert_size_mean",
     "insert_size_std_dev",
-    "source_reads_ref"
+    "source_reads_ref",
+    "fwd_file_url",
+    "rev_file_url",
+    "fwd_staging_file_name",
+    "rev_staging_file_name",
+    "download_type"
 })
 public class UploadReadsParams {
 
@@ -160,6 +178,16 @@ public class UploadReadsParams {
     private Double insertSizeStdDev;
     @JsonProperty("source_reads_ref")
     private String sourceReadsRef;
+    @JsonProperty("fwd_file_url")
+    private String fwdFileUrl;
+    @JsonProperty("rev_file_url")
+    private String revFileUrl;
+    @JsonProperty("fwd_staging_file_name")
+    private String fwdStagingFileName;
+    @JsonProperty("rev_staging_file_name")
+    private String revStagingFileName;
+    @JsonProperty("download_type")
+    private String downloadType;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     @JsonProperty("fwd_id")
@@ -475,6 +503,81 @@ public class UploadReadsParams {
         return this;
     }
 
+    @JsonProperty("fwd_file_url")
+    public String getFwdFileUrl() {
+        return fwdFileUrl;
+    }
+
+    @JsonProperty("fwd_file_url")
+    public void setFwdFileUrl(String fwdFileUrl) {
+        this.fwdFileUrl = fwdFileUrl;
+    }
+
+    public UploadReadsParams withFwdFileUrl(String fwdFileUrl) {
+        this.fwdFileUrl = fwdFileUrl;
+        return this;
+    }
+
+    @JsonProperty("rev_file_url")
+    public String getRevFileUrl() {
+        return revFileUrl;
+    }
+
+    @JsonProperty("rev_file_url")
+    public void setRevFileUrl(String revFileUrl) {
+        this.revFileUrl = revFileUrl;
+    }
+
+    public UploadReadsParams withRevFileUrl(String revFileUrl) {
+        this.revFileUrl = revFileUrl;
+        return this;
+    }
+
+    @JsonProperty("fwd_staging_file_name")
+    public String getFwdStagingFileName() {
+        return fwdStagingFileName;
+    }
+
+    @JsonProperty("fwd_staging_file_name")
+    public void setFwdStagingFileName(String fwdStagingFileName) {
+        this.fwdStagingFileName = fwdStagingFileName;
+    }
+
+    public UploadReadsParams withFwdStagingFileName(String fwdStagingFileName) {
+        this.fwdStagingFileName = fwdStagingFileName;
+        return this;
+    }
+
+    @JsonProperty("rev_staging_file_name")
+    public String getRevStagingFileName() {
+        return revStagingFileName;
+    }
+
+    @JsonProperty("rev_staging_file_name")
+    public void setRevStagingFileName(String revStagingFileName) {
+        this.revStagingFileName = revStagingFileName;
+    }
+
+    public UploadReadsParams withRevStagingFileName(String revStagingFileName) {
+        this.revStagingFileName = revStagingFileName;
+        return this;
+    }
+
+    @JsonProperty("download_type")
+    public String getDownloadType() {
+        return downloadType;
+    }
+
+    @JsonProperty("download_type")
+    public void setDownloadType(String downloadType) {
+        this.downloadType = downloadType;
+    }
+
+    public UploadReadsParams withDownloadType(String downloadType) {
+        this.downloadType = downloadType;
+        return this;
+    }
+
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -487,7 +590,7 @@ public class UploadReadsParams {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", fwdFile=")+ fwdFile)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", revFile=")+ revFile)+", sequencingTech=")+ sequencingTech)+", singleGenome=")+ singleGenome)+", strain=")+ strain)+", source=")+ source)+", interleaved=")+ interleaved)+", readOrientationOutward=")+ readOrientationOutward)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", sourceReadsRef=")+ sourceReadsRef)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((((((((((((((((((((((((((((((("UploadReadsParams"+" [fwdId=")+ fwdId)+", fwdFile=")+ fwdFile)+", wsid=")+ wsid)+", wsname=")+ wsname)+", objid=")+ objid)+", name=")+ name)+", revId=")+ revId)+", revFile=")+ revFile)+", sequencingTech=")+ sequencingTech)+", singleGenome=")+ singleGenome)+", strain=")+ strain)+", source=")+ source)+", interleaved=")+ interleaved)+", readOrientationOutward=")+ readOrientationOutward)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", sourceReadsRef=")+ sourceReadsRef)+", fwdFileUrl=")+ fwdFileUrl)+", revFileUrl=")+ revFileUrl)+", fwdStagingFileName=")+ fwdStagingFileName)+", revStagingFileName=")+ revStagingFileName)+", downloadType=")+ downloadType)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

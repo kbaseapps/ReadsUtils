@@ -236,6 +236,11 @@ UploadReadsParams is a reference to a hash where the following keys are defined:
 	insert_size_mean has a value which is a float
 	insert_size_std_dev has a value which is a float
 	source_reads_ref has a value which is a string
+	fwd_file_url has a value which is a string
+	rev_file_url has a value which is a string
+	fwd_staging_file_name has a value which is a string
+	rev_staging_file_name has a value which is a string
+	download_type has a value which is a string
 boolean is an int
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
@@ -287,6 +292,11 @@ UploadReadsParams is a reference to a hash where the following keys are defined:
 	insert_size_mean has a value which is a float
 	insert_size_std_dev has a value which is a float
 	source_reads_ref has a value which is a string
+	fwd_file_url has a value which is a string
+	rev_file_url has a value which is a string
+	fwd_staging_file_name has a value which is a string
+	rev_staging_file_name has a value which is a string
+	download_type has a value which is a string
 boolean is an int
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
@@ -659,330 +669,6 @@ stores the zip in shock.
     }
 }
  
-
-
-=head2 upload_reads_from_staging_area
-
-  $output = $obj->upload_reads_from_staging_area($params)
-
-=over 4
-
-=item Parameter and return types
-
-=begin html
-
-<pre>
-$params is a ReadsUtils.UploadStagingParams
-$output is a ReadsUtils.UploadReadsOutput
-UploadStagingParams is a reference to a hash where the following keys are defined:
-	staging_fwd_file_name has a value which is a string
-	wsid has a value which is an int
-	wsname has a value which is a string
-	objid has a value which is an int
-	name has a value which is a string
-	staging_rev_file_name has a value which is a string
-	sequencing_tech has a value which is a string
-	single_genome has a value which is a ReadsUtils.boolean
-	strain has a value which is a KBaseCommon.StrainInfo
-	source has a value which is a KBaseCommon.SourceInfo
-	interleaved has a value which is a ReadsUtils.boolean
-	read_orientation_outward has a value which is a ReadsUtils.boolean
-	insert_size_mean has a value which is a float
-	insert_size_std_dev has a value which is a float
-	source_reads_ref has a value which is a string
-boolean is an int
-StrainInfo is a reference to a hash where the following keys are defined:
-	genetic_code has a value which is an int
-	genus has a value which is a string
-	species has a value which is a string
-	strain has a value which is a string
-	organelle has a value which is a string
-	source has a value which is a KBaseCommon.SourceInfo
-	ncbi_taxid has a value which is an int
-	location has a value which is a KBaseCommon.Location
-SourceInfo is a reference to a hash where the following keys are defined:
-	source has a value which is a string
-	source_id has a value which is a KBaseCommon.source_id
-	project_id has a value which is a KBaseCommon.project_id
-source_id is a string
-project_id is a string
-Location is a reference to a hash where the following keys are defined:
-	lat has a value which is a float
-	lon has a value which is a float
-	elevation has a value which is a float
-	date has a value which is a string
-	description has a value which is a string
-UploadReadsOutput is a reference to a hash where the following keys are defined:
-	obj_ref has a value which is a string
-
-</pre>
-
-=end html
-
-=begin text
-
-$params is a ReadsUtils.UploadStagingParams
-$output is a ReadsUtils.UploadReadsOutput
-UploadStagingParams is a reference to a hash where the following keys are defined:
-	staging_fwd_file_name has a value which is a string
-	wsid has a value which is an int
-	wsname has a value which is a string
-	objid has a value which is an int
-	name has a value which is a string
-	staging_rev_file_name has a value which is a string
-	sequencing_tech has a value which is a string
-	single_genome has a value which is a ReadsUtils.boolean
-	strain has a value which is a KBaseCommon.StrainInfo
-	source has a value which is a KBaseCommon.SourceInfo
-	interleaved has a value which is a ReadsUtils.boolean
-	read_orientation_outward has a value which is a ReadsUtils.boolean
-	insert_size_mean has a value which is a float
-	insert_size_std_dev has a value which is a float
-	source_reads_ref has a value which is a string
-boolean is an int
-StrainInfo is a reference to a hash where the following keys are defined:
-	genetic_code has a value which is an int
-	genus has a value which is a string
-	species has a value which is a string
-	strain has a value which is a string
-	organelle has a value which is a string
-	source has a value which is a KBaseCommon.SourceInfo
-	ncbi_taxid has a value which is an int
-	location has a value which is a KBaseCommon.Location
-SourceInfo is a reference to a hash where the following keys are defined:
-	source has a value which is a string
-	source_id has a value which is a KBaseCommon.source_id
-	project_id has a value which is a KBaseCommon.project_id
-source_id is a string
-project_id is a string
-Location is a reference to a hash where the following keys are defined:
-	lat has a value which is a float
-	lon has a value which is a float
-	elevation has a value which is a float
-	date has a value which is a string
-	description has a value which is a string
-UploadReadsOutput is a reference to a hash where the following keys are defined:
-	obj_ref has a value which is a string
-
-
-=end text
-
-=item Description
-
-
-
-=back
-
-=cut
-
- sub upload_reads_from_staging_area
-{
-    my($self, @args) = @_;
-
-# Authentication: required
-
-    if ((my $n = @args) != 1)
-    {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function upload_reads_from_staging_area (received $n, expecting 1)");
-    }
-    {
-	my($params) = @args;
-
-	my @_bad_arguments;
-        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
-        if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to upload_reads_from_staging_area:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'upload_reads_from_staging_area');
-	}
-    }
-
-    my $url = $self->{url};
-    my $result = $self->{client}->call($url, $self->{headers}, {
-	    method => "ReadsUtils.upload_reads_from_staging_area",
-	    params => \@args,
-    });
-    if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'upload_reads_from_staging_area',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
-	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
-	}
-    } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method upload_reads_from_staging_area",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'upload_reads_from_staging_area',
-				       );
-    }
-}
- 
-
-
-=head2 upload_reads_from_web
-
-  $output = $obj->upload_reads_from_web($params)
-
-=over 4
-
-=item Parameter and return types
-
-=begin html
-
-<pre>
-$params is a ReadsUtils.UploadWebParams
-$output is a ReadsUtils.UploadReadsOutput
-UploadWebParams is a reference to a hash where the following keys are defined:
-	fwd_file_url has a value which is a string
-	wsid has a value which is an int
-	wsname has a value which is a string
-	objid has a value which is an int
-	name has a value which is a string
-	rev_file_url has a value which is a string
-	sequencing_tech has a value which is a string
-	single_genome has a value which is a ReadsUtils.boolean
-	strain has a value which is a KBaseCommon.StrainInfo
-	source has a value which is a KBaseCommon.SourceInfo
-	interleaved has a value which is a ReadsUtils.boolean
-	read_orientation_outward has a value which is a ReadsUtils.boolean
-	insert_size_mean has a value which is a float
-	insert_size_std_dev has a value which is a float
-	source_reads_ref has a value which is a string
-boolean is an int
-StrainInfo is a reference to a hash where the following keys are defined:
-	genetic_code has a value which is an int
-	genus has a value which is a string
-	species has a value which is a string
-	strain has a value which is a string
-	organelle has a value which is a string
-	source has a value which is a KBaseCommon.SourceInfo
-	ncbi_taxid has a value which is an int
-	location has a value which is a KBaseCommon.Location
-SourceInfo is a reference to a hash where the following keys are defined:
-	source has a value which is a string
-	source_id has a value which is a KBaseCommon.source_id
-	project_id has a value which is a KBaseCommon.project_id
-source_id is a string
-project_id is a string
-Location is a reference to a hash where the following keys are defined:
-	lat has a value which is a float
-	lon has a value which is a float
-	elevation has a value which is a float
-	date has a value which is a string
-	description has a value which is a string
-UploadReadsOutput is a reference to a hash where the following keys are defined:
-	obj_ref has a value which is a string
-
-</pre>
-
-=end html
-
-=begin text
-
-$params is a ReadsUtils.UploadWebParams
-$output is a ReadsUtils.UploadReadsOutput
-UploadWebParams is a reference to a hash where the following keys are defined:
-	fwd_file_url has a value which is a string
-	wsid has a value which is an int
-	wsname has a value which is a string
-	objid has a value which is an int
-	name has a value which is a string
-	rev_file_url has a value which is a string
-	sequencing_tech has a value which is a string
-	single_genome has a value which is a ReadsUtils.boolean
-	strain has a value which is a KBaseCommon.StrainInfo
-	source has a value which is a KBaseCommon.SourceInfo
-	interleaved has a value which is a ReadsUtils.boolean
-	read_orientation_outward has a value which is a ReadsUtils.boolean
-	insert_size_mean has a value which is a float
-	insert_size_std_dev has a value which is a float
-	source_reads_ref has a value which is a string
-boolean is an int
-StrainInfo is a reference to a hash where the following keys are defined:
-	genetic_code has a value which is an int
-	genus has a value which is a string
-	species has a value which is a string
-	strain has a value which is a string
-	organelle has a value which is a string
-	source has a value which is a KBaseCommon.SourceInfo
-	ncbi_taxid has a value which is an int
-	location has a value which is a KBaseCommon.Location
-SourceInfo is a reference to a hash where the following keys are defined:
-	source has a value which is a string
-	source_id has a value which is a KBaseCommon.source_id
-	project_id has a value which is a KBaseCommon.project_id
-source_id is a string
-project_id is a string
-Location is a reference to a hash where the following keys are defined:
-	lat has a value which is a float
-	lon has a value which is a float
-	elevation has a value which is a float
-	date has a value which is a string
-	description has a value which is a string
-UploadReadsOutput is a reference to a hash where the following keys are defined:
-	obj_ref has a value which is a string
-
-
-=end text
-
-=item Description
-
-
-
-=back
-
-=cut
-
- sub upload_reads_from_web
-{
-    my($self, @args) = @_;
-
-# Authentication: required
-
-    if ((my $n = @args) != 1)
-    {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function upload_reads_from_web (received $n, expecting 1)");
-    }
-    {
-	my($params) = @args;
-
-	my @_bad_arguments;
-        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
-        if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to upload_reads_from_web:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'upload_reads_from_web');
-	}
-    }
-
-    my $url = $self->{url};
-    my $result = $self->{client}->call($url, $self->{headers}, {
-	    method => "ReadsUtils.upload_reads_from_web",
-	    params => \@args,
-    });
-    if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'upload_reads_from_web',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
-	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
-	}
-    } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method upload_reads_from_web",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'upload_reads_from_web',
-				       );
-    }
-}
- 
   
 sub status
 {
@@ -1026,16 +712,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'upload_reads_from_web',
+                method_name => 'export_reads',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method upload_reads_from_web",
+            error => "Error invoking method export_reads",
             status_line => $self->{client}->status_line,
-            method_name => 'upload_reads_from_web',
+            method_name => 'export_reads',
         );
     }
 }
@@ -1277,6 +963,13 @@ fwd_id - the id of the shock node containing the reads data file:
 - OR -
 fwd_file - a local path to the reads data file: either single end
     reads, forward/left reads, or interleaved reads.
+- OR - 
+fwd_file_url - a download link that contains reads data file:
+    either single end reads, forward/left reads, or interleaved reads.
+download_type - download type ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
+- OR - 
+fwd_staging_file_name - reads data file name in staging area:
+    either single end reads, forward/left reads, or interleaved reads.
 
 sequencing_tech - the sequencing technology used to produce the
     reads. (If source_reads_ref is specified then sequencing_tech
@@ -1299,6 +992,13 @@ rev_file - a local path to the reads data file containing the
     reverse/right reads for paired end, non-interleaved reads, 
     note the reverse file will get interleaved 
     with the forward file.
+- OR - 
+rev_file_url - a download link that contains reads data file:
+    reverse/right reads for paired end, non-interleaved reads.
+- OR - 
+rev_staging_file_name - reads data file name in staging area:
+    reverse/right reads for paired end, non-interleaved reads.
+
 single_genome - whether the reads are from a single genome or a
     metagenome. Default is single genome.
 strain - information about the organism strain
@@ -1346,6 +1046,11 @@ read_orientation_outward has a value which is a ReadsUtils.boolean
 insert_size_mean has a value which is a float
 insert_size_std_dev has a value which is a float
 source_reads_ref has a value which is a string
+fwd_file_url has a value which is a string
+rev_file_url has a value which is a string
+fwd_staging_file_name has a value which is a string
+rev_staging_file_name has a value which is a string
+download_type has a value which is a string
 
 </pre>
 
@@ -1371,6 +1076,11 @@ read_orientation_outward has a value which is a ReadsUtils.boolean
 insert_size_mean has a value which is a float
 insert_size_std_dev has a value which is a float
 source_reads_ref has a value which is a string
+fwd_file_url has a value which is a string
+rev_file_url has a value which is a string
+fwd_staging_file_name has a value which is a string
+rev_staging_file_name has a value which is a string
+download_type has a value which is a string
 
 
 =end text
@@ -1731,242 +1441,6 @@ shock_id has a value which is a string
 
 a reference to a hash where the following keys are defined:
 shock_id has a value which is a string
-
-
-=end text
-
-=back
-
-
-
-=head2 UploadStagingParams
-
-=over 4
-
-
-
-=item Description
-
-Input to the upload_reads_from_staging_area function.
-
-If local files are specified for upload, they must be uncompressed.
-Files will be gzipped prior to upload.
-
-Note that if a reverse read file is specified, it must be a local file
-if the forward reads file is a local file, or a shock id if not.
-
-If a reverse file is specified the uploader will will automatically
-intereave the forward and reverse files and store that in shock.
-Additionally the statistics generated are on the resulting interleaved file.
-
-Required parameters:
-staging_fwd_file_name - the file name in staging area:
-    either single end reads, forward/left reads, or interleaved reads.
-
-sequencing_tech - the sequencing technology used to produce the
-    reads. (If source_reads_ref is specified then sequencing_tech
-    must not be specified)
-
-One of:
-wsid - the id of the workspace where the reads will be saved
-    (preferred).
-wsname - the name of the workspace where the reads will be saved.
-
-One of:
-objid - the id of the workspace object to save over
-name - the name to which the workspace object will be saved
-    
-Optional parameters:
-staging_rev_file_name - the file name in staging area: the file containing the
-    reverse/right reads for paired end, non-interleaved reads, 
-    note the reverse file will get interleaved 
-    with the forward file.
-single_genome - whether the reads are from a single genome or a
-    metagenome. Default is single genome.
-strain - information about the organism strain
-    that was sequenced.
-source - information about the organism source.
-interleaved - specify that the fwd reads file is an interleaved paired
-    end reads file as opposed to a single end reads file. Default true,
-    ignored if rev_id is specified.
-read_orientation_outward - whether the read orientation is outward
-    from the set of primers. Default is false and is ignored for
-    single end reads.
-insert_size_mean - the mean size of the genetic fragments. Ignored for
-    single end reads.
-insert_size_std_dev - the standard deviation of the size of the
-    genetic fragments. Ignored for single end reads.
-source_reads_ref - A workspace reference to a source reads object.
-    This is used to propogate user defined info from the source reads
-    object to the new reads object (used for filtering or 
-    trimming services). Note this causes a passed in 
-    insert_size_mean, insert_size_std_dev, sequencing_tech,
-    read_orientation_outward, strain, source and/or 
-    single_genome to throw an error.
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-staging_fwd_file_name has a value which is a string
-wsid has a value which is an int
-wsname has a value which is a string
-objid has a value which is an int
-name has a value which is a string
-staging_rev_file_name has a value which is a string
-sequencing_tech has a value which is a string
-single_genome has a value which is a ReadsUtils.boolean
-strain has a value which is a KBaseCommon.StrainInfo
-source has a value which is a KBaseCommon.SourceInfo
-interleaved has a value which is a ReadsUtils.boolean
-read_orientation_outward has a value which is a ReadsUtils.boolean
-insert_size_mean has a value which is a float
-insert_size_std_dev has a value which is a float
-source_reads_ref has a value which is a string
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-staging_fwd_file_name has a value which is a string
-wsid has a value which is an int
-wsname has a value which is a string
-objid has a value which is an int
-name has a value which is a string
-staging_rev_file_name has a value which is a string
-sequencing_tech has a value which is a string
-single_genome has a value which is a ReadsUtils.boolean
-strain has a value which is a KBaseCommon.StrainInfo
-source has a value which is a KBaseCommon.SourceInfo
-interleaved has a value which is a ReadsUtils.boolean
-read_orientation_outward has a value which is a ReadsUtils.boolean
-insert_size_mean has a value which is a float
-insert_size_std_dev has a value which is a float
-source_reads_ref has a value which is a string
-
-
-=end text
-
-=back
-
-
-
-=head2 UploadWebParams
-
-=over 4
-
-
-
-=item Description
-
-Input to the upload_reads_from_web function.
-
-If local files are specified for upload, they must be uncompressed.
-Files will be gzipped prior to upload.
-
-Note that if a reverse read file is specified, it must be a local file
-if the forward reads file is a local file, or a shock id if not.
-
-If a reverse file is specified the uploader will will automatically
-intereave the forward and reverse files and store that in shock.
-Additionally the statistics generated are on the resulting interleaved file.
-
-Required parameters:
-fwd_file_url - the file URL ('Direct Download', 'FTP', 'DropBox', 'Google Drive'):
-    either single end reads, forward/left reads, or interleaved reads.
-
-sequencing_tech - the sequencing technology used to produce the
-    reads. (If source_reads_ref is specified then sequencing_tech
-    must not be specified)
-
-One of:
-wsid - the id of the workspace where the reads will be saved
-    (preferred).
-wsname - the name of the workspace where the reads will be saved.
-
-One of:
-objid - the id of the workspace object to save over
-name - the name to which the workspace object will be saved
-    
-Optional parameters:
-rev_file_url - the file URL ('Direct Download', 'FTP', 'DropBox', 'Google Drive'):
-    the file containing the reverse/right reads for paired end, non-interleaved reads, 
-    note the reverse file will get interleaved 
-    with the forward file.
-single_genome - whether the reads are from a single genome or a
-    metagenome. Default is single genome.
-strain - information about the organism strain
-    that was sequenced.
-source - information about the organism source.
-interleaved - specify that the fwd reads file is an interleaved paired
-    end reads file as opposed to a single end reads file. Default true,
-    ignored if rev_id is specified.
-read_orientation_outward - whether the read orientation is outward
-    from the set of primers. Default is false and is ignored for
-    single end reads.
-insert_size_mean - the mean size of the genetic fragments. Ignored for
-    single end reads.
-insert_size_std_dev - the standard deviation of the size of the
-    genetic fragments. Ignored for single end reads.
-source_reads_ref - A workspace reference to a source reads object.
-    This is used to propogate user defined info from the source reads
-    object to the new reads object (used for filtering or 
-    trimming services). Note this causes a passed in 
-    insert_size_mean, insert_size_std_dev, sequencing_tech,
-    read_orientation_outward, strain, source and/or 
-    single_genome to throw an error.
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-fwd_file_url has a value which is a string
-wsid has a value which is an int
-wsname has a value which is a string
-objid has a value which is an int
-name has a value which is a string
-rev_file_url has a value which is a string
-sequencing_tech has a value which is a string
-single_genome has a value which is a ReadsUtils.boolean
-strain has a value which is a KBaseCommon.StrainInfo
-source has a value which is a KBaseCommon.SourceInfo
-interleaved has a value which is a ReadsUtils.boolean
-read_orientation_outward has a value which is a ReadsUtils.boolean
-insert_size_mean has a value which is a float
-insert_size_std_dev has a value which is a float
-source_reads_ref has a value which is a string
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-fwd_file_url has a value which is a string
-wsid has a value which is an int
-wsname has a value which is a string
-objid has a value which is an int
-name has a value which is a string
-rev_file_url has a value which is a string
-sequencing_tech has a value which is a string
-single_genome has a value which is a ReadsUtils.boolean
-strain has a value which is a KBaseCommon.StrainInfo
-source has a value which is a KBaseCommon.SourceInfo
-interleaved has a value which is a ReadsUtils.boolean
-read_orientation_outward has a value which is a ReadsUtils.boolean
-insert_size_mean has a value which is a float
-insert_size_std_dev has a value which is a float
-source_reads_ref has a value which is a string
 
 
 =end text

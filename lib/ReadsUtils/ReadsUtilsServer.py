@@ -345,14 +345,6 @@ class Application(object):
                              name='ReadsUtils.export_reads',
                              types=[dict])
         self.method_authentication['ReadsUtils.export_reads'] = 'required' # noqa
-        self.rpc_service.add(impl_ReadsUtils.upload_reads_from_staging_area,
-                             name='ReadsUtils.upload_reads_from_staging_area',
-                             types=[dict])
-        self.method_authentication['ReadsUtils.upload_reads_from_staging_area'] = 'required' # noqa
-        self.rpc_service.add(impl_ReadsUtils.upload_reads_from_web,
-                             name='ReadsUtils.upload_reads_from_web',
-                             types=[dict])
-        self.method_authentication['ReadsUtils.upload_reads_from_web'] = 'required' # noqa
         self.rpc_service.add(impl_ReadsUtils.status,
                              name='ReadsUtils.status',
                              types=[dict])

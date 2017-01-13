@@ -38,8 +38,8 @@ class ReadsUtils:
     # the latter method is running.
     ######################################### noqa
     VERSION = "0.3.1"
-    GIT_URL = "https://github.com/jkbaumohl/ReadsUtils"
-    GIT_COMMIT_HASH = "a37c74d57dac41271aaf480df5e97375e10cd1b0"
+    GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
+    GIT_COMMIT_HASH = "ee225e6aef9677a28010ee18217dce5bc453a6ed"
 
     #BEGIN_CLASS_HEADER
 
@@ -87,10 +87,14 @@ class ReadsUtils:
     def _proc_upload_reads_params(self, params):
         fwdid = params.get('fwd_id')
         fwdfile = params.get('fwd_file')
-        if not self.xor(fwdid, fwdfile):
-            raise ValueError('Exactly one of a file or shock id containing ' +
+        fwdurl = params.get('fwd_file_url')
+        fwdstaging = params.get('fwd_staging_file_name')
+        if not self.xor(fwdid, fwdfile, fwdurl, fwdstaging):
+            raise ValueError('Exactly one of a file, shock id, staging file name or file url containing ' +
                              'a forwards reads file must be specified')
         shock = True if fwdid else False
+        fwdfile = self._get_staging_path(fwdstaging) if fwdstaging
+        fwdfile = self._get_web_path(fwdurl) if fwdurl
         fwdid = fwdid if shock else os.path.abspath(
             os.path.expanduser(fwdfile))
         wsid = params.get('wsid')
@@ -830,6 +834,7 @@ class ReadsUtils:
         #END_CONSTRUCTOR
         pass
 
+
     def validateFASTQ(self, ctx, params):
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
@@ -929,8 +934,14 @@ class ReadsUtils:
            of the shock node containing the reads data file: either single
            end reads, forward/left reads, or interleaved reads. - OR -
            fwd_file - a local path to the reads data file: either single end
-           reads, forward/left reads, or interleaved reads. sequencing_tech -
-           the sequencing technology used to produce the reads. (If
+           reads, forward/left reads, or interleaved reads. - OR -
+           fwd_file_url - a download link that contains reads data file:
+           either single end reads, forward/left reads, or interleaved reads.
+           download_type - download type ['Direct Download', 'FTP',
+           'DropBox', 'Google Drive'] - OR - fwd_staging_file_name - reads
+           data file name in staging area: either single end reads,
+           forward/left reads, or interleaved reads. sequencing_tech - the
+           sequencing technology used to produce the reads. (If
            source_reads_ref is specified then sequencing_tech must not be
            specified) One of: wsid - the id of the workspace where the reads
            will be saved (preferred). wsname - the name of the workspace
@@ -941,7 +952,11 @@ class ReadsUtils:
            non-interleaved reads. - OR - rev_file - a local path to the reads
            data file containing the reverse/right reads for paired end,
            non-interleaved reads, note the reverse file will get interleaved
-           with the forward file. single_genome - whether the reads are from
+           with the forward file. - OR - rev_file_url - a download link that
+           contains reads data file: reverse/right reads for paired end,
+           non-interleaved reads. - OR - rev_staging_file_name - reads data
+           file name in staging area: reverse/right reads for paired end,
+           non-interleaved reads. single_genome - whether the reads are from
            a single genome or a metagenome. Default is single genome. strain
            - information about the organism strain that was sequenced. source
            - information about the organism source. interleaved - specify
@@ -1014,7 +1029,11 @@ class ReadsUtils:
            "read_orientation_outward" of type "boolean" (A boolean - 0 for
            false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
            Double, parameter "insert_size_std_dev" of Double, parameter
-           "source_reads_ref" of String
+           "source_reads_ref" of String, parameter "fwd_file_url" of String,
+           parameter "rev_file_url" of String, parameter
+           "fwd_staging_file_name" of String, parameter
+           "rev_staging_file_name" of String, parameter "download_type" of
+           String
         :returns: instance of type "UploadReadsOutput" (The output of the
            upload_reads function. obj_ref - a reference to the new Workspace
            object in the form X/Y/Z, where X is the workspace ID, Y is the
@@ -1361,293 +1380,6 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
-
-
-
-    def upload_reads_from_staging_area(self, ctx, params):
-        """
-        upload_reads_from_staging_area: upload file from user's staging area as reads 
-
-        :param params: instance of type "UploadStagingParams" (Input to the
-           upload_reads_from_staging_area function. If local files are
-           specified for upload, they must be uncompressed. Files will be
-           gzipped prior to upload. Note that if a reverse read file is
-           specified, it must be a local file if the forward reads file is a
-           local file, or a shock id if not. If a reverse file is specified
-           the uploader will will automatically intereave the forward and
-           reverse files and store that in shock. Additionally the statistics
-           generated are on the resulting interleaved file. Required
-           parameters: staging_fwd_file_name - the file name in staging area:
-           either single end reads, forward/left reads, or interleaved reads.
-           sequencing_tech - the sequencing technology used to produce the
-           reads. (If source_reads_ref is specified then sequencing_tech must
-           not be specified) One of: wsid - the id of the workspace where the
-           reads will be saved (preferred). wsname - the name of the
-           workspace where the reads will be saved. One of: objid - the id of
-           the workspace object to save over name - the name to which the
-           workspace object will be saved Optional parameters:
-           staging_rev_file_name - the file name in staging area: the file
-           containing the reverse/right reads for paired end, non-interleaved
-           reads, note the reverse file will get interleaved with the forward
-           file. single_genome - whether the reads are from a single genome
-           or a metagenome. Default is single genome. strain - information
-           about the organism strain that was sequenced. source - information
-           about the organism source. interleaved - specify that the fwd
-           reads file is an interleaved paired end reads file as opposed to a
-           single end reads file. Default true, ignored if rev_id is
-           specified. read_orientation_outward - whether the read orientation
-           is outward from the set of primers. Default is false and is
-           ignored for single end reads. insert_size_mean - the mean size of
-           the genetic fragments. Ignored for single end reads.
-           insert_size_std_dev - the standard deviation of the size of the
-           genetic fragments. Ignored for single end reads. source_reads_ref
-           - A workspace reference to a source reads object. This is used to
-           propogate user defined info from the source reads object to the
-           new reads object (used for filtering or trimming services). Note
-           this causes a passed in insert_size_mean, insert_size_std_dev,
-           sequencing_tech, read_orientation_outward, strain, source and/or
-           single_genome to throw an error.) -> structure: parameter
-           "staging_fwd_file_name" of String, parameter "wsid" of Long,
-           parameter "wsname" of String, parameter "objid" of Long, parameter
-           "name" of String, parameter "staging_rev_file_name" of String,
-           parameter "sequencing_tech" of String, parameter "single_genome"
-           of type "boolean" (A boolean - 0 for false, 1 for true. @range (0,
-           1)), parameter "strain" of type "StrainInfo" (Information about a
-           strain. genetic_code - the genetic code of the strain. See
-           http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
-           genus - the genus of the strain species - the species of the
-           strain strain - the identifier for the strain source - information
-           about the source of the strain organelle - the organelle of
-           interest for the related data (e.g. mitochondria) ncbi_taxid - the
-           NCBI taxonomy ID of the strain location - the location from which
-           the strain was collected @optional genetic_code source ncbi_taxid
-           organelle location) -> structure: parameter "genetic_code" of
-           Long, parameter "genus" of String, parameter "species" of String,
-           parameter "strain" of String, parameter "organelle" of String,
-           parameter "source" of type "SourceInfo" (Information about the
-           source of a piece of data. source - the name of the source (e.g.
-           NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
-           source project_id - the ID of a project encompassing the data at
-           the source @optional source source_id project_id) -> structure:
-           parameter "source" of String, parameter "source_id" of type
-           "source_id" (An ID used for a piece of data at its source. @id
-           external), parameter "project_id" of type "project_id" (An ID used
-           for a project encompassing a piece of data at its source. @id
-           external), parameter "ncbi_taxid" of Long, parameter "location" of
-           type "Location" (Information about a location. lat - latitude of
-           the site, recorded as a decimal number. North latitudes are
-           positive values and south latitudes are negative numbers. lon -
-           longitude of the site, recorded as a decimal number. West
-           longitudes are positive values and east longitudes are negative
-           numbers. elevation - elevation of the site, expressed in meters
-           above sea level. Negative values are allowed. date - date of an
-           event at this location (for example, sample collection), expressed
-           in the format YYYY-MM-DDThh:mm:ss.SSSZ description - a free text
-           description of the location and, if applicable, the associated
-           event. @optional date description) -> structure: parameter "lat"
-           of Double, parameter "lon" of Double, parameter "elevation" of
-           Double, parameter "date" of String, parameter "description" of
-           String, parameter "source" of type "SourceInfo" (Information about
-           the source of a piece of data. source - the name of the source
-           (e.g. NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
-           source project_id - the ID of a project encompassing the data at
-           the source @optional source source_id project_id) -> structure:
-           parameter "source" of String, parameter "source_id" of type
-           "source_id" (An ID used for a piece of data at its source. @id
-           external), parameter "project_id" of type "project_id" (An ID used
-           for a project encompassing a piece of data at its source. @id
-           external), parameter "interleaved" of type "boolean" (A boolean -
-           0 for false, 1 for true. @range (0, 1)), parameter
-           "read_orientation_outward" of type "boolean" (A boolean - 0 for
-           false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
-           Double, parameter "insert_size_std_dev" of Double, parameter
-           "source_reads_ref" of String
-        :returns: instance of type "UploadReadsOutput" (The output of the
-           upload_reads function. obj_ref - a reference to the new Workspace
-           object in the form X/Y/Z, where X is the workspace ID, Y is the
-           object ID, and Z is the version.) -> structure: parameter
-           "obj_ref" of String
-        """
-        # ctx is the context object
-        # return variables are: output
-        #BEGIN upload_reads_from_staging_area
-
-        token_user = ctx['token'].split('client_id=')[1].split('|')[0]
-        fwd_file_name = params.get('staging_fwd_file_name')
-        fwd_file_path = self._get_file_path(token_user, fwd_file_name)
-
-        # copy single-end fastq or forward/left paired-end fastq file from starging area to local tmp folder
-        dstdir = os.path.join(self.scratch, 'tmp')
-        if not os.path.exists(dstdir):
-            os.makedirs(dstdir)
-        shutil.copy2(fwd_file_path, dstdir)
-        copy_fwd_file_path = os.path.join(dstdir, fwd_file_name)
-        self.log('--->\ncopied file from: %s to: %s\n' % (fwd_file_path, copy_fwd_file_path))
-
-        params['fwd_file'] = copy_fwd_file_path
- 
-        # copy reverse/right paired-end fastq file from starging area to local tmp folder
-        rev_file_name = params.get('staging_rev_file_name')
-        if rev_file_name:
-            rev_file_path = self._get_file_path(token_user, rev_file_name)
-            shutil.copy2(rev_file_path, dstdir)
-            copy_rev_file_path = os.path.join(dstdir, rev_file_name)
-            self.log('--->\ncopied file from: %s to: %s\n' % (rev_file_path, copy_rev_file_path))
-            params['rev_file'] = copy_rev_file_path
-
-        output = self.upload_reads({}, params)[0]
-
-        self.log('--->\nremoving folder: %s' % dstdir)
-        shutil.rmtree(dstdir)
-        #END upload_reads_from_staging_area
-
-        # At some point might do deeper type checking...
-        if not isinstance(output, dict):
-            raise ValueError('Method upload_reads_from_staging_area return value ' +
-                             'output is not type dict as required.')
-        # return the results
-        return [output]
-
-    def upload_reads_from_web(self, ctx, params):
-        """
-        upload_reads_from_web: upload file from web as reads
-
-        :param params: instance of type "UploadWebParams" (Input to the
-           upload_reads_from_web function. If local files are specified for
-           upload, they must be uncompressed. Files will be gzipped prior to
-           upload. Note that if a reverse read file is specified, it must be
-           a local file if the forward reads file is a local file, or a shock
-           id if not. If a reverse file is specified the uploader will will
-           automatically intereave the forward and reverse files and store
-           that in shock. Additionally the statistics generated are on the
-           resulting interleaved file. Required parameters: fwd_file_url -
-           the file URL ('Direct Download', 'FTP', 'DropBox', 'Google
-           Drive'): either single end reads, forward/left reads, or
-           interleaved reads. sequencing_tech - the sequencing technology
-           used to produce the reads. (If source_reads_ref is specified then
-           sequencing_tech must not be specified) One of: wsid - the id of
-           the workspace where the reads will be saved (preferred). wsname -
-           the name of the workspace where the reads will be saved. One of:
-           objid - the id of the workspace object to save over name - the
-           name to which the workspace object will be saved Optional
-           parameters: rev_file_url - the file URL ('Direct Download', 'FTP',
-           'DropBox', 'Google Drive'): the file containing the reverse/right
-           reads for paired end, non-interleaved reads, note the reverse file
-           will get interleaved with the forward file. single_genome -
-           whether the reads are from a single genome or a metagenome.
-           Default is single genome. strain - information about the organism
-           strain that was sequenced. source - information about the organism
-           source. interleaved - specify that the fwd reads file is an
-           interleaved paired end reads file as opposed to a single end reads
-           file. Default true, ignored if rev_id is specified.
-           read_orientation_outward - whether the read orientation is outward
-           from the set of primers. Default is false and is ignored for
-           single end reads. insert_size_mean - the mean size of the genetic
-           fragments. Ignored for single end reads. insert_size_std_dev - the
-           standard deviation of the size of the genetic fragments. Ignored
-           for single end reads. source_reads_ref - A workspace reference to
-           a source reads object. This is used to propogate user defined info
-           from the source reads object to the new reads object (used for
-           filtering or trimming services). Note this causes a passed in
-           insert_size_mean, insert_size_std_dev, sequencing_tech,
-           read_orientation_outward, strain, source and/or single_genome to
-           throw an error.) -> structure: parameter "fwd_file_url" of String,
-           parameter "wsid" of Long, parameter "wsname" of String, parameter
-           "objid" of Long, parameter "name" of String, parameter
-           "rev_file_url" of String, parameter "sequencing_tech" of String,
-           parameter "single_genome" of type "boolean" (A boolean - 0 for
-           false, 1 for true. @range (0, 1)), parameter "strain" of type
-           "StrainInfo" (Information about a strain. genetic_code - the
-           genetic code of the strain. See
-           http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
-           genus - the genus of the strain species - the species of the
-           strain strain - the identifier for the strain source - information
-           about the source of the strain organelle - the organelle of
-           interest for the related data (e.g. mitochondria) ncbi_taxid - the
-           NCBI taxonomy ID of the strain location - the location from which
-           the strain was collected @optional genetic_code source ncbi_taxid
-           organelle location) -> structure: parameter "genetic_code" of
-           Long, parameter "genus" of String, parameter "species" of String,
-           parameter "strain" of String, parameter "organelle" of String,
-           parameter "source" of type "SourceInfo" (Information about the
-           source of a piece of data. source - the name of the source (e.g.
-           NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
-           source project_id - the ID of a project encompassing the data at
-           the source @optional source source_id project_id) -> structure:
-           parameter "source" of String, parameter "source_id" of type
-           "source_id" (An ID used for a piece of data at its source. @id
-           external), parameter "project_id" of type "project_id" (An ID used
-           for a project encompassing a piece of data at its source. @id
-           external), parameter "ncbi_taxid" of Long, parameter "location" of
-           type "Location" (Information about a location. lat - latitude of
-           the site, recorded as a decimal number. North latitudes are
-           positive values and south latitudes are negative numbers. lon -
-           longitude of the site, recorded as a decimal number. West
-           longitudes are positive values and east longitudes are negative
-           numbers. elevation - elevation of the site, expressed in meters
-           above sea level. Negative values are allowed. date - date of an
-           event at this location (for example, sample collection), expressed
-           in the format YYYY-MM-DDThh:mm:ss.SSSZ description - a free text
-           description of the location and, if applicable, the associated
-           event. @optional date description) -> structure: parameter "lat"
-           of Double, parameter "lon" of Double, parameter "elevation" of
-           Double, parameter "date" of String, parameter "description" of
-           String, parameter "source" of type "SourceInfo" (Information about
-           the source of a piece of data. source - the name of the source
-           (e.g. NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
-           source project_id - the ID of a project encompassing the data at
-           the source @optional source source_id project_id) -> structure:
-           parameter "source" of String, parameter "source_id" of type
-           "source_id" (An ID used for a piece of data at its source. @id
-           external), parameter "project_id" of type "project_id" (An ID used
-           for a project encompassing a piece of data at its source. @id
-           external), parameter "interleaved" of type "boolean" (A boolean -
-           0 for false, 1 for true. @range (0, 1)), parameter
-           "read_orientation_outward" of type "boolean" (A boolean - 0 for
-           false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
-           Double, parameter "insert_size_std_dev" of Double, parameter
-           "source_reads_ref" of String
-        :returns: instance of type "UploadReadsOutput" (The output of the
-           upload_reads function. obj_ref - a reference to the new Workspace
-           object in the form X/Y/Z, where X is the workspace ID, Y is the
-           object ID, and Z is the version.) -> structure: parameter
-           "obj_ref" of String
-        """
-        # ctx is the context object
-        # return variables are: output
-        #BEGIN upload_reads_from_web
-        # prepare local copy file path for fwd_file
-        del ctx
-        tmp_fwd_file_name = 'tmp_fwd_fastq.fq'
-        dstdir = os.path.join(self.scratch, 'tmp')
-        if not os.path.exists(dstdir):
-            os.makedirs(dstdir)
-        copy_fwd_file_path = os.path.join(dstdir, tmp_fwd_file_name)
-
-        self._download_file(params.get('download_type'), params.get('fwd_file_url'), copy_fwd_file_path)
-
-        params['fwd_file'] = copy_fwd_file_path
-
-        if params.get('rev_file_url'):
-            # prepare local copy file path for rev_file
-            tmp_rev_file_name = 'tmp_rev_fastq.fq'
-            copy_rev_file_path = os.path.join(dstdir, tmp_rev_file_name)
-            self._download_file(params.get('download_type'), params.get('rev_file_url'), copy_rev_file_path)
-            params['rev_file'] = copy_rev_file_path
-
-        output = self.upload_reads({}, params)[0]
-
-        self.log('--->\nremoving folder: %s' % dstdir)
-        shutil.rmtree(dstdir)
-        #END upload_reads_from_web
-
-        # At some point might do deeper type checking...
-        if not isinstance(output, dict):
-            raise ValueError('Method upload_reads_from_web return value ' +
-                             'output is not type dict as required.')
-        # return the results
-        return [output]
-
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx
