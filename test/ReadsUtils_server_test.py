@@ -2552,58 +2552,181 @@ class ReadsUtilsTest(unittest.TestCase):
         if len(os.listdir(tempdir)) != count:
             raise TestError('found extra files in testdir {}: {}'.format(
                 os.path.abspath(tempdir), str(os.listdir(tempdir))))
-    
-    def test_upload_reads_from_staging_area(self):
-        with patch.object(ReadsUtils, '_get_file_path', create=True, return_value='/kb/module/work/tmp/Sample1.fastq') as mock_obj:
-            # copy test file to scratch area
-            fq_filename = "Sample1.fastq"
-            fq_path = os.path.join(self.cfg['scratch'], fq_filename)
-            shutil.copy(os.path.join("data", fq_filename), fq_path)
 
-            params = {
-                'staging_fwd_file_name': 'Sample1.fastq',
-                'sequencing_tech': 'Unknown',
-                'name': 'test_reads_file_name.reads',
-                'wsname': self.getWsName()
-            }
-
-            ret = self.impl.upload_reads_from_staging_area(self.ctx, params)
-            self.assertTrue(ret[0].has_key('obj_ref'))
-
-    def test_upload_reads_from_web_direct_download(self):
+    def test_multiple_invalidate_params(self):
         params = {
             'download_type': 'Direct Download',
+            'fwd_file_url': 'http://molb7621.github.io/workshop/_downloads/SP1.fq',
+            'fwd_staging_file_name': 'Sample1.fastq',
+            'sequencing_tech': 'Unknown',
+            'name': 'test_reads_file_name.reads',
+            'wsname': self.getWsName()
+        }
+
+        with self.assertRaisesRegexp(ValueError, 'Exactly one of a file, shock id, staging file name or file url containing'):
+            self.impl.upload_reads(self.ctx, params) 
+
+    def test_missing_download_type(self):
+        params = {
             'fwd_file_url': 'http://molb7621.github.io/workshop/_downloads/SP1.fq',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
         }
 
-        ret = self.impl.upload_reads_from_web(self.ctx, params)
-        self.assertTrue(ret[0].has_key('obj_ref'))
+        with self.assertRaisesRegexp(ValueError, 'Both download_type and fwd_file_url must be provided'):
+            self.impl.upload_reads(self.ctx, params) 
+
+    def test_upload_reads_from_staging_area(self):
+        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1.fastq') as mock_obj:
+            # copy test file to scratch area
+            fq_filename = "Sample1.fastq"
+            fq_path = os.path.join(self.cfg['scratch'], fq_filename)
+            shutil.copy(os.path.join("data", fq_filename), fq_path)
+
+            params = {
+                'fwd_staging_file_name': 'Sample1.fastq',
+                'sequencing_tech': 'Unknown',
+                'name': 'test_reads_file_name.reads',
+                'wsname': self.getWsName()
+            }
+
+            ref = self.impl.upload_reads(self.ctx, params)
+            self.assertTrue(ref[0].has_key('obj_ref'))
+
+            obj = self.dfu.get_objects(
+                {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+            self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+            self.assertEqual(obj['info'][2].startswith(
+                            'KBaseFile.SingleEndLibrary'), True)
+            d = obj['data']
+            self.assertEqual(d['sequencing_tech'], 'Unknown')
+            self.assertEqual(d['single_genome'], 1)
+            self.assertEqual('source' not in d, True)
+            self.assertEqual('strain' not in d, True)
+            self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+            node = d['lib']['file']['id']
+            self.delete_shock_node(node)
+
+    def test_upload_reads_from_web_direct_download(self):
+        params = {
+            'download_type': 'Direct Download',
+            'fwd_file_url': 'https://anl.box.com/shared/static/qwadp20dxtwnhc8r3sjphen6h0k1hdyo.fastq',
+            'sequencing_tech': 'Unknown',
+            'name': 'test_reads_file_name.reads',
+            'wsname': self.getWsName()
+        }
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 
     def test_upload_reads_from_web_direct_download_paired_ends(self):
         params = {
             'download_type': 'Direct Download',
             'fwd_file_url': 'https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
             'rev_file_url': 'https://anl.box.com/shared/static/1u9fi158vquyrh9qt7l04t71eqbpvyrr.fq',
-            'sequencing_tech': 'Unknown',
-            'name': 'test_reads_file_name.reads',
-            'wsname': self.getWsName()
+            'sequencing_tech': 'seqtech-pr1',
+            'name': 'pairedreads1',
+            'wsname': self.getWsName(),
+            'interleaved': 0
         }
-        ret = self.impl.upload_reads_from_web(self.ctx, params)
-        self.assertTrue(ret[0].has_key('obj_ref'))
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.PairedEndLibrary'), True)
+        
+        d = obj['data']
+        file_name = d["lib1"]["file"]["file_name"]
+        self.assertTrue(file_name.endswith(".inter.fastq.gz"))
+        self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.assertEqual(d['interleaved'], 1)
+        self.assertEqual(d['read_orientation_outward'], 0)
+        self.assertEqual(d['insert_size_mean'], None)
+        self.assertEqual(d['insert_size_std_dev'], None)
+        self.check_lib(d['lib1'], 1341276, file_name, '04dac97530faa081c966e79af7c90883')
+        node = d['lib1']['file']['id']
+        self.delete_shock_node(node)
 
     def test_upload_reads_from_web_dropbox(self):
         params = {
             'download_type': 'DropBox',
-            'fwd_file_url': 'https://www.dropbox.com/s/mcl7mual35c5p7s/SP1.fq?dl=0',
+            'fwd_file_url': 'https://www.dropbox.com/s/lv7jx1vh6yky3o0/Sample1.fastq?dl=0',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
         }
-        ret = self.impl.upload_reads_from_web(self.ctx, params)
-        self.assertTrue(ret[0].has_key('obj_ref'))
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
+
+    def test_upload_reads_from_web_dropbox_paired_ends(self):
+        params = {
+            'download_type': 'DropBox',
+            'fwd_file_url': 'https://www.dropbox.com/s/pgtja4btj62ctkx/small.forward.fq?dl=0',
+            'rev_file_url': 'https://www.dropbox.com/s/hh55x00qluhfhr8/small.reverse.fq?dl=0',
+            'sequencing_tech': 'seqtech-pr1',
+            'name': 'pairedreads1',
+            'wsname': self.getWsName(),
+            'interleaved': 0
+        }
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.PairedEndLibrary'), True)
+        
+        d = obj['data']
+        file_name = d["lib1"]["file"]["file_name"]
+        self.assertTrue(file_name.endswith(".inter.fastq.gz"))
+        self.assertEqual(d['sequencing_tech'], 'seqtech-pr1')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.assertEqual(d['interleaved'], 1)
+        self.assertEqual(d['read_orientation_outward'], 0)
+        self.assertEqual(d['insert_size_mean'], None)
+        self.assertEqual(d['insert_size_std_dev'], None)
+        self.check_lib(d['lib1'], 1341276, file_name, '04dac97530faa081c966e79af7c90883')
+        node = d['lib1']['file']['id']
+        self.delete_shock_node(node)
 
     def test_ftp_validator(self):
         fake_ftp_domain_params = {
@@ -2614,11 +2737,11 @@ class ReadsUtilsTest(unittest.TestCase):
             'wsname': self.getWsName()
         }
         with self.assertRaisesRegexp(ValueError, 'Cannot connect:'):
-            self.impl.upload_reads_from_web(self.ctx, fake_ftp_domain_params)
+            self.impl.upload_reads(self.ctx, fake_ftp_domain_params)
 
         fake_ftp_domain_params['fwd_file_url'] = 'ftp://FAKE_USER:FAKE_PASSWORD@ftp.dlptest.com/24_Hour/Sample1.fastq'
         with self.assertRaisesRegexp(ValueError, 'Cannot login:'):
-            self.impl.upload_reads_from_web(self.ctx, fake_ftp_domain_params)
+            self.impl.upload_reads(self.ctx, fake_ftp_domain_params)
 
     def test_upload_reads_from_web_ftp(self):
         # copy test file to scratch area
@@ -2642,16 +2765,46 @@ class ReadsUtilsTest(unittest.TestCase):
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
         }
-        ret = self.impl.upload_reads_from_web(self.ctx, params)
-        self.assertTrue(ret[0].has_key('obj_ref'))
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 
     def test_upload_reads_from_web_google_drive(self):
         params = {
             'download_type': 'Google Drive',
-            'fwd_file_url': 'https://drive.google.com/file/d/0B0exSa7ebQ0qNDc3ZTY5cDFob3M/view?usp=sharing',
+            'fwd_file_url': 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/view?usp=sharing',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
         }
-        ret = self.impl.upload_reads_from_web(self.ctx, params)
-        self.assertTrue(ret[0].has_key('obj_ref'))
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
+
+

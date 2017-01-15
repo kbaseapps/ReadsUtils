@@ -89,12 +89,19 @@ class ReadsUtils:
         fwdfile = params.get('fwd_file')
         fwdurl = params.get('fwd_file_url')
         fwdstaging = params.get('fwd_staging_file_name')
-        if not self.xor(fwdid, fwdfile, fwdurl, fwdstaging):
+        if sum(bool(e) for e in [fwdid, fwdfile, fwdurl, fwdstaging]) != 1:
             raise ValueError('Exactly one of a file, shock id, staging file name or file url containing ' +
                              'a forwards reads file must be specified')
+        if fwdurl:
+            download_type = params.get('download_type')
+            if not (fwdurl and download_type):
+                raise ValueError('Both download_type and fwd_file_url must be provided')
+            fwdfile = self._download_web_file(fwdurl, download_type)
+        
+        if fwdstaging:
+            fwdfile = self._download_staging_file(self.token_user, fwdstaging)
+
         shock = True if fwdid else False
-        fwdfile = self._get_staging_path(fwdstaging) if fwdstaging
-        fwdfile = self._get_web_path(fwdurl) if fwdurl
         fwdid = fwdid if shock else os.path.abspath(
             os.path.expanduser(fwdfile))
         wsid = params.get('wsid')
@@ -117,6 +124,8 @@ class ReadsUtils:
                 'Exactly one of the object ID or name must be provided')
         revid = params.get('rev_id')
         revfile = params.get('rev_file')
+        revurl = params.get('rev_file_url')
+        revstaging = params.get('rev_staging_file_name')
         if revid and revfile:
             raise ValueError('Specified both a local file and a shock node ' +
                              'for the reverse reads file')
@@ -126,8 +135,16 @@ class ReadsUtils:
         if not shock and revid:
             raise ValueError('Cannot specify a reverse reads file in shock ' +
                              'with a local forward reads file')
+        
+        if revurl:
+            revfile = self._download_web_file(revurl, download_type)
+        
+        if revstaging:
+            revfile = self._download_staging_file(self.token_user, revstaging)
+
         if not shock and revfile:
             revid = os.path.abspath(os.path.expanduser(revfile))
+
         interleaved = 0
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
@@ -651,25 +668,70 @@ class ReadsUtils:
             reads_object[key] = ea_stats_dict[key]
         return reads_object
 
-    """
-    _get_file_path: return staging area file path
 
-    directory pattern: /data/bulk/user_name/file_name
+    def _get_staging_file_path(self, token_user, upload_file_name):
+        """
+        _get_staging_file_path: return staging area file path
 
-    """
-    def _get_file_path(self, token_user, upload_file_name):
+        directory pattern: /data/bulk/user_name/file_name
+
+        """
         return '/data/bulk/%s/%s' % (token_user, upload_file_name)
 
-    """
-    _download_file: download execution distributor
 
-    params:
-    download_type: download type for web source fastq file
-    file_url: file URL
-    copy_file_path: output file saving path
-    
-    """
+    def _download_staging_file(self, token_user, staging_file_name):
+        """
+        _download_staging_file: download staging file to scratch
+
+        return: file path of downloaded staging file
+
+        """
+
+        staging_file_path = self._get_staging_file_path(token_user, staging_file_name)
+
+        dstdir = os.path.join(self.scratch, 'tmp')
+        if not os.path.exists(dstdir):
+            os.makedirs(dstdir)
+        shutil.copy2(staging_file_path, dstdir)
+        copy_file_path = os.path.join(dstdir, staging_file_path)
+
+        return copy_file_path
+
+
+    def _download_web_file(self, file_url, download_type, rev_file=False):
+        """
+        _download_web_file: download reads source file from web
+
+        file_url: file URL
+        download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
+        rev_file: optional, default as False. Set to True if file_url is for rev_file
+
+        return: file path of downloaded web file
+
+        """
+
+        # prepare local copy file path for copy
+        tmp_file_name = 'tmp_rev_fastq.fastq' if rev_file else 'tmp_fwd_fastq.fastq'
+        dstdir = os.path.join(self.scratch, 'tmp')
+        if not os.path.exists(dstdir):
+            os.makedirs(dstdir)
+        copy_file_path = os.path.join(dstdir, tmp_file_name)
+
+        self._download_file(download_type, file_url, copy_file_path)
+
+        return copy_file_path
+
+
     def _download_file(self, download_type, file_url, copy_file_path):
+        """
+        _download_file: download execution distributor
+
+        params:
+        download_type: download type for web source file
+        file_url: file URL
+        copy_file_path: output file saving path
+        
+        """
         if download_type == 'Direct Download':
             self._download_direct_download_link(file_url, copy_file_path)
         elif download_type == 'DropBox':
@@ -678,16 +740,17 @@ class ReadsUtils:
             self._download_ftp_link(file_url, copy_file_path)
         elif download_type == 'Google Drive':
             self._download_google_drive_link(file_url, copy_file_path)
-    
-    """
-    _download_direct_download_link: direct download link handler 
 
-    params:
-    file_url: direct download URL
-    copy_file_path: output file saving path
+    def _download_direct_download_link(self, file_url, copy_file_path):    
+        """
+        _download_direct_download_link: direct download link handler 
 
-    """
-    def _download_direct_download_link(self, file_url, copy_file_path):
+        params:
+        file_url: direct download URL
+        copy_file_path: output file saving path
+
+        """
+
         try: online_file = urllib2.urlopen(file_url)
         except urllib2.HTTPError as e:
             raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
@@ -698,16 +761,16 @@ class ReadsUtils:
                 with open(copy_file_path, 'wb') as output:
                     shutil.copyfileobj(online_file, output)
 
-    """
-    _download_dropbox_link: dropbox download link handler
-                            file needs to be shared publicly 
-
-    params:
-    file_url: dropbox download link
-    copy_file_path: output file saving path
-
-    """
     def _download_dropbox_link(self, file_url, copy_file_path):
+        """
+        _download_dropbox_link: dropbox download link handler
+                                file needs to be shared publicly 
+
+        params:
+        file_url: dropbox download link
+        copy_file_path: output file saving path
+
+        """
         # translate dropbox URL for direct download
         if "?" not in file_url:
             force_download_link = file_url + '?raw=1'
@@ -724,18 +787,18 @@ class ReadsUtils:
                 with open(copy_file_path, 'wb') as output:
                     shutil.copyfileobj(online_file, output)
 
-    """
-    _download_ftp_link: FTP download link handler
-                        URL fomat: ftp://user_name:password@ftp_link or ftp://ftp_link
-                        defualt user_name: 'anonymous'
-                                password: 'anonymous@domain.com'
-
-    params:
-    file_url: FTP download link
-    copy_file_path: output file saving path
-
-    """
     def _download_ftp_link(self, file_url, copy_file_path):
+        """
+        _download_ftp_link: FTP download link handler
+                            URL fomat: ftp://user_name:password@ftp_link or ftp://ftp_link
+                            defualt user_name: 'anonymous'
+                                    password: 'anonymous@domain.com'
+
+        params:
+        file_url: FTP download link
+        copy_file_path: output file saving path
+
+        """
 
         # process ftp credentials 
         ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
@@ -770,18 +833,18 @@ class ReadsUtils:
             with open(copy_file_path, 'wb') as output:
                 ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
 
-    """
-    _check_ftp_connection: ftp connection checker
-
-    params:
-    user_name: FTP user name
-    password: FTP user password
-    domain: FTP domain
-    file_path: target file directory
-    file_name: target file name 
-
-    """
     def _check_ftp_connection(self, user_name, password, domain, file_path, file_name):
+        """
+        _check_ftp_connection: ftp connection checker
+
+        params:
+        user_name: FTP user name
+        password: FTP user password
+        domain: FTP domain
+        file_path: target file directory
+        file_name: target file name 
+
+        """
 
         try: ftp = ftplib.FTP(domain)
         except ftplib.all_errors, error:
@@ -797,16 +860,16 @@ class ReadsUtils:
                 else:
                     raise ValueError("File %s does NOT exist in FTP path: %s" % (file_name, domain + '/' + file_path))
 
-    """
-    _download_google_drive_link: Google Drive download link handler
-                                 file needs to be shared publicly 
-
-    params:
-    file_url: Google Drive download link
-    copy_file_path: output file saving path
-
-    """
     def _download_google_drive_link(self, file_url, copy_file_path):
+        """
+        _download_google_drive_link: Google Drive download link handler
+                                     file needs to be shared publicly 
+
+        params:
+        file_url: Google Drive download link
+        copy_file_path: output file saving path
+
+        """
         # translate Google Drive URL for direct download
         force_download_link_prefix = 'https://drive.google.com/uc?export=download&id='
         file_id = file_url.partition('/d/')[-1].partition('/')[0]
@@ -831,6 +894,7 @@ class ReadsUtils:
         self.scratch = config['scratch']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.ws_url = config['workspace-url']
+        self.token_user = os.environ['KB_AUTH_TOKEN'].split('client_id=')[1].split('|')[0]
         #END_CONSTRUCTOR
         pass
 
