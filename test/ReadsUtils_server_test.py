@@ -1187,7 +1187,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'foo'
              },
             'Exactly one of a file, shock id, staging file name or file url containing ' +
-            'file must be specified')
+            'a forwards reads file must be specified')
 
     def test_upload_fail_fwd_reads_spec_twice(self):
         self.fail_upload_reads(

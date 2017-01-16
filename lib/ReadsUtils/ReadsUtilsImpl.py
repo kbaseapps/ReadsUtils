@@ -99,7 +99,7 @@ class ReadsUtils:
             fwdfile = self._download_web_file(fwdurl, download_type)
         
         if fwdstaging:
-            fwdfile = self._download_staging_file(self.token_user, fwdstaging)
+            fwdfile = self._download_staging_file(params.get('user_id'), fwdstaging)
 
         shock = True if fwdid else False
         fwdid = fwdid if shock else os.path.abspath(
@@ -140,7 +140,7 @@ class ReadsUtils:
             revfile = self._download_web_file(revurl, download_type)
         
         if revstaging:
-            revfile = self._download_staging_file(self.token_user, revstaging)
+            revfile = self._download_staging_file(params.get('user_id'), revstaging)
 
         if not shock and revfile:
             revid = os.path.abspath(os.path.expanduser(revfile))
@@ -894,7 +894,6 @@ class ReadsUtils:
         self.scratch = config['scratch']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.ws_url = config['workspace-url']
-        self.token_user = os.environ['KB_AUTH_TOKEN'].split('client_id=')[1].split('|')[0]
         #END_CONSTRUCTOR
         pass
 
@@ -1107,8 +1106,8 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
-        del ctx
         self.log('Starting upload reads, parsing args')
+        params['user_id'] = ctx['user_id']
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
             self._proc_upload_reads_params(params))
         # IF from shock fwdid and revid are shock nodes, if not shock they are file paths
