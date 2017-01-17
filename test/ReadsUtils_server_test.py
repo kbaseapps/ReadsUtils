@@ -1200,6 +1200,27 @@ class ReadsUtilsTest(unittest.TestCase):
             'Exactly one of a file, shock id, staging file name or file url containing ' +
             'a forwards reads file must be specified')
 
+    def test_upload_fail_fwd_web_and_fwd_staging(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_staging_file_name': 'whee',
+             'fwd_file_url': 'whoo',
+             'download_type': 'Direct Download'
+             },
+            'Exactly one of a file, shock id, staging file name or file url containing ' +
+            'a forwards reads file must be specified')
+
+    def test_upload_fail_fwd_web_missing_download_type(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_file_url': 'whoo'
+             },
+            'Both download_type and fwd_file_url must be provided')
+
     def test_upload_fail_rev_reads_spec_twice(self):
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
@@ -1209,8 +1230,30 @@ class ReadsUtilsTest(unittest.TestCase):
              'rev_id': 'whee',
              'rev_file': 'whoo'
              },
-            'Specified both a local file and a shock node for the reverse ' +
-            'reads file')
+            'Cannot specify more than one rev file source'
+            )
+
+    def test_upload_fail_rev_staging_fwd_web(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_file_url': 'whoa',
+             'rev_staging_file_name': 'whoo'
+             },
+            'Specified reverse staging file but missing forward staging file'
+            )
+
+    def test_upload_fail_rev_web_fwd_staging(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_staging_file_name': 'whoa',
+             'rev_file_url': 'whoo'
+             },
+            'Specified reverse file URL but missing forward file URL'
+            )
 
     def test_upload_fail_spec_fwd_id_rev_file(self):
         self.fail_upload_reads(
@@ -1220,8 +1263,9 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': 'whee',
              'rev_file': 'whoo'
              },
-            'Cannot specify a local reverse reads file with a forward reads ' +
-            'file in shock')
+            'Cannot specify a local, web or stagin reverse reads file ' +
+            'with a forward reads file in shock'
+            )
 
     def test_upload_fail_spec_fwd_file_rev_id(self):
         self.fail_upload_reads(
@@ -2552,30 +2596,6 @@ class ReadsUtilsTest(unittest.TestCase):
         if len(os.listdir(tempdir)) != count:
             raise TestError('found extra files in testdir {}: {}'.format(
                 os.path.abspath(tempdir), str(os.listdir(tempdir))))
-
-    def test_multiple_invalidate_params(self):
-        params = {
-            'download_type': 'Direct Download',
-            'fwd_file_url': 'http://molb7621.github.io/workshop/_downloads/SP1.fq',
-            'fwd_staging_file_name': 'Sample1.fastq',
-            'sequencing_tech': 'Unknown',
-            'name': 'test_reads_file_name.reads',
-            'wsname': self.getWsName()
-        }
-
-        with self.assertRaisesRegexp(ValueError, 'Exactly one of a file, shock id, staging file name or file url containing'):
-            self.impl.upload_reads(self.ctx, params) 
-
-    def test_missing_download_type(self):
-        params = {
-            'fwd_file_url': 'http://molb7621.github.io/workshop/_downloads/SP1.fq',
-            'sequencing_tech': 'Unknown',
-            'name': 'test_reads_file_name.reads',
-            'wsname': self.getWsName()
-        }
-
-        with self.assertRaisesRegexp(ValueError, 'Both download_type and fwd_file_url must be provided'):
-            self.impl.upload_reads(self.ctx, params) 
 
     def test_upload_reads_from_staging_area(self):
         with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1.fastq') as mock_obj:

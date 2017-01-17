@@ -65,6 +65,9 @@ class ReadsUtils:
     MODULE_NAMES = [KBASE_FILE, KBASE_ASSEMBLY]
     TYPE_NAMES = [SINGLE_END_TYPE, PAIRED_END_TYPE]
 
+    #staging file prefix
+    STAGING_FILE_PREFIX = '/data/bulk/'
+
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') +
               str(time.time()) + ': ' + message)
@@ -126,16 +129,20 @@ class ReadsUtils:
         revfile = params.get('rev_file')
         revurl = params.get('rev_file_url')
         revstaging = params.get('rev_staging_file_name')
-        if revid and revfile:
-            raise ValueError('Specified both a local file and a shock node ' +
-                             'for the reverse reads file')
-        if shock and revfile:
-            raise ValueError('Cannot specify a local reverse reads file ' +
+        if sum(bool(e) for e in [revid, revfile, revurl, revstaging]) >= 1:
+            raise ValueError('Cannot specify more than one rev file source')
+
+        if shock and any([revfile, revurl, revstaging]):
+            raise ValueError('Cannot specify a local, web or staging reverse reads file ' +
                              'with a forward reads file in shock')
         if not shock and revid:
             raise ValueError('Cannot specify a reverse reads file in shock ' +
                              'with a local forward reads file')
-        
+        if revurl and not fwdurl:
+            raise ValueError('Specified reverse file URL but missing forward file URL')
+        if revstaging and not fwdstaging:
+            raise ValueError('Specified reverse staging file but missing forward staging file')
+
         if revurl:
             revfile = self._download_web_file(revurl, download_type)
         
@@ -676,7 +683,7 @@ class ReadsUtils:
         directory pattern: /data/bulk/user_name/file_name
 
         """
-        return '/data/bulk/%s/%s' % (token_user, upload_file_name)
+        return self.STAGING_FILE_PREFIX + token_user + '/' + upload_file_name 
 
 
     def _download_staging_file(self, token_user, staging_file_name):
@@ -689,11 +696,13 @@ class ReadsUtils:
 
         staging_file_path = self._get_staging_file_path(token_user, staging_file_name)
 
+        self.log('Start downloading staging file: %s' % staging_file_path)
         dstdir = os.path.join(self.scratch, 'tmp')
         if not os.path.exists(dstdir):
             os.makedirs(dstdir)
         shutil.copy2(staging_file_path, dstdir)
         copy_file_path = os.path.join(dstdir, staging_file_path)
+        self.log('Copied staging file from %s to %s' % (staging_file_path, copy_file_path))
 
         return copy_file_path
 
@@ -711,6 +720,7 @@ class ReadsUtils:
         """
 
         # prepare local copy file path for copy
+        self.log('Start downloading web file from: %s' % file_url)
         tmp_file_name = 'tmp_rev_fastq.fastq' if rev_file else 'tmp_fwd_fastq.fastq'
         dstdir = os.path.join(self.scratch, 'tmp')
         if not os.path.exists(dstdir):
@@ -718,6 +728,7 @@ class ReadsUtils:
         copy_file_path = os.path.join(dstdir, tmp_file_name)
 
         self._download_file(download_type, file_url, copy_file_path)
+        self.log('Copied web file to %s' % copy_file_path)
 
         return copy_file_path
 
@@ -732,6 +743,10 @@ class ReadsUtils:
         copy_file_path: output file saving path
         
         """
+        valid_download_type = ['Direct Download', 'DropBox', 'FTP', 'Google Drive']
+        if download_type not in valid_download_type:
+            raise ValueError('Invalid download type: %s. Please use one of %s' % (download_type, valid_download_type))
+
         if download_type == 'Direct Download':
             self._download_direct_download_link(file_url, copy_file_path)
         elif download_type == 'DropBox':
@@ -740,7 +755,7 @@ class ReadsUtils:
             self._download_ftp_link(file_url, copy_file_path)
         elif download_type == 'Google Drive':
             self._download_google_drive_link(file_url, copy_file_path)
-
+            
     def _download_direct_download_link(self, file_url, copy_file_path):    
         """
         _download_direct_download_link: direct download link handler 
@@ -751,6 +766,7 @@ class ReadsUtils:
 
         """
 
+        self.log('Connecting and downloading web source: %s' % file_url)
         try: online_file = urllib2.urlopen(file_url)
         except urllib2.HTTPError as e:
             raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
@@ -760,6 +776,7 @@ class ReadsUtils:
             with closing(online_file):
                 with open(copy_file_path, 'wb') as output:
                     shutil.copyfileobj(online_file, output)
+            self.log('Downloaded file to %s' % copy_file_path)
 
     def _download_dropbox_link(self, file_url, copy_file_path):
         """
@@ -777,15 +794,8 @@ class ReadsUtils:
         else:
             force_download_link = file_url.partition('?')[0] + '?raw=1'
 
-        try: online_file = urllib2.urlopen(force_download_link)
-        except urllib2.HTTPError as e:
-            raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
-        except urllib2.URLError as e:
-            raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
-        else:
-            with closing(online_file):
-                with open(copy_file_path, 'wb') as output:
-                    shutil.copyfileobj(online_file, output)
+        self.log('Generating DropBox direct download link\n from: %s\n to: %s' % (file_url, force_download_link))
+        self._download_direct_download_link(force_download_link, copy_file_path)
 
     def _download_ftp_link(self, file_url, copy_file_path):
         """
@@ -801,6 +811,7 @@ class ReadsUtils:
         """
 
         # process ftp credentials 
+        self.log('Connecting FTP link: %s' % file_url)
         ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
         if ftp_url_format:
             self.ftp_user_name = re.search('ftp://(.+?):', file_url).group(1)
@@ -809,13 +820,15 @@ class ReadsUtils:
             self.ftp_file_path = file_url.partition('ftp://')[-1].partition('/')[-1].rpartition('/')[0]
             self.ftp_file_name = re.search('ftp://.*:.*@.*/(.+$)', file_url).group(1)
         else:
+            self.log('Setting anonymous FTP user_name and password')
             self.ftp_user_name = 'anonymous'
             self.ftp_password = 'anonymous@domain.com'
             self.ftp_domain = re.search('ftp://(.+?)/', file_url).group(1)
             self.ftp_file_path = file_url.partition('ftp://')[-1].partition('/')[-1].rpartition('/')[0]
             self.ftp_file_name = re.search('ftp://.*/(.+$)', file_url).group(1)
 
-        self._check_ftp_connection(self.ftp_user_name, self.ftp_password, self.ftp_domain, self.ftp_file_path, self.ftp_file_name)
+        self._check_ftp_connection(self.ftp_user_name, self.ftp_password, 
+                                    self.ftp_domain, self.ftp_file_path, self.ftp_file_name)
         
         ftp_connection = ftplib.FTP(self.ftp_domain)
         ftp_connection.login(self.ftp_user_name, self.ftp_password)
@@ -824,14 +837,17 @@ class ReadsUtils:
         # .gz file handler 
         # TODO: create separate zip file handler for all download types 
         if self.ftp_file_name.endswith('.gz'):
+            self.log('unzipping file: %s' % ftp_file_name)
             with open(copy_file_path + '.gz', 'wb') as output:
                 ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
             with gzip.open(copy_file_path + '.gz', 'rb') as in_file:
                 with open(copy_file_path, 'w') as f:
                     f.write(in_file.read())
+            self.log('Copied FTP file to: %s' % copy_file_path)
         else:
             with open(copy_file_path, 'wb') as output:
                 ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
+            self.log('Copied FTP file to: %s' % copy_file_path)
 
     def _check_ftp_connection(self, user_name, password, domain, file_path, file_name):
         """
@@ -875,15 +891,8 @@ class ReadsUtils:
         file_id = file_url.partition('/d/')[-1].partition('/')[0]
         force_download_link = force_download_link_prefix + file_id
 
-        try: online_file = urllib2.urlopen(force_download_link)
-        except urllib2.HTTPError as e:
-            raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
-        except urllib2.URLError as e:
-            raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
-        else:
-            with closing(online_file):
-                with open(copy_file_path, 'wb') as output:
-                    shutil.copyfileobj(online_file, output)
+        self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (file_url, force_download_link))
+        self._download_direct_download_link(force_download_link, copy_file_path)
 
     #END_CLASS_HEADER
 
