@@ -2778,7 +2778,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_ftp_validator(self):
         fake_ftp_domain_params = {
             'download_type': 'FTP',
-            'fwd_file_url': 'ftp://dlpuser:yc#KtFCR5kBp@FAKE_SERVER.ftp.dlptest.com/24_Hour/Sample1.fastq',
+            'fwd_file_url': 'ftp://FAKE_SERVER.ftp.dlptest.com/24_Hour/Sample1.fastq',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
@@ -2787,7 +2787,7 @@ class ReadsUtilsTest(unittest.TestCase):
             self.impl.upload_reads(self.ctx, fake_ftp_domain_params)
 
         fake_ftp_domain_params['fwd_file_url'] = 'ftp://FAKE_USER:FAKE_PASSWORD@ftp.dlptest.com/24_Hour/Sample1.fastq'
-        with self.assertRaisesRegexp(ValueError, 'Cannot login:'):
+        with self.assertRaisesRegexp(ValueError, 'Currently we only support anonymous FTP'):
             self.impl.upload_reads(self.ctx, fake_ftp_domain_params)
 
     def test_upload_reads_from_web_ftp(self):
