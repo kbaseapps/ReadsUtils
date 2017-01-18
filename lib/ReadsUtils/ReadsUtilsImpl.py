@@ -937,9 +937,11 @@ class ReadsUtils:
                 revpath = files[1]["file_path"]
                 revname = files[1]["node_file_name"]
         elif reads_source == 'web':
+            # TODO: Tian move _download_web_file to DFU
             fwdpath = self._download_web_file(fwd, download_type)
             revpath = self._download_web_file(rev, download_type) if rev else None
         elif reads_source == 'staging':
+            # TODO: Tian move _download_staging_file to DFU
             fwdpath = self._download_staging_file(user_id, fwd)
             revpath = self._download_staging_file(user_id, rev) if rev else None
         elif reads_source == 'local':
