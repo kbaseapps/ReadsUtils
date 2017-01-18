@@ -834,20 +834,20 @@ class ReadsUtils:
         ftp_connection.login(self.ftp_user_name, self.ftp_password)
         ftp_connection.cwd(self.ftp_file_path)
 
-        # .gz file handler 
-        # TODO: create separate zip file handler for all download types 
+        ftp_copy_file_path = copy_file_path + '.gz' if self.ftp_file_name.endswith('.gz') else copy_file_path
+        with open(ftp_copy_file_path, 'wb') as output:
+            ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
+        self.log('Copied FTP file to: %s' % ftp_copy_file_path)
+
         if self.ftp_file_name.endswith('.gz'):
-            self.log('unzipping file: %s' % ftp_file_name)
-            with open(copy_file_path + '.gz', 'wb') as output:
-                ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
-            with gzip.open(copy_file_path + '.gz', 'rb') as in_file:
+            self._unpack_gz_file(copy_file_path)
+
+    def _unpack_gz_file(self, copy_file_path):
+        with gzip.open(copy_file_path + '.gz', 'rb') as in_file:
                 with open(copy_file_path, 'w') as f:
                     f.write(in_file.read())
-            self.log('Copied FTP file to: %s' % copy_file_path)
-        else:
-            with open(copy_file_path, 'wb') as output:
-                ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
-            self.log('Copied FTP file to: %s' % copy_file_path)
+        self.log('Unzipped file: %s' % copy_file_path + '.gz')
+
 
     def _check_ftp_connection(self, user_name, password, domain, file_path, file_name):
         """
