@@ -97,6 +97,8 @@ class ReadsUtils:
                              'a forwards reads file must be specified')
         shock = False
         if fwdurl:
+            if not params.get('download_type'):
+                raise ValueError('Both download_type and fwd_file_url must be provided')
             reads_source = 'web'
             fwdid = fwdurl
         elif fwdstaging:
