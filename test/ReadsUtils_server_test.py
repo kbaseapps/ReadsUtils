@@ -1263,7 +1263,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': 'whee',
              'rev_file': 'whoo'
              },
-            'Cannot specify a local, web or stagin reverse reads file ' +
+            'Cannot specify a local, web or staging reverse reads file ' +
             'with a forward reads file in shock'
             )
 

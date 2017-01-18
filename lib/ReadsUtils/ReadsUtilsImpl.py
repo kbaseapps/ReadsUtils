@@ -129,7 +129,7 @@ class ReadsUtils:
         revfile = params.get('rev_file')
         revurl = params.get('rev_file_url')
         revstaging = params.get('rev_staging_file_name')
-        if sum(bool(e) for e in [revid, revfile, revurl, revstaging]) >= 1:
+        if sum(bool(e) for e in [revid, revfile, revurl, revstaging]) > 1:
             raise ValueError('Cannot specify more than one rev file source')
 
         if shock and any([revfile, revurl, revstaging]):
