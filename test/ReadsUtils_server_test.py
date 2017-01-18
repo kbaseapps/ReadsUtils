@@ -74,7 +74,7 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.staged = {}
         cls.nodes_to_delete = []
         cls.handles_to_delete = []
-        cls.setupTestData()
+        # cls.setupTestData()
         print('\n\n=============== Starting tests ==================')
 
     @classmethod
@@ -86,7 +86,7 @@ class ReadsUtilsTest(unittest.TestCase):
             for node in cls.nodes_to_delete:
                 cls.delete_shock_node(node)
         if hasattr(cls, 'handles_to_delete'):
-            cls.hs.delete_handles(cls.hs.ids_to_handles(cls.handles_to_delete))
+            # cls.hs.delete_handles(cls.hs.ids_to_handles(cls.handles_to_delete))
             print('Deleted handles ' + str(cls.handles_to_delete))
 
     @classmethod
@@ -1238,6 +1238,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
              'name': 'foo',
+             'download_type': 'Direct Download',
              'fwd_file_url': 'whoa',
              'rev_staging_file_name': 'whoo'
              },
@@ -1245,15 +1246,16 @@ class ReadsUtilsTest(unittest.TestCase):
             )
 
     def test_upload_fail_rev_web_fwd_staging(self):
-        self.fail_upload_reads(
-            {'sequencing_tech': 'tech',
-             'wsname': self.ws_info[1],
-             'name': 'foo',
-             'fwd_staging_file_name': 'whoa',
-             'rev_file_url': 'whoo'
-             },
-            'Specified reverse file URL but missing forward file URL'
-            )
+        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1.fastq') as mock_obj:
+            self.fail_upload_reads(
+                {'sequencing_tech': 'tech',
+                 'wsname': self.ws_info[1],
+                 'name': 'foo',
+                 'fwd_staging_file_name': 'whoa',
+                 'rev_file_url': 'whoo'
+                 },
+                'Specified reverse file URL but missing forward file URL'
+                )
 
     def test_upload_fail_spec_fwd_id_rev_file(self):
         self.fail_upload_reads(
@@ -1419,6 +1421,31 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'bar'
              },
             'Invalid FASTQ file - Path: /kb/module/test/data/Sample1_invalid.fastq.')
+
+    def test_upload_fail_bad_fastq_file_staging(self):
+        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1_invalid.fastq') as mock_obj:
+            fq_filename = "Sample1_invalid.fastq"
+            fq_path = os.path.join(self.cfg['scratch'], fq_filename)
+            shutil.copy(os.path.join("data", fq_filename), fq_path)
+            self.fail_upload_reads(
+                {'sequencing_tech': 'tech',
+                 'wsname': self.ws_info[1],
+                 'fwd_staging_file_name': 'Sample1_invalid.fastq',
+                 'name': 'bar'
+                 },
+                'Invalid FASTQ file - Path: /kb/module/work/tmp/Sample1_invalid.fastq. ' +
+                'Input Staging : Sample1_invalid.fastq.')
+
+    def test_upload_fail_bad_fastq_file_web(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file_url': 'https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq?dl=0',
+             'download_type': 'DropBox',
+             'name': 'bar'
+             },
+            'Invalid FASTQ file - Path: /kb/module/work/tmp/tmp/tmp_fwd_fastq.fastq. ' +
+            'Input URL : https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq?dl=0.')
 
     def test_upload_fail_paired_bad_fastq_file(self):
         print('*** upload_fail_bad_fastq_file***')
@@ -2781,6 +2808,45 @@ class ReadsUtilsTest(unittest.TestCase):
         params = {
             'download_type': 'FTP',
             'fwd_file_url': 'ftp://dlpuser:yc#KtFCR5kBp@ftp.dlptest.com/24_Hour/Sample1.fastq',
+            'sequencing_tech': 'Unknown',
+            'name': 'test_reads_file_name.reads',
+            'wsname': self.getWsName()
+        }
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+                        'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
+
+    def test_upload_reads_from_web_ftp_gz_file(self):
+        # copy test file to scratch area
+        fq_filename = "Sample1.fastq.gz"
+        fq_path = os.path.join(self.cfg['scratch'], fq_filename)
+        shutil.copy(os.path.join("data", fq_filename), fq_path)
+
+        ftp_connection = ftplib.FTP('ftp.dlptest.com')
+        ftp_connection.login('dlpuser', 'yc#KtFCR5kBp')
+        ftp_connection.cwd("/24_Hour/")
+
+        if fq_filename not in ftp_connection.nlst():
+            fh = open(os.path.join("data", fq_filename), 'rb')
+            ftp_connection.storbinary('STOR Sample1.fastq.gz', fh)
+            fh.close()
+
+        params = {
+            'download_type': 'FTP',
+            'fwd_file_url': 'ftp://dlpuser:yc#KtFCR5kBp@ftp.dlptest.com/24_Hour/Sample1.fastq.gz',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()

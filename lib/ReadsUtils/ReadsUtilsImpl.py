@@ -95,18 +95,20 @@ class ReadsUtils:
         if sum(bool(e) for e in [fwdid, fwdfile, fwdurl, fwdstaging]) != 1:
             raise ValueError('Exactly one of a file, shock id, staging file name or file url containing ' +
                              'a forwards reads file must be specified')
+        shock = False
         if fwdurl:
-            download_type = params.get('download_type')
-            if not (fwdurl and download_type):
-                raise ValueError('Both download_type and fwd_file_url must be provided')
-            fwdfile = self._download_web_file(fwdurl, download_type)
-        
-        if fwdstaging:
-            fwdfile = self._download_staging_file(params.get('user_id'), fwdstaging)
+            reads_source = 'web'
+            fwdid = fwdurl
+        elif fwdstaging:
+            reads_source = 'staging'
+            fwdid = fwdstaging
+        elif fwdid:
+            reads_source = 'shock'
+            shock = True
+        else:
+            reads_source = 'local'
+            fwdid = os.path.abspath(os.path.expanduser(fwdfile))
 
-        shock = True if fwdid else False
-        fwdid = fwdid if shock else os.path.abspath(
-            os.path.expanduser(fwdfile))
         wsid = params.get('wsid')
         wsname = params.get('wsname')
         if not self.xor(wsid, wsname):
@@ -144,12 +146,10 @@ class ReadsUtils:
             raise ValueError('Specified reverse staging file but missing forward staging file')
 
         if revurl:
-            revfile = self._download_web_file(revurl, download_type)
-        
-        if revstaging:
-            revfile = self._download_staging_file(params.get('user_id'), revstaging)
-
-        if not shock and revfile:
+            revid = revurl
+        elif revstaging:
+            revid = revstaging
+        elif revfile:
             revid = os.path.abspath(os.path.expanduser(revfile))
 
         interleaved = 0
@@ -166,7 +166,7 @@ class ReadsUtils:
                                                      interleaved, single_end)
         else:
             o = self._build_up_reads_data(params, single_end)
-        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
+        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, reads_source
 
     def _propagate_reference_reads_info(self, params, dfu, source_reads_ref,
                                         interleaved, single_end):
@@ -894,6 +894,98 @@ class ReadsUtils:
         self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (file_url, force_download_link))
         self._download_direct_download_link(force_download_link, copy_file_path)
 
+    def _process_download(self, fwd, rev, reads_source, download_type, user_id):
+        """
+        _process_download: processing different type of downloads
+
+        fwd: forward shock_id if reads_source is 'shock'
+               forward url if reads_source is 'web'
+               forward file name in staging if reads_source is 'staging'
+        rev: reverse shock_id if reads_source is 'shock'
+               reverse url if reads_source is 'web'
+               reverse file name in staging if reads_source is 'staging'
+        reads_source: one of 'shock', 'web' or 'staging'
+        download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
+        user_id: current token user
+        """
+
+        # return values
+        fwdpath = None
+        revpath = None
+        fwdname = None
+        revname = None
+  
+        if reads_source == 'shock':
+            # Grab files from Shock
+            fwdid = fwd
+            revid = rev
+            dfu = DataFileUtil(self.callback_url)
+            fileinput = [{'shock_id': fwdid,
+                          'file_path': self.scratch + '/fwd/',
+                          'unpack': 'uncompress'}]
+            if revid:
+                fileinput.append({'shock_id': revid,
+                                  'file_path': self.scratch + '/rev/',
+                                  'unpack': 'uncompress'})
+            self.log('downloading reads file(s) from Shock')
+            files = dfu.shock_to_file_mass(fileinput)
+            fwdpath = files[0]["file_path"]
+            fwdname = files[0]["node_file_name"]
+            if revid:
+                revpath = files[1]["file_path"]
+                revname = files[1]["node_file_name"]
+        elif reads_source == 'web':
+            fwdpath = self._download_web_file(fwd, download_type)
+            revpath = self._download_web_file(rev, download_type) if rev else None
+        elif reads_source == 'staging':
+            fwdpath = self._download_staging_file(user_id, fwd)
+            revpath = self._download_staging_file(user_id, rev) if rev else None
+        elif reads_source == 'local':
+            pass
+        else:
+            raise ValueError("Unexpected reads_source value. reads_source: %s" % reads_source)
+
+        returnVal = {'fwdpath': fwdpath, 
+                     'revpath': revpath,
+                     'fwdname': fwdname, 
+                     'revname': revname}
+
+        return returnVal
+
+    def _generate_validation_error_message(self, reads_source, actualpath, fwdpath, revpath, fwdname, revname, fwdid, revid, fwdurl, revurl, fwdstaging, revstaging):
+        validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
+        if reads_source == 'shock':
+            if revid:
+                validation_error_message += (
+                    " Input Shock IDs - FWD Shock ID : " +
+                    fwdid + ", REV Shock ID : " + revid +
+                    ". FWD File Name : " + fwdname +
+                    ". REV File Name : " + revname +
+                    ". FWD Path : " + fwdpath +
+                    ". REV Path : " + revpath + ".")
+            else:
+                validation_error_message += (" Input Shock ID : " + 
+                                        fwdid + ". File Name : " + fwdname + ".")
+        elif reads_source == 'web':
+            if revurl:
+                validation_error_message += (" Input URLs - FWD URL : " +
+                                        fwdurl + ", REV URL : " + revurl + ".")
+            else:
+                validation_error_message += (" Input URL : " + fwdurl + ".")
+        elif reads_source == 'staging':
+            if revstaging:
+                validation_error_message += (" Input Staging files - FWD Staging file : " +
+                                        fwdstaging + ", REV Staging file : " + revstaging + ".")
+            else:
+                validation_error_message += (" Input Staging : " + fwdstaging + ".")
+        elif reads_source == 'local':
+             if revpath:
+                validation_error_message += (" Input Files Paths - FWD Path : " +
+                                        fwdpath + ", REV Path : " + revpath + ".")
+
+        return validation_error_message
+            
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -1116,35 +1208,44 @@ class ReadsUtils:
         # return variables are: returnVal
         #BEGIN upload_reads
         self.log('Starting upload reads, parsing args')
-        params['user_id'] = ctx['user_id']
-        o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
+        o, wsid, name, objid, kbtype, single_end, fwdid, revid, reads_source = (
             self._proc_upload_reads_params(params))
-        # IF from shock fwdid and revid are shock nodes, if not shock they are file paths
+        # If reads_source == 'shock', fwdid and revid are shock nodes
+        # If reads_source == 'web', fwdid and revid are urls
+        # If reads_source == 'staging', fwdid and revid are file name in staging area
+        # If reads_source == 'local', fwdid and revid are file paths
         dfu = DataFileUtil(self.callback_url)
-        fwdpath = None
-        revpath = None
-        if shock:
-            # Grab files from Shock
-            fileinput = [{'shock_id': fwdid,
-                          'file_path': self.scratch + '/fwd/',
-                          'unpack': 'uncompress'}]
-            if revid:
-                fileinput.append({'shock_id': revid,
-                                  'file_path': self.scratch + '/rev/',
-                                  'unpack': 'uncompress'})
-            self.log('downloading reads file(s) from Shock')
-            files = dfu.shock_to_file_mass(fileinput)
-            fwdpath = files[0]["file_path"]
-            fwdname = files[0]["node_file_name"]
-            if revid:
-                revpath = files[1]["file_path"]
-                revname = files[1]["node_file_name"]
+        fwdname, revname, fwdurl, revurl, fwdstaging, revstaging = (None,) * 6
+        shock = False
+
+        ret = self._process_download(fwdid, revid, reads_source, 
+                                        params.get('download_type'), ctx['user_id'])
+        if reads_source == 'shock':
+            shock = True
+            fwdpath = ret.get('fwdpath')
+            revpath = ret.get('revpath')
+            fwdname = ret.get('fwdname')
+            revname = ret.get('revname')
+        elif reads_source == 'web':
+            # Web reads file source
+            fwdpath = ret.get('fwdpath')
+            revpath = ret.get('revpath')
+            fwdurl = fwdid
+            revurl = revid
+            fwdid = None
+            revid = None
+        elif reads_source == 'staging':
+            # Staging reads file source
+            fwdpath = ret.get('fwdpath')
+            revpath = ret.get('revpath')
+            fwdstaging = fwdid
+            revstaging = revid
+            fwdid = None
+            revid = None
         else:
-            # Not shock
+            # Local reads file source
             fwdpath = fwdid
             revpath = revid
-            fwdname = None
-            revname = None
             fwdid = None
             revid = None
 
@@ -1159,22 +1260,13 @@ class ReadsUtils:
         file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
                                         'interleaved': interleaved}])
         if not file_valid[0][0]['validated']:
-            validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
-            if shock:
-                if revid:
-                    validation_error_message += (
-                        " Input Shock IDs - FWD Shock ID : " +
-                        fwdid + ", REV Shock ID : " + revid +
-                        ". FWD File Name : " + fwdname +
-                        ". REV File Name : " + revname +
-                        ". FWD Path : " + fwdpath +
-                        ". REV Path : " + revpath + ".")
-                else:
-                    validation_error_message += (" Input Shock ID : " + fwdid +
-                                                 ". File Name : " + fwdname + ".")
-            elif revpath:
-                validation_error_message += (" Input Files Paths - FWD Path : " +
-                                             fwdpath + ", REV Path : " + revpath + ".")
+            validation_error_message = self._generate_validation_error_message(
+                                                                reads_source, actualpath, 
+                                                                fwdpath, revpath, 
+                                                                fwdname, revname, 
+                                                                fwdid, revid, 
+                                                                fwdurl, revurl, 
+                                                                fwdstaging, revstaging)
             raise ValueError(validation_error_message)
 
         self.log('validation complete, uploading files to shock')
