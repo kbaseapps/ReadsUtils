@@ -74,7 +74,7 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.staged = {}
         cls.nodes_to_delete = []
         cls.handles_to_delete = []
-        # cls.setupTestData()
+        cls.setupTestData()
         print('\n\n=============== Starting tests ==================')
 
     @classmethod
@@ -86,7 +86,7 @@ class ReadsUtilsTest(unittest.TestCase):
             for node in cls.nodes_to_delete:
                 cls.delete_shock_node(node)
         if hasattr(cls, 'handles_to_delete'):
-            # cls.hs.delete_handles(cls.hs.ids_to_handles(cls.handles_to_delete))
+            cls.hs.delete_handles(cls.hs.ids_to_handles(cls.handles_to_delete))
             print('Deleted handles ' + str(cls.handles_to_delete))
 
     @classmethod
