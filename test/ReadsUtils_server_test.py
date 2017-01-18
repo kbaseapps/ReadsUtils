@@ -2796,9 +2796,9 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
 
-        ftp_connection = ftplib.FTP('ftp.dlptest.com')
-        ftp_connection.login('dlpuser', 'yc#KtFCR5kBp')
-        ftp_connection.cwd("/24_Hour/")
+        ftp_connection = ftplib.FTP('ftp.uconn.edu')
+        ftp_connection.login('anonymous', 'anonymous@domain.com')
+        ftp_connection.cwd("/48_hour/")
 
         if fq_filename not in ftp_connection.nlst():
             fh = open(os.path.join("data", fq_filename), 'rb')
@@ -2807,7 +2807,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         params = {
             'download_type': 'FTP',
-            'fwd_file_url': 'ftp://dlpuser:yc#KtFCR5kBp@ftp.dlptest.com/24_Hour/Sample1.fastq',
+            'fwd_file_url': 'ftp://ftp.uconn.edu/48_hour/Sample1.fastq',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
@@ -2835,9 +2835,9 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
 
-        ftp_connection = ftplib.FTP('ftp.dlptest.com')
-        ftp_connection.login('dlpuser', 'yc#KtFCR5kBp')
-        ftp_connection.cwd("/24_Hour/")
+        ftp_connection = ftplib.FTP('ftp.uconn.edu')
+        ftp_connection.login('anonymous', 'anonymous@domain.com')
+        ftp_connection.cwd("/48_hour/")
 
         if fq_filename not in ftp_connection.nlst():
             fh = open(os.path.join("data", fq_filename), 'rb')
@@ -2846,7 +2846,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         params = {
             'download_type': 'FTP',
-            'fwd_file_url': 'ftp://dlpuser:yc#KtFCR5kBp@ftp.dlptest.com/24_Hour/Sample1.fastq.gz',
+            'fwd_file_url': 'ftp://ftp.uconn.edu/48_hour/Sample1.fastq.gz',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()

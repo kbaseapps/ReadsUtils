@@ -803,9 +803,12 @@ class ReadsUtils:
     def _download_ftp_link(self, file_url, copy_file_path):
         """
         _download_ftp_link: FTP download link handler
-                            URL fomat: ftp://user_name:password@ftp_link or ftp://ftp_link
+                            URL fomat: ftp://anonymous:email@ftp_link 
+                                    or ftp://ftp_link
                             defualt user_name: 'anonymous'
                                     password: 'anonymous@domain.com'
+                                    
+                            Note: Currenlty we only support anonymous FTP due to securty reasons.
 
         params:
         file_url: FTP download link
@@ -813,8 +816,8 @@ class ReadsUtils:
 
         """
         print "=== WARNING ===\n=== WARNING ===\n"
-        print "FTP IS NOT A SECURIED PROTOCOL\nCREDENTIALS WILL BE EXPOSED TO THE PUBLIC"
-        print "\n=== STOP THE PROCESS NOW IF YOU DO NOT WISH TO EXPOSE CRENDENTIALS ==="
+        print "FTP IS NOT A SECURIED PROTOCOL\nCREDENTIALS AND FILE CONTENTS WILL BE EXPOSED TO THE PUBLIC"
+        print "\n=== STOP THE PROCESS NOW IF YOU DO NOT WISH TO EXPOSE PRIVATE DATA ==="
         time.sleep(60)
 
         self.log('Connecting FTP link: %s' % file_url)
@@ -822,6 +825,8 @@ class ReadsUtils:
         # process ftp credentials
         if ftp_url_format:
             self.ftp_user_name = re.search('ftp://(.+?):', file_url).group(1)
+            if self.ftp_user_name.lower() != 'anonymous':
+                raise ValueError("Currently we only support anonymous FTP")
             self.ftp_password = file_url.rpartition('@')[0].rpartition(':')[-1]
             self.ftp_domain = re.search('ftp://.*:.*@(.+?)/', file_url).group(1)
             self.ftp_file_path = file_url.partition('ftp://')[-1].partition('/')[-1].rpartition('/')[0]
