@@ -986,6 +986,8 @@ class ReadsUtils:
              if revpath:
                 validation_error_message += (" Input Files Paths - FWD Path : " +
                                         fwdpath + ", REV Path : " + revpath + ".")
+        else:
+            raise ValueError("Unexpected reads_source value. reads_source: %s" % reads_source)
 
         return validation_error_message
             
@@ -1220,12 +1222,10 @@ class ReadsUtils:
         # If reads_source == 'local', fwdid and revid are file paths
         dfu = DataFileUtil(self.callback_url)
         fwdname, revname, fwdurl, revurl, fwdstaging, revstaging = (None,) * 6
-        shock = False
 
         ret = self._process_download(fwdid, revid, reads_source, 
                                         params.get('download_type'), ctx['user_id'])
         if reads_source == 'shock':
-            shock = True
             fwdpath = ret.get('fwdpath')
             revpath = ret.get('revpath')
             fwdname = ret.get('fwdname')
@@ -1246,12 +1246,14 @@ class ReadsUtils:
             revstaging = revid
             fwdid = None
             revid = None
-        else:
+        elif reads_source == 'local':
             # Local reads file source
             fwdpath = fwdid
             revpath = revid
             fwdid = None
             revid = None
+        else:
+            raise ValueError("Unexpected reads_source value. reads_source: %s" % reads_source)
 
         actualpath = fwdpath
         if revpath:
