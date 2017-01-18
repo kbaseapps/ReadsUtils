@@ -19,6 +19,7 @@ from contextlib import closing
 import ftplib
 import re
 import gzip
+import time
 #END_HEADER
 
 
@@ -811,10 +812,14 @@ class ReadsUtils:
         copy_file_path: output file saving path
 
         """
+        print "=== WARNING ===\n=== WARNING ===\n"
+        print "FTP IS NOT A SECURIED PROTOCOL\nCREDENTIALS WILL BE EXPOSED TO THE PUBLIC"
+        print "\n=== STOP THE PROCESS NOW IF YOU DO NOT WISH TO EXPOSE CRENDENTIALS ==="
+        time.sleep(60)
 
-        # process ftp credentials 
         self.log('Connecting FTP link: %s' % file_url)
         ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
+        # process ftp credentials
         if ftp_url_format:
             self.ftp_user_name = re.search('ftp://(.+?):', file_url).group(1)
             self.ftp_password = file_url.rpartition('@')[0].rpartition(':')[-1]
