@@ -91,11 +91,12 @@ class ReadsUtils:
 
         fwdid = params.get('fwd_id')
         fwdfile = params.get('fwd_file')
+        download_type = params.get('download_type')
         fwdurl = params.get('fwd_file_url')
         fwdstaging = params.get('fwd_staging_file_name')
 
         fwdid, reads_source = (self._process_fwd_params(
-            fwdid, fwdfile, fwdurl, fwdstaging))
+            fwdid, fwdfile, fwdurl, fwdstaging, download_type))
 
         wsid = params.get('wsid')
         wsname = params.get('wsname')
@@ -168,14 +169,14 @@ class ReadsUtils:
             raise ValueError(
                 'Specified reverse staging file but missing forward staging file')
 
-    def _process_fwd_params(self, fwdid, fwdfile, fwdurl, fwdstaging):
+    def _process_fwd_params(self, fwdid, fwdfile, fwdurl, fwdstaging, download_type):
 
         if sum(bool(e) for e in [fwdid, fwdfile, fwdurl, fwdstaging]) != 1:
             raise ValueError('Exactly one of a file, shock id, staging ' +
                              'file name or file url containing ' +
                              'a forwards reads file must be specified')
         if fwdurl:
-            if not params.get('download_type'):
+            if not download_type:
                 raise ValueError(
                     'Both download_type and fwd_file_url must be provided')
             reads_source = 'web'
@@ -998,42 +999,46 @@ class ReadsUtils:
 
         return returnVal
 
-    def _generate_validation_error_message(self, reads_source, actualpath,
-                                           fwdpath, revpath, fwdname, revname,
-                                           fwdid, revid, fwdurl, revurl,
-                                           fwdstaging, revstaging):
+    def _generate_validation_error_message(self, reads_source, actualpath, file_info):
+        fwdpath = file_info.get('fwdpath')
+        revpath = file_info.get('revpath')
+        fwdname = file_info.get('fwdname')
+        revname = file_info.get('revname')
+        fwdsource = file_info.get('fwdsource')
+        revsource = file_info.get('revsource')
+
         validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
         if reads_source == 'shock':
-            if revid:
+            if revsource:
                 validation_error_message += (
                     " Input Shock IDs - FWD Shock ID : " +
-                    fwdid + ", REV Shock ID : " + revid +
+                    fwdsource + ", REV Shock ID : " + revsource +
                     ". FWD File Name : " + fwdname +
                     ". REV File Name : " + revname +
                     ". FWD Path : " + fwdpath +
                     ". REV Path : " + revpath + ".")
             else:
                 validation_error_message += (" Input Shock ID : " +
-                                             fwdid + ". File Name : " + fwdname + ".")
+                                             fwdsource + ". File Name : " + fwdname + ".")
         elif reads_source == 'web':
-            if revurl:
+            if revsource:
                 validation_error_message += (" Input URLs - FWD URL : " +
-                                             fwdurl + ", REV URL : " + revurl +
+                                             fwdsource + ", REV URL : " + revsource +
                                              ". FWD Path : " + fwdpath +
                                              ". REV Path : " + revpath + ".")
             else:
-                validation_error_message += (" Input URL : " + fwdurl + ".")
+                validation_error_message += (" Input URL : " + fwdsource + ".")
         elif reads_source == 'staging':
-            if revstaging:
+            if revsource:
                 validation_error_message += (" Input Staging files - FWD Staging file : " +
-                                             fwdstaging +
+                                             fwdsource +
                                              ", REV Staging file : " +
-                                             revstaging +
+                                             revsource +
                                              ". FWD Path : " + fwdpath +
                                              ". REV Path : " + revpath + ".")
             else:
                 validation_error_message += (" Input Staging : " +
-                                             fwdstaging + ".")
+                                             fwdsource + ".")
         elif reads_source == 'local':
             if revpath:
                 validation_error_message += (" Input Files Paths - FWD Path : " +
@@ -1272,46 +1277,25 @@ class ReadsUtils:
         # return variables are: returnVal
         #BEGIN upload_reads
         self.log('Starting upload reads, parsing args')
-        o, wsid, name, objid, kbtype, single_end, fwdid, revid, reads_source = (
-            self._proc_upload_reads_params(params))
-        # If reads_source == 'shock', fwdid and revid are shock nodes
-        # If reads_source == 'web', fwdid and revid are urls
-        # If reads_source == 'staging', fwdid and revid are file name in staging area
-        # If reads_source == 'local', fwdid and revid are file paths
+        o, wsid, name, objid, kbtype, single_end, 
+        fwdsource, revsource, reads_source = (self._proc_upload_reads_params(params))
+        # If reads_source == 'shock', fwdsource and revsource are shock nodes
+        # If reads_source == 'web', fwdsource and revsource are urls
+        # If reads_source == 'staging', fwdsource and revsource are file name in staging area
+        # If reads_source == 'local', fwdsource and revsource are file paths
         dfu = DataFileUtil(self.callback_url)
-        fwdname, revname, fwdurl, revurl, fwdstaging, revstaging = (None,) * 6
-        ret = self._process_download(fwdid, revid, reads_source,
+        fwdname, revname, fwdid, revid = (None,) * 4
+        ret = self._process_download(fwdsource, revsource, reads_source,
                                      params.get('download_type'), ctx['user_id'])
+
+        fwdpath = ret.get('fwdpath')
+        revpath = ret.get('revpath')
+
         if reads_source == 'shock':
-            fwdpath = ret.get('fwdpath')
-            revpath = ret.get('revpath')
             fwdname = ret.get('fwdname')
             revname = ret.get('revname')
-        elif reads_source == 'web':
-            # Web reads file source
-            fwdpath = ret.get('fwdpath')
-            revpath = ret.get('revpath')
-            fwdurl = fwdid
-            revurl = revid
-            fwdid = None
-            revid = None
-        elif reads_source == 'staging':
-            # Staging reads file source
-            fwdpath = ret.get('fwdpath')
-            revpath = ret.get('revpath')
-            fwdstaging = fwdid
-            revstaging = revid
-            fwdid = None
-            revid = None
-        elif reads_source == 'local':
-            # Local reads file source
-            fwdpath = ret.get('fwdpath')
-            revpath = ret.get('revpath')
-            fwdid = None
-            revid = None
-        else:
-            raise ValueError(
-                "Unexpected reads_source value. reads_source: %s" % reads_source)
+            fwdid = fwdsource
+            revid = revsource
 
         actualpath = fwdpath
         if revpath:
@@ -1324,14 +1308,13 @@ class ReadsUtils:
         interleaved = 1 if not single_end else 0
         file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
                                               'interleaved': interleaved}])
+
         if not file_valid[0][0]['validated']:
+            file_info = ret
+            file_info['fwdsource'] = fwdsource
+            file_info['revsource'] = revsource
             validation_error_message = self._generate_validation_error_message(
-                reads_source, actualpath,
-                fwdpath, revpath,
-                fwdname, revname,
-                fwdid, revid,
-                fwdurl, revurl,
-                fwdstaging, revstaging)
+                reads_source, actualpath, file_info)
             raise ValueError(validation_error_message)
 
         self.log('validation complete, uploading files to shock')
