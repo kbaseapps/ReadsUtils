@@ -88,27 +88,14 @@ class ReadsUtils:
                 raise ValueError(name + ' must be > 0')
 
     def _proc_upload_reads_params(self, params):
+
         fwdid = params.get('fwd_id')
         fwdfile = params.get('fwd_file')
         fwdurl = params.get('fwd_file_url')
         fwdstaging = params.get('fwd_staging_file_name')
-        if sum(bool(e) for e in [fwdid, fwdfile, fwdurl, fwdstaging]) != 1:
-            raise ValueError('Exactly one of a file, shock id, staging file name or file url containing ' +
-                             'a forwards reads file must be specified')
-        if fwdurl:
-            if not params.get('download_type'):
-                raise ValueError(
-                    'Both download_type and fwd_file_url must be provided')
-            reads_source = 'web'
-            fwdid = fwdurl
-        elif fwdstaging:
-            reads_source = 'staging'
-            fwdid = fwdstaging
-        elif fwdid:
-            reads_source = 'shock'
-        else:
-            reads_source = 'local'
-            fwdid = os.path.abspath(os.path.expanduser(fwdfile))
+
+        fwdid, reads_source = (self._process_fwd_params(
+            fwdid, fwdfile, fwdurl, fwdstaging))
 
         wsid = params.get('wsid')
         wsname = params.get('wsname')
@@ -132,6 +119,36 @@ class ReadsUtils:
         revfile = params.get('rev_file')
         revurl = params.get('rev_file_url')
         revstaging = params.get('rev_staging_file_name')
+
+        self._check_rev_params(revid, revfile, revurl, revstaging, fwdfile,
+                               fwdurl, fwdstaging, reads_source)
+
+        if revurl:
+            revid = revurl
+        elif revstaging:
+            revid = revstaging
+        elif revfile:
+            revid = os.path.abspath(os.path.expanduser(revfile))
+
+        interleaved = 0
+        kbtype = 'KBaseFile.SingleEndLibrary'
+        single_end = True
+        if params.get('interleaved') or revid:
+            interleaved = 1
+            kbtype = 'KBaseFile.PairedEndLibrary'
+            single_end = False
+
+        source_reads_ref = params.get('source_reads_ref')
+        if source_reads_ref:
+            o = self._propagate_reference_reads_info(params, dfu,
+                                                     source_reads_ref,
+                                                     interleaved, single_end)
+        else:
+            o = self._build_up_reads_data(params, single_end)
+        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, reads_source
+
+    def _check_rev_params(self, revid, revfile, revurl, revstaging,
+                          fwdfile, fwdurl, fwdstaging, reads_source):
         if sum(bool(e) for e in [revid, revfile, revurl, revstaging]) > 1:
             raise ValueError('Cannot specify more than one rev file source')
 
@@ -151,28 +168,28 @@ class ReadsUtils:
             raise ValueError(
                 'Specified reverse staging file but missing forward staging file')
 
-        if revurl:
-            revid = revurl
-        elif revstaging:
-            revid = revstaging
-        elif revfile:
-            revid = os.path.abspath(os.path.expanduser(revfile))
+    def _process_fwd_params(self, fwdid, fwdfile, fwdurl, fwdstaging):
 
-        interleaved = 0
-        kbtype = 'KBaseFile.SingleEndLibrary'
-        single_end = True
-        if params.get('interleaved') or revid:
-            interleaved = 1
-            kbtype = 'KBaseFile.PairedEndLibrary'
-            single_end = False
-
-        source_reads_ref = params.get('source_reads_ref')
-        if source_reads_ref:
-            o = self._propagate_reference_reads_info(params, dfu, source_reads_ref,
-                                                     interleaved, single_end)
+        if sum(bool(e) for e in [fwdid, fwdfile, fwdurl, fwdstaging]) != 1:
+            raise ValueError('Exactly one of a file, shock id, staging ' +
+                             'file name or file url containing ' +
+                             'a forwards reads file must be specified')
+        if fwdurl:
+            if not params.get('download_type'):
+                raise ValueError(
+                    'Both download_type and fwd_file_url must be provided')
+            reads_source = 'web'
+            fwdid = fwdurl
+        elif fwdstaging:
+            reads_source = 'staging'
+            fwdid = fwdstaging
+        elif fwdid:
+            reads_source = 'shock'
         else:
-            o = self._build_up_reads_data(params, single_end)
-        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, reads_source
+            reads_source = 'local'
+            fwdid = os.path.abspath(os.path.expanduser(fwdfile))
+
+        return fwdid, reads_source
 
     def _propagate_reference_reads_info(self, params, dfu, source_reads_ref,
                                         interleaved, single_end):
@@ -778,7 +795,7 @@ class ReadsUtils:
             online_file = urllib2.urlopen(file_url)
         except urllib2.HTTPError as e:
             raise ValueError(
-                "The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
+                "The server couldn\'t fulfill the request.\nError code: %s" % e.code)
         except urllib2.URLError as e:
             raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
         else:
@@ -981,10 +998,10 @@ class ReadsUtils:
 
         return returnVal
 
-    def _generate_validation_error_message(self, reads_source, actualpath, 
-                                            fwdpath, revpath, fwdname, revname, 
-                                            fwdid, revid, fwdurl, revurl, 
-                                            fwdstaging, revstaging):
+    def _generate_validation_error_message(self, reads_source, actualpath,
+                                           fwdpath, revpath, fwdname, revname,
+                                           fwdid, revid, fwdurl, revurl,
+                                           fwdstaging, revstaging):
         validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
         if reads_source == 'shock':
             if revid:
@@ -1009,8 +1026,8 @@ class ReadsUtils:
         elif reads_source == 'staging':
             if revstaging:
                 validation_error_message += (" Input Staging files - FWD Staging file : " +
-                                             fwdstaging + 
-                                             ", REV Staging file : " + 
+                                             fwdstaging +
+                                             ", REV Staging file : " +
                                              revstaging +
                                              ". FWD Path : " + fwdpath +
                                              ". REV Path : " + revpath + ".")
