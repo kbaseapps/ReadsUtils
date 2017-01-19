@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# BEGIN_HEADER
+#BEGIN_HEADER
 import time
 import subprocess
 import os
@@ -19,7 +19,7 @@ from contextlib import closing
 import ftplib
 import re
 import gzip
-# END_HEADER
+#END_HEADER
 
 
 class ReadsUtils:
@@ -41,7 +41,7 @@ class ReadsUtils:
     GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
     GIT_COMMIT_HASH = "26056b45180356363b088c1ec33979dcc6be2df0"
 
-    # BEGIN_CLASS_HEADER
+    #BEGIN_CLASS_HEADER
 
     TRUE = 'true'
     FALSE = 'false'
@@ -1044,16 +1044,16 @@ class ReadsUtils:
 
         return validation_error_message
 
-    # END_CLASS_HEADER
+    #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
     # be found
     def __init__(self, config):
-        # BEGIN_CONSTRUCTOR
+        #BEGIN_CONSTRUCTOR
         self.scratch = config['scratch']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.ws_url = config['workspace-url']
-        # END_CONSTRUCTOR
+        #END_CONSTRUCTOR
         pass
 
     def validateFASTQ(self, ctx, params):
@@ -1076,7 +1076,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: out
-        # BEGIN validateFASTQ
+        #BEGIN validateFASTQ
         del ctx
         # TODO try and parse the validator output and return errors
         out = []
@@ -1131,7 +1131,7 @@ class ReadsUtils:
                 self.log('Validation ' +
                          ('succeeded' if validated else 'failed'))
             out.append({'validated': validated})
-        # END validateFASTQ
+        #END validateFASTQ
 
         # At some point might do deeper type checking...
         if not isinstance(out, list):
@@ -1270,7 +1270,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: returnVal
-        # BEGIN upload_reads
+        #BEGIN upload_reads
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, reads_source = (
             self._proc_upload_reads_params(params))
@@ -1369,7 +1369,7 @@ class ReadsUtils:
 
         returnVal = {'obj_ref': str(oi[6]) + '/' + str(oi[0]) + '/' +
                      str(oi[4])}
-        # END upload_reads
+        #END upload_reads
 
         # At some point might do deeper type checking...
         if not isinstance(returnVal, dict):
@@ -1512,7 +1512,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: output
-        # BEGIN download_reads
+        #BEGIN download_reads
         ''' potential improvements:
             Add continue_on_failure mode that reports errors for each failed
                 conversion rather than failing completely.
@@ -1545,7 +1545,7 @@ class ReadsUtils:
             output[read_name] = self.process_reads(
                 read, params[self.PARAM_IN_INTERLEAVED])
         output = {'files': output}
-        # END download_reads
+        #END download_reads
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
@@ -1565,7 +1565,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: output
-        # BEGIN export_reads
+        #BEGIN export_reads
 
         inref = params.get('input_ref')
         if not inref:
@@ -1601,7 +1601,7 @@ class ReadsUtils:
 
         output = {'shock_id': ret['shock_id']}
 
-        # END export_reads
+        #END export_reads
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
@@ -1611,12 +1611,12 @@ class ReadsUtils:
         return [output]
 
     def status(self, ctx):
-        # BEGIN_STATUS
+        #BEGIN_STATUS
         del ctx
         returnVal = {'state': 'OK',
                      'message': '',
                      'version': self.VERSION,
                      'git_url': self.GIT_URL,
                      'git_commit_hash': self.GIT_COMMIT_HASH}
-        # END_STATUS
+        #END_STATUS
         return [returnVal]
