@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#BEGIN_HEADER
+# BEGIN_HEADER
 import time
 import subprocess
 import os
@@ -19,8 +19,7 @@ from contextlib import closing
 import ftplib
 import re
 import gzip
-import time
-#END_HEADER
+# END_HEADER
 
 
 class ReadsUtils:
@@ -42,7 +41,7 @@ class ReadsUtils:
     GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
     GIT_COMMIT_HASH = "26056b45180356363b088c1ec33979dcc6be2df0"
 
-    #BEGIN_CLASS_HEADER
+    # BEGIN_CLASS_HEADER
 
     TRUE = 'true'
     FALSE = 'false'
@@ -66,7 +65,7 @@ class ReadsUtils:
     MODULE_NAMES = [KBASE_FILE, KBASE_ASSEMBLY]
     TYPE_NAMES = [SINGLE_END_TYPE, PAIRED_END_TYPE]
 
-    #staging file prefix
+    # staging file prefix
     STAGING_FILE_PREFIX = '/data/bulk/'
 
     def log(self, message, prefix_newline=False):
@@ -96,10 +95,10 @@ class ReadsUtils:
         if sum(bool(e) for e in [fwdid, fwdfile, fwdurl, fwdstaging]) != 1:
             raise ValueError('Exactly one of a file, shock id, staging file name or file url containing ' +
                              'a forwards reads file must be specified')
-        shock = False
         if fwdurl:
             if not params.get('download_type'):
-                raise ValueError('Both download_type and fwd_file_url must be provided')
+                raise ValueError(
+                    'Both download_type and fwd_file_url must be provided')
             reads_source = 'web'
             fwdid = fwdurl
         elif fwdstaging:
@@ -107,7 +106,6 @@ class ReadsUtils:
             fwdid = fwdstaging
         elif fwdid:
             reads_source = 'shock'
-            shock = True
         else:
             reads_source = 'local'
             fwdid = os.path.abspath(os.path.expanduser(fwdfile))
@@ -137,18 +135,21 @@ class ReadsUtils:
         if sum(bool(e) for e in [revid, revfile, revurl, revstaging]) > 1:
             raise ValueError('Cannot specify more than one rev file source')
 
-        if shock and any([revfile, revurl, revstaging]):
+        if reads_source == 'shock' and any([revfile, revurl, revstaging]):
             raise ValueError('Cannot specify a local, web or staging reverse reads file ' +
                              'with a forward reads file in shock')
-        if revid and not shock:
+        if revid and reads_source != 'shock':
             raise ValueError('Cannot specify a reverse reads file in shock ' +
                              'with a local forward reads file')
         if revfile and not fwdfile:
-            raise ValueError('Specified local reverse file path but missing local forward file path')
+            raise ValueError(
+                'Specified local reverse file path but missing local forward file path')
         if revurl and not fwdurl:
-            raise ValueError('Specified reverse file URL but missing forward file URL')
+            raise ValueError(
+                'Specified reverse file URL but missing forward file URL')
         if revstaging and not fwdstaging:
-            raise ValueError('Specified reverse staging file but missing forward staging file')
+            raise ValueError(
+                'Specified reverse staging file but missing forward staging file')
 
         if revurl:
             revid = revurl
@@ -176,7 +177,8 @@ class ReadsUtils:
     def _propagate_reference_reads_info(self, params, dfu, source_reads_ref,
                                         interleaved, single_end):
         # Means the uploaded reads is a result of an input reads object being filtered/trimmed
-        # Make sure that no non file related parameters are set. If so throw error.
+        # Make sure that no non file related parameters are set. If so throw
+        # error.
         parameters_should_unfilled = ['insert_size_mean', 'insert_size_std_dev',
                                       'sequencing_tech', 'strain',
                                       'source', 'read_orientation_outward']
@@ -189,7 +191,7 @@ class ReadsUtils:
                               "include").format(", ".join(parameters_should_unfilled)))
         try:
             source_reads_object = dfu.get_objects({'object_refs':
-                                                  [source_reads_ref]})['data'][0]
+                                                   [source_reads_ref]})['data'][0]
         except DFUError as e:
             self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
                       'Logging stacktrace from workspace exception:' +
@@ -366,7 +368,8 @@ class ReadsUtils:
                   }
         # TODO LATER may want to do dl en masse, but that means if there's a bad file it won't be caught until everythings dl'd @IgnorePep8 # noqa
         # TODO LATER add method to DFU to get shock attribs and check filename prior to download @IgnorePep8 # noqa
-        # TODO LATER at least check handle filename & file type are ok before download
+        # TODO LATER at least check handle filename & file type are ok before
+        # download
         dfu = DataFileUtil(self.callback_url)
         ret = dfu.shock_to_file(params)
         fn = ret['node_file_name']
@@ -435,7 +438,8 @@ class ReadsUtils:
                         error_message_bindings.insert(0, source_obj_ref)
                         error_message_bindings.insert(0, source_obj_name)
                     error_message += 'Shock node {}, Shock filename {}'
-                    raise ValueError(error_message.format(*error_message_bindings))
+                    raise ValueError(error_message.format(
+                        *error_message_bindings))
                 else:
                     return ''
             r = r + l
@@ -473,7 +477,8 @@ class ReadsUtils:
                                                            rev_shock_node, rev_shock_filename])
                         error_message += 'Forward Path {}, Reverse Path {}.'
                         error_message_bindings.extend([fwdpath, revpath])
-                        raise ValueError(error_message.format(*error_message_bindings))
+                        raise ValueError(error_message.format(
+                            *error_message_bindings))
                     if not frec:  # not rrec is implied at this point
                         break
                     t.write(frec)
@@ -675,11 +680,11 @@ class ReadsUtils:
 
     def get_fq_stats(self, reads_object, file_path):
         eautils = kb_ea_utils(self.callback_url)
-        ea_stats_dict = eautils.calculate_fastq_stats({'read_library_path': file_path})
+        ea_stats_dict = eautils.calculate_fastq_stats(
+            {'read_library_path': file_path})
         for key in ea_stats_dict:
             reads_object[key] = ea_stats_dict[key]
         return reads_object
-
 
     def _get_staging_file_path(self, token_user, upload_file_name):
         """
@@ -688,8 +693,7 @@ class ReadsUtils:
         directory pattern: /data/bulk/user_name/file_name
 
         """
-        return self.STAGING_FILE_PREFIX + token_user + '/' + upload_file_name 
-
+        return self.STAGING_FILE_PREFIX + token_user + '/' + upload_file_name
 
     def _download_staging_file(self, token_user, staging_file_name):
         """
@@ -699,7 +703,8 @@ class ReadsUtils:
 
         """
 
-        staging_file_path = self._get_staging_file_path(token_user, staging_file_name)
+        staging_file_path = self._get_staging_file_path(
+            token_user, staging_file_name)
 
         self.log('Start downloading staging file: %s' % staging_file_path)
         dstdir = os.path.join(self.scratch, 'tmp')
@@ -707,10 +712,10 @@ class ReadsUtils:
             os.makedirs(dstdir)
         shutil.copy2(staging_file_path, dstdir)
         copy_file_path = os.path.join(dstdir, staging_file_path)
-        self.log('Copied staging file from %s to %s' % (staging_file_path, copy_file_path))
+        self.log('Copied staging file from %s to %s' %
+                 (staging_file_path, copy_file_path))
 
         return copy_file_path
-
 
     def _download_web_file(self, file_url, download_type, rev_file=False):
         """
@@ -737,7 +742,6 @@ class ReadsUtils:
 
         return copy_file_path
 
-
     def _download_file(self, download_type, file_url, copy_file_path):
         """
         _download_file: download execution distributor
@@ -746,12 +750,8 @@ class ReadsUtils:
         download_type: download type for web source file
         file_url: file URL
         copy_file_path: output file saving path
-        
-        """
-        valid_download_type = ['Direct Download', 'DropBox', 'FTP', 'Google Drive']
-        if download_type not in valid_download_type:
-            raise ValueError('Invalid download type: %s. Please use one of %s' % (download_type, valid_download_type))
 
+        """
         if download_type == 'Direct Download':
             self._download_direct_download_link(file_url, copy_file_path)
         elif download_type == 'DropBox':
@@ -760,8 +760,10 @@ class ReadsUtils:
             self._download_ftp_link(file_url, copy_file_path)
         elif download_type == 'Google Drive':
             self._download_google_drive_link(file_url, copy_file_path)
-            
-    def _download_direct_download_link(self, file_url, copy_file_path):    
+        else:
+            raise ValueError('Invalid download type: %s' % download_type)
+
+    def _download_direct_download_link(self, file_url, copy_file_path):
         """
         _download_direct_download_link: direct download link handler 
 
@@ -772,9 +774,11 @@ class ReadsUtils:
         """
 
         self.log('Connecting and downloading web source: %s' % file_url)
-        try: online_file = urllib2.urlopen(file_url)
+        try:
+            online_file = urllib2.urlopen(file_url)
         except urllib2.HTTPError as e:
-            raise ValueError("The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
+            raise ValueError(
+                "The server couldn\'t fulfill the request.\n(Is link publicaly accessable?)\nError code: %s" % e.code)
         except urllib2.URLError as e:
             raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
         else:
@@ -799,8 +803,10 @@ class ReadsUtils:
         else:
             force_download_link = file_url.partition('?')[0] + '?raw=1'
 
-        self.log('Generating DropBox direct download link\n from: %s\n to: %s' % (file_url, force_download_link))
-        self._download_direct_download_link(force_download_link, copy_file_path)
+        self.log('Generating DropBox direct download link\n from: %s\n to: %s' % (
+            file_url, force_download_link))
+        self._download_direct_download_link(
+            force_download_link, copy_file_path)
 
     def _download_ftp_link(self, file_url, copy_file_path):
         """
@@ -817,11 +823,6 @@ class ReadsUtils:
         copy_file_path: output file saving path
 
         """
-        print "=== WARNING ===\n=== WARNING ===\n"
-        print "FTP IS NOT A SECURIED PROTOCOL\nCREDENTIALS AND FILE CONTENTS WILL BE EXPOSED TO THE PUBLIC"
-        print "\n=== STOP THE PROCESS NOW IF YOU DO NOT WISH TO EXPOSE PRIVATE DATA ==="
-        time.sleep(60)
-
         self.log('Connecting FTP link: %s' % file_url)
         ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
         # process ftp credentials
@@ -830,27 +831,33 @@ class ReadsUtils:
             if self.ftp_user_name.lower() != 'anonymous':
                 raise ValueError("Currently we only support anonymous FTP")
             self.ftp_password = file_url.rpartition('@')[0].rpartition(':')[-1]
-            self.ftp_domain = re.search('ftp://.*:.*@(.+?)/', file_url).group(1)
-            self.ftp_file_path = file_url.partition('ftp://')[-1].partition('/')[-1].rpartition('/')[0]
-            self.ftp_file_name = re.search('ftp://.*:.*@.*/(.+$)', file_url).group(1)
+            self.ftp_domain = re.search(
+                'ftp://.*:.*@(.+?)/', file_url).group(1)
+            self.ftp_file_path = file_url.partition(
+                'ftp://')[-1].partition('/')[-1].rpartition('/')[0]
+            self.ftp_file_name = re.search(
+                'ftp://.*:.*@.*/(.+$)', file_url).group(1)
         else:
             self.log('Setting anonymous FTP user_name and password')
             self.ftp_user_name = 'anonymous'
             self.ftp_password = 'anonymous@domain.com'
             self.ftp_domain = re.search('ftp://(.+?)/', file_url).group(1)
-            self.ftp_file_path = file_url.partition('ftp://')[-1].partition('/')[-1].rpartition('/')[0]
+            self.ftp_file_path = file_url.partition(
+                'ftp://')[-1].partition('/')[-1].rpartition('/')[0]
             self.ftp_file_name = re.search('ftp://.*/(.+$)', file_url).group(1)
 
-        self._check_ftp_connection(self.ftp_user_name, self.ftp_password, 
-                                    self.ftp_domain, self.ftp_file_path, self.ftp_file_name)
-        
+        self._check_ftp_connection(self.ftp_user_name, self.ftp_password,
+                                   self.ftp_domain, self.ftp_file_path, self.ftp_file_name)
+
         ftp_connection = ftplib.FTP(self.ftp_domain)
         ftp_connection.login(self.ftp_user_name, self.ftp_password)
         ftp_connection.cwd(self.ftp_file_path)
 
-        ftp_copy_file_path = copy_file_path + '.gz' if self.ftp_file_name.endswith('.gz') else copy_file_path
+        ftp_copy_file_path = copy_file_path + \
+            '.gz' if self.ftp_file_name.endswith('.gz') else copy_file_path
         with open(ftp_copy_file_path, 'wb') as output:
-            ftp_connection.retrbinary('RETR %s' % self.ftp_file_name, output.write)
+            ftp_connection.retrbinary('RETR %s' %
+                                      self.ftp_file_name, output.write)
         self.log('Copied FTP file to: %s' % ftp_copy_file_path)
 
         if self.ftp_file_name.endswith('.gz'):
@@ -858,10 +865,9 @@ class ReadsUtils:
 
     def _unpack_gz_file(self, copy_file_path):
         with gzip.open(copy_file_path + '.gz', 'rb') as in_file:
-                with open(copy_file_path, 'w') as f:
-                    f.write(in_file.read())
+            with open(copy_file_path, 'w') as f:
+                f.write(in_file.read())
         self.log('Unzipped file: %s' % copy_file_path + '.gz')
-
 
     def _check_ftp_connection(self, user_name, password, domain, file_path, file_name):
         """
@@ -876,11 +882,13 @@ class ReadsUtils:
 
         """
 
-        try: ftp = ftplib.FTP(domain)
+        try:
+            ftp = ftplib.FTP(domain)
         except ftplib.all_errors, error:
             raise ValueError("Cannot connect: %s" % error)
         else:
-            try: ftp.login(user_name, password)
+            try:
+                ftp.login(user_name, password)
             except ftplib.all_errors, error:
                 raise ValueError("Cannot login: %s" % error)
             else:
@@ -888,7 +896,8 @@ class ReadsUtils:
                 if file_name in ftp.nlst():
                     pass
                 else:
-                    raise ValueError("File %s does NOT exist in FTP path: %s" % (file_name, domain + '/' + file_path))
+                    raise ValueError("File %s does NOT exist in FTP path: %s" % (
+                        file_name, domain + '/' + file_path))
 
     def _download_google_drive_link(self, file_url, copy_file_path):
         """
@@ -905,8 +914,10 @@ class ReadsUtils:
         file_id = file_url.partition('/d/')[-1].partition('/')[0]
         force_download_link = force_download_link_prefix + file_id
 
-        self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (file_url, force_download_link))
-        self._download_direct_download_link(force_download_link, copy_file_path)
+        self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (
+            file_url, force_download_link))
+        self._download_direct_download_link(
+            force_download_link, copy_file_path)
 
     def _process_download(self, fwd, rev, reads_source, download_type, user_id):
         """
@@ -924,11 +935,9 @@ class ReadsUtils:
         """
 
         # return values
-        fwdpath = None
-        revpath = None
         fwdname = None
         revname = None
-  
+
         if reads_source == 'shock':
             # Grab files from Shock
             fwdid = fwd
@@ -951,24 +960,31 @@ class ReadsUtils:
         elif reads_source == 'web':
             # TODO: Tian move _download_web_file to DFU
             fwdpath = self._download_web_file(fwd, download_type)
-            revpath = self._download_web_file(rev, download_type) if rev else None
+            revpath = self._download_web_file(
+                rev, download_type) if rev else None
         elif reads_source == 'staging':
             # TODO: Tian move _download_staging_file to DFU
             fwdpath = self._download_staging_file(user_id, fwd)
-            revpath = self._download_staging_file(user_id, rev) if rev else None
+            revpath = self._download_staging_file(
+                user_id, rev) if rev else None
         elif reads_source == 'local':
-            pass
+            fwdpath = fwd
+            revpath = rev
         else:
-            raise ValueError("Unexpected reads_source value. reads_source: %s" % reads_source)
+            raise ValueError(
+                "Unexpected reads_source value. reads_source: %s" % reads_source)
 
-        returnVal = {'fwdpath': fwdpath, 
+        returnVal = {'fwdpath': fwdpath,
                      'revpath': revpath,
-                     'fwdname': fwdname, 
+                     'fwdname': fwdname,
                      'revname': revname}
 
         return returnVal
 
-    def _generate_validation_error_message(self, reads_source, actualpath, fwdpath, revpath, fwdname, revname, fwdid, revid, fwdurl, revurl, fwdstaging, revstaging):
+    def _generate_validation_error_message(self, reads_source, actualpath, 
+                                            fwdpath, revpath, fwdname, revname, 
+                                            fwdid, revid, fwdurl, revurl, 
+                                            fwdstaging, revstaging):
         validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
         if reads_source == 'shock':
             if revid:
@@ -980,42 +996,48 @@ class ReadsUtils:
                     ". FWD Path : " + fwdpath +
                     ". REV Path : " + revpath + ".")
             else:
-                validation_error_message += (" Input Shock ID : " + 
-                                        fwdid + ". File Name : " + fwdname + ".")
+                validation_error_message += (" Input Shock ID : " +
+                                             fwdid + ". File Name : " + fwdname + ".")
         elif reads_source == 'web':
             if revurl:
                 validation_error_message += (" Input URLs - FWD URL : " +
-                                        fwdurl + ", REV URL : " + revurl + ".")
+                                             fwdurl + ", REV URL : " + revurl +
+                                             ". FWD Path : " + fwdpath +
+                                             ". REV Path : " + revpath + ".")
             else:
                 validation_error_message += (" Input URL : " + fwdurl + ".")
         elif reads_source == 'staging':
             if revstaging:
                 validation_error_message += (" Input Staging files - FWD Staging file : " +
-                                        fwdstaging + ", REV Staging file : " + revstaging + ".")
+                                             fwdstaging + 
+                                             ", REV Staging file : " + 
+                                             revstaging +
+                                             ". FWD Path : " + fwdpath +
+                                             ". REV Path : " + revpath + ".")
             else:
-                validation_error_message += (" Input Staging : " + fwdstaging + ".")
+                validation_error_message += (" Input Staging : " +
+                                             fwdstaging + ".")
         elif reads_source == 'local':
-             if revpath:
+            if revpath:
                 validation_error_message += (" Input Files Paths - FWD Path : " +
-                                        fwdpath + ", REV Path : " + revpath + ".")
+                                             fwdpath + ", REV Path : " + revpath + ".")
         else:
-            raise ValueError("Unexpected reads_source value. reads_source: %s" % reads_source)
+            raise ValueError(
+                "Unexpected reads_source value. reads_source: %s" % reads_source)
 
         return validation_error_message
-            
 
-    #END_CLASS_HEADER
+    # END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
     # be found
     def __init__(self, config):
-        #BEGIN_CONSTRUCTOR
+        # BEGIN_CONSTRUCTOR
         self.scratch = config['scratch']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.ws_url = config['workspace-url']
-        #END_CONSTRUCTOR
+        # END_CONSTRUCTOR
         pass
-
 
     def validateFASTQ(self, ctx, params):
         """
@@ -1037,7 +1059,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: out
-        #BEGIN validateFASTQ
+        # BEGIN validateFASTQ
         del ctx
         # TODO try and parse the validator output and return errors
         out = []
@@ -1092,7 +1114,7 @@ class ReadsUtils:
                 self.log('Validation ' +
                          ('succeeded' if validated else 'failed'))
             out.append({'validated': validated})
-        #END validateFASTQ
+        # END validateFASTQ
 
         # At some point might do deeper type checking...
         if not isinstance(out, list):
@@ -1231,7 +1253,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: returnVal
-        #BEGIN upload_reads
+        # BEGIN upload_reads
         self.log('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdid, revid, reads_source = (
             self._proc_upload_reads_params(params))
@@ -1241,8 +1263,8 @@ class ReadsUtils:
         # If reads_source == 'local', fwdid and revid are file paths
         dfu = DataFileUtil(self.callback_url)
         fwdname, revname, fwdurl, revurl, fwdstaging, revstaging = (None,) * 6
-        ret = self._process_download(fwdid, revid, reads_source, 
-                                        params.get('download_type'), ctx['user_id'])
+        ret = self._process_download(fwdid, revid, reads_source,
+                                     params.get('download_type'), ctx['user_id'])
         if reads_source == 'shock':
             fwdpath = ret.get('fwdpath')
             revpath = ret.get('revpath')
@@ -1266,31 +1288,33 @@ class ReadsUtils:
             revid = None
         elif reads_source == 'local':
             # Local reads file source
-            fwdpath = fwdid
-            revpath = revid
+            fwdpath = ret.get('fwdpath')
+            revpath = ret.get('revpath')
             fwdid = None
             revid = None
         else:
-            raise ValueError("Unexpected reads_source value. reads_source: %s" % reads_source)
+            raise ValueError(
+                "Unexpected reads_source value. reads_source: %s" % reads_source)
 
         actualpath = fwdpath
         if revpath:
             # now interleave the files
-            actualpath = os.path.join(self.scratch, self.get_file_prefix() + '.inter.fastq')
+            actualpath = os.path.join(
+                self.scratch, self.get_file_prefix() + '.inter.fastq')
             self.interleave(None, None, fwdname, fwdid,
                             revname, revid, fwdpath, revpath, actualpath)
 
         interleaved = 1 if not single_end else 0
         file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
-                                        'interleaved': interleaved}])
+                                              'interleaved': interleaved}])
         if not file_valid[0][0]['validated']:
             validation_error_message = self._generate_validation_error_message(
-                                                                reads_source, actualpath, 
-                                                                fwdpath, revpath, 
-                                                                fwdname, revname, 
-                                                                fwdid, revid, 
-                                                                fwdurl, revurl, 
-                                                                fwdstaging, revstaging)
+                reads_source, actualpath,
+                fwdpath, revpath,
+                fwdname, revname,
+                fwdid, revid,
+                fwdurl, revurl,
+                fwdstaging, revstaging)
             raise ValueError(validation_error_message)
 
         self.log('validation complete, uploading files to shock')
@@ -1328,7 +1352,7 @@ class ReadsUtils:
 
         returnVal = {'obj_ref': str(oi[6]) + '/' + str(oi[0]) + '/' +
                      str(oi[4])}
-        #END upload_reads
+        # END upload_reads
 
         # At some point might do deeper type checking...
         if not isinstance(returnVal, dict):
@@ -1471,7 +1495,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: output
-        #BEGIN download_reads
+        # BEGIN download_reads
         ''' potential improvements:
             Add continue_on_failure mode that reports errors for each failed
                 conversion rather than failing completely.
@@ -1504,7 +1528,7 @@ class ReadsUtils:
             output[read_name] = self.process_reads(
                 read, params[self.PARAM_IN_INTERLEAVED])
         output = {'files': output}
-        #END download_reads
+        # END download_reads
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
@@ -1524,7 +1548,7 @@ class ReadsUtils:
         """
         # ctx is the context object
         # return variables are: output
-        #BEGIN export_reads
+        # BEGIN export_reads
 
         inref = params.get('input_ref')
         if not inref:
@@ -1560,7 +1584,7 @@ class ReadsUtils:
 
         output = {'shock_id': ret['shock_id']}
 
-        #END export_reads
+        # END export_reads
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
@@ -1568,13 +1592,14 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
+
     def status(self, ctx):
-        #BEGIN_STATUS
+        # BEGIN_STATUS
         del ctx
         returnVal = {'state': 'OK',
                      'message': '',
                      'version': self.VERSION,
                      'git_url': self.GIT_URL,
                      'git_commit_hash': self.GIT_COMMIT_HASH}
-        #END_STATUS
+        # END_STATUS
         return [returnVal]
