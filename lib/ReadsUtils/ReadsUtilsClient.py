@@ -61,14 +61,21 @@ class ReadsUtils(object):
         :param params: instance of type "UploadReadsParams" (Input to the
            upload_reads function. If local files are specified for upload,
            they must be uncompressed. Files will be gzipped prior to upload.
-           Note that if a reverse read file is specified, it must be a local
-           file if the forward reads file is a local file, or a shock id if
-           not. If a reverse file is specified the uploader will will
-           automatically intereave the forward and reverse files and store
-           that in shock. Additionally the statistics generated are on the
-           resulting interleaved file. Required parameters: fwd_id - the id
-           of the shock node containing the reads data file: either single
-           end reads, forward/left reads, or interleaved reads. - OR -
+           If web files are specified for upload, a download type one of
+           ['Direct Download', 'DropBox', 'FTP', 'Google Drive'] must be
+           specified too. The downloadable file must be uncompressed (except
+           for FTP, .gz file is acceptable). If staging files are specified
+           for upload, the staging file must be uncompressed and must be
+           accessible by current user. Note that if a reverse read file is
+           specified, it must be a local file if the forward reads file is a
+           local file, or a shock id if not. If a reverse web file or staging
+           file is specified, the reverse file category must match the
+           forward file category. If a reverse file is specified the uploader
+           will will automatically intereave the forward and reverse files
+           and store that in shock. Additionally the statistics generated are
+           on the resulting interleaved file. Required parameters: fwd_id -
+           the id of the shock node containing the reads data file: either
+           single end reads, forward/left reads, or interleaved reads. - OR -
            fwd_file - a local path to the reads data file: either single end
            reads, forward/left reads, or interleaved reads. - OR -
            fwd_file_url - a download link that contains reads data file:
