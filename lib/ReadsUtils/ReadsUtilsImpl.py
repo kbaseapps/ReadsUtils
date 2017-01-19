@@ -142,7 +142,7 @@ class ReadsUtils:
         parameters_should_unfilled = ['insert_size_mean', 'insert_size_std_dev',
                                       'sequencing_tech', 'strain',
                                       'source', 'read_orientation_outward']
-        if any(x in params for x in parameters_should_unfilled):
+        if any(x in params for x in parameters_should_unfilled):  # TOO SEVERE
             self.log(("'source_reads_ref' was passed, making the following list of " +
                       "parameters {} erroneous to " +
                       "include").format(",".join(parameters_should_unfilled)))
