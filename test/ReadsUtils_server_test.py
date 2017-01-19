@@ -1230,8 +1230,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'rev_id': 'whee',
              'rev_file': 'whoo'
              },
-            'Cannot specify more than one rev file source'
-            )
+            'Cannot specify more than one rev file source')
 
     def test_upload_fail_rev_staging_fwd_web(self):
         self.fail_upload_reads(
@@ -1242,8 +1241,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_file_url': 'whoa',
              'rev_staging_file_name': 'whoo'
              },
-            'Specified reverse staging file but missing forward staging file'
-            )
+            'Specified reverse staging file but missing forward staging file')
 
     def test_upload_fail_rev_web_fwd_staging(self):
         with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1.fastq') as mock_obj:
@@ -1254,8 +1252,18 @@ class ReadsUtilsTest(unittest.TestCase):
                  'fwd_staging_file_name': 'whoa',
                  'rev_file_url': 'whoo'
                  },
-                'Specified reverse file URL but missing forward file URL'
-                )
+                'Specified reverse file URL but missing forward file URL')
+
+    def test_upload_fail_rev_local_fwd_staging(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'download_type': 'Direct Download',
+             'fwd_file_url': 'whoa',
+             'rev_file': 'whoo'
+             },
+            'Specified local reverse file path but missing local forward file path')
 
     def test_upload_fail_spec_fwd_id_rev_file(self):
         self.fail_upload_reads(
@@ -1266,8 +1274,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'rev_file': 'whoo'
              },
             'Cannot specify a local, web or staging reverse reads file ' +
-            'with a forward reads file in shock'
-            )
+            'with a forward reads file in shock')
 
     def test_upload_fail_spec_fwd_file_rev_id(self):
         self.fail_upload_reads(
@@ -2775,20 +2782,37 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
-    def test_ftp_validator(self):
-        fake_ftp_domain_params = {
-            'download_type': 'FTP',
-            'fwd_file_url': 'ftp://FAKE_SERVER.ftp.dlptest.com/24_Hour/Sample1.fastq',
-            'sequencing_tech': 'Unknown',
-            'name': 'test_reads_file_name.reads',
-            'wsname': self.getWsName()
-        }
-        with self.assertRaisesRegexp(ValueError, 'Cannot connect:'):
-            self.impl.upload_reads(self.ctx, fake_ftp_domain_params)
+    def test_upload_fail_private_creds_ftp(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'download_type': 'FTP',
+             'fwd_file_url': 'ftp://FAKE_USER:FAKE_PASSWORD@ftp.dlptest.com/24_Hour/Sample1.fastq'
+             },
+            'Currently we only support anonymous FTP')
 
-        fake_ftp_domain_params['fwd_file_url'] = 'ftp://FAKE_USER:FAKE_PASSWORD@ftp.dlptest.com/24_Hour/Sample1.fastq'
-        with self.assertRaisesRegexp(ValueError, 'Currently we only support anonymous FTP'):
-            self.impl.upload_reads(self.ctx, fake_ftp_domain_params)
+    def test_upload_fail_wrong_password_ftp(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'download_type': 'FTP',
+             'fwd_file_url': 'ftp://anonymous:FAKE_PASSWORD@ftp.dlptest.com/24_Hour/Sample1.fastq'
+             },
+            'Cannot login',
+            do_startswith = True)
+
+    def test_upload_fail_invalid_ftp(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'download_type': 'FTP',
+             'fwd_file_url': 'ftp://FAKE_SERVER.ftp.dlptest.com/24_Hour/Sample1.fastq'
+             },
+            'Cannot connect:',
+            do_startswith = True)
 
     def test_upload_reads_from_web_ftp(self):
         # copy test file to scratch area

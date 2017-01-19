@@ -140,9 +140,11 @@ class ReadsUtils:
         if shock and any([revfile, revurl, revstaging]):
             raise ValueError('Cannot specify a local, web or staging reverse reads file ' +
                              'with a forward reads file in shock')
-        if not shock and revid:
+        if revid and not shock:
             raise ValueError('Cannot specify a reverse reads file in shock ' +
                              'with a local forward reads file')
+        if revfile and not fwdfile:
+            raise ValueError('Specified local reverse file path but missing local forward file path')
         if revurl and not fwdurl:
             raise ValueError('Specified reverse file URL but missing forward file URL')
         if revstaging and not fwdstaging:
@@ -807,7 +809,7 @@ class ReadsUtils:
                                     or ftp://ftp_link
                             defualt user_name: 'anonymous'
                                     password: 'anonymous@domain.com'
-                                    
+
                             Note: Currenlty we only support anonymous FTP due to securty reasons.
 
         params:
@@ -818,7 +820,7 @@ class ReadsUtils:
         print "=== WARNING ===\n=== WARNING ===\n"
         print "FTP IS NOT A SECURIED PROTOCOL\nCREDENTIALS AND FILE CONTENTS WILL BE EXPOSED TO THE PUBLIC"
         print "\n=== STOP THE PROCESS NOW IF YOU DO NOT WISH TO EXPOSE PRIVATE DATA ==="
-        time.sleep(60)
+        time.sleep(1)
 
         self.log('Connecting FTP link: %s' % file_url)
         ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
@@ -1232,7 +1234,6 @@ class ReadsUtils:
         # If reads_source == 'local', fwdid and revid are file paths
         dfu = DataFileUtil(self.callback_url)
         fwdname, revname, fwdurl, revurl, fwdstaging, revstaging = (None,) * 6
-
         ret = self._process_download(fwdid, revid, reads_source, 
                                         params.get('download_type'), ctx['user_id'])
         if reads_source == 'shock':
