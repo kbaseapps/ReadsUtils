@@ -820,7 +820,7 @@ class ReadsUtils:
         print "=== WARNING ===\n=== WARNING ===\n"
         print "FTP IS NOT A SECURIED PROTOCOL\nCREDENTIALS AND FILE CONTENTS WILL BE EXPOSED TO THE PUBLIC"
         print "\n=== STOP THE PROCESS NOW IF YOU DO NOT WISH TO EXPOSE PRIVATE DATA ==="
-        time.sleep(1)
+        time.sleep(60)
 
         self.log('Connecting FTP link: %s' % file_url)
         ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
