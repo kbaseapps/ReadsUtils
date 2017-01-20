@@ -118,7 +118,7 @@ class ReadsUtils:
         interleaved = 0
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
-        if params.get('interleaved') or params.get('rev_id'):
+        if params.get('interleaved') or revsource:
             interleaved = 1
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
