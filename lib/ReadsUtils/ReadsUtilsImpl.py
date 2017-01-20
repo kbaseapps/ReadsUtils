@@ -136,9 +136,6 @@ class ReadsUtils:
         if sum(bool(e) for e in [revid, revfile, revurl, revstaging]) > 1:
             raise ValueError('Cannot specify more than one rev file source')
 
-        if reads_source == 'shock' and any([revfile, revurl, revstaging]):
-            raise ValueError('Cannot specify a local, web or staging reverse reads file ' +
-                             'with a forward reads file in shock')
         if revid and reads_source != 'shock':
             raise ValueError('Cannot specify a reverse reads file in shock ' +
                              'with a local forward reads file')
@@ -796,9 +793,9 @@ class ReadsUtils:
             online_file = urllib2.urlopen(file_url)
         except urllib2.HTTPError as e:
             raise ValueError(
-                "The server couldn\'t fulfill the request.\nError code: %s" % e.code)
+                "The server couldn\'t fulfill the request.\nURL: %s\nError code: %s" % (file_url, e.code))
         except urllib2.URLError as e:
-            raise ValueError("Failed to reach a server\nReason: %s" % e.reason)
+            raise ValueError("Failed to reach a server\nURL: %s\nReason: %s" % (file_url, e.reason))
         else:
             with closing(online_file):
                 with open(copy_file_path, 'wb') as output:
@@ -955,33 +952,30 @@ class ReadsUtils:
         # return values
         fwdname = None
         revname = None
-        fwdpath = None
         revpath = None
 
         if reads_source == 'shock':
             # Grab files from Shock
-            fwdid = fwd
-            revid = rev
             dfu = DataFileUtil(self.callback_url)
-            fileinput = [{'shock_id': fwdid,
+            fileinput = [{'shock_id': fwd,
                           'file_path': self.scratch + '/fwd/',
                           'unpack': 'uncompress'}]
-            if revid:
-                fileinput.append({'shock_id': revid,
+            if rev:
+                fileinput.append({'shock_id': rev,
                                   'file_path': self.scratch + '/rev/',
                                   'unpack': 'uncompress'})
             self.log('downloading reads file(s) from Shock')
             files = dfu.shock_to_file_mass(fileinput)
             fwdpath = files[0]["file_path"]
             fwdname = files[0]["node_file_name"]
-            if revid:
+            if rev:
                 revpath = files[1]["file_path"]
                 revname = files[1]["node_file_name"]
         elif reads_source == 'web':
             # TODO: Tian move _download_web_file to DFU
             fwdpath = self._download_web_file(fwd, download_type)
             revpath = self._download_web_file(
-                rev, download_type) if rev else None
+                rev, download_type, rev_file=True) if rev else None
         elif reads_source == 'staging':
             # TODO: Tian move _download_staging_file to DFU
             fwdpath = self._download_staging_file(user_id, fwd)
