@@ -955,6 +955,8 @@ class ReadsUtils:
         # return values
         fwdname = None
         revname = None
+        fwdpath = None
+        revpath = None
 
         if reads_source == 'shock':
             # Grab files from Shock
