@@ -61,17 +61,30 @@ class ReadsUtils(object):
         :param params: instance of type "UploadReadsParams" (Input to the
            upload_reads function. If local files are specified for upload,
            they must be uncompressed. Files will be gzipped prior to upload.
-           Note that if a reverse read file is specified, it must be a local
-           file if the forward reads file is a local file, or a shock id if
-           not. If a reverse file is specified the uploader will will
-           automatically intereave the forward and reverse files and store
-           that in shock. Additionally the statistics generated are on the
-           resulting interleaved file. Required parameters: fwd_id - the id
-           of the shock node containing the reads data file: either single
-           end reads, forward/left reads, or interleaved reads. - OR -
+           If web files are specified for upload, a download type one of
+           ['Direct Download', 'DropBox', 'FTP', 'Google Drive'] must be
+           specified too. The downloadable file must be uncompressed (except
+           for FTP, .gz file is acceptable). If staging files are specified
+           for upload, the staging file must be uncompressed and must be
+           accessible by current user. Note that if a reverse read file is
+           specified, it must be a local file if the forward reads file is a
+           local file, or a shock id if not. If a reverse web file or staging
+           file is specified, the reverse file category must match the
+           forward file category. If a reverse file is specified the uploader
+           will will automatically intereave the forward and reverse files
+           and store that in shock. Additionally the statistics generated are
+           on the resulting interleaved file. Required parameters: fwd_id -
+           the id of the shock node containing the reads data file: either
+           single end reads, forward/left reads, or interleaved reads. - OR -
            fwd_file - a local path to the reads data file: either single end
-           reads, forward/left reads, or interleaved reads. sequencing_tech -
-           the sequencing technology used to produce the reads. (If
+           reads, forward/left reads, or interleaved reads. - OR -
+           fwd_file_url - a download link that contains reads data file:
+           either single end reads, forward/left reads, or interleaved reads.
+           download_type - download type ['Direct Download', 'FTP',
+           'DropBox', 'Google Drive'] - OR - fwd_staging_file_name - reads
+           data file name in staging area: either single end reads,
+           forward/left reads, or interleaved reads. sequencing_tech - the
+           sequencing technology used to produce the reads. (If
            source_reads_ref is specified then sequencing_tech must not be
            specified) One of: wsid - the id of the workspace where the reads
            will be saved (preferred). wsname - the name of the workspace
@@ -82,7 +95,11 @@ class ReadsUtils(object):
            non-interleaved reads. - OR - rev_file - a local path to the reads
            data file containing the reverse/right reads for paired end,
            non-interleaved reads, note the reverse file will get interleaved
-           with the forward file. single_genome - whether the reads are from
+           with the forward file. - OR - rev_file_url - a download link that
+           contains reads data file: reverse/right reads for paired end,
+           non-interleaved reads. - OR - rev_staging_file_name - reads data
+           file name in staging area: reverse/right reads for paired end,
+           non-interleaved reads. single_genome - whether the reads are from
            a single genome or a metagenome. Default is single genome. strain
            - information about the organism strain that was sequenced. source
            - information about the organism source. interleaved - specify
@@ -155,7 +172,11 @@ class ReadsUtils(object):
            "read_orientation_outward" of type "boolean" (A boolean - 0 for
            false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
            Double, parameter "insert_size_std_dev" of Double, parameter
-           "source_reads_ref" of String
+           "source_reads_ref" of String, parameter "fwd_file_url" of String,
+           parameter "rev_file_url" of String, parameter
+           "fwd_staging_file_name" of String, parameter
+           "rev_staging_file_name" of String, parameter "download_type" of
+           String
         :returns: instance of type "UploadReadsOutput" (The output of the
            upload_reads function. obj_ref - a reference to the new Workspace
            object in the form X/Y/Z, where X is the workspace ID, Y is the
