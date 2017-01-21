@@ -493,12 +493,16 @@ class ReadsUtils:
                                                            rev_shock_node, rev_shock_filename])
                         error_message += 'Forward Path {}, Reverse Path {}.'
                         error_message_bindings.extend([fwdpath, revpath])
+                        
                         if reads_source == 'web':
                             error_message += 'Forward File URL {}, Reverse File URL {}.'
+                            error_message_bindings.extend([fwdsource, revsource])
+
                         if reads_source == 'staging':
                             error_message += 'Forward Staging file name {}, '
                             error_message += 'Reverse Staging file name {}.'
-                        error_message_bindings.extend([fwdsource, revsource])
+                            error_message_bindings.extend([fwdsource, revsource])
+                        
                         raise ValueError(error_message.format(
                             *error_message_bindings))
                     if not frec:  # not rrec is implied at this point
