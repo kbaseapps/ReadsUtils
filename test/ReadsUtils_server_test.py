@@ -1470,6 +1470,24 @@ class ReadsUtilsTest(unittest.TestCase):
                 'FWD Path : /kb/module/work/tmp/Sample1_invalid.fastq. '+
                 'REV Path : /kb/module/work/tmp/Sample1_invalid.fastq.')
 
+    def test_upload_fail_bad_paired_end_reads_web(self):
+        self.fail_upload_reads(
+        {'sequencing_tech': 'tech',
+         'wsname': self.ws_info[1],
+         'fwd_file_url': 'https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
+         'rev_file_url': 'https://anl.box.com/shared/static/k0y8lkkpt1bxr04h6necwm7vewsvgm28.fastq',
+         'download_type': 'Direct Download',
+         'name': 'bar',
+         'interleaved': 0
+         },
+         'Interleave failed - reads files do not have ' +
+         'an equal number of records. ' +
+         'Forward Path /kb/module/work/tmp/tmp/tmp_fwd_fastq.fastq, '
+         'Reverse Path /kb/module/work/tmp/tmp/tmp_rev_fastq.fastq.'
+         'Forward File URL https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq, '
+         'Reverse File URL https://anl.box.com/shared/static/k0y8lkkpt1bxr04h6necwm7vewsvgm28.fastq.'
+         )
+
     def test_upload_fail_bad_fastq_file_web(self):
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',

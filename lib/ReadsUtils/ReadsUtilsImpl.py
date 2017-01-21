@@ -465,7 +465,7 @@ class ReadsUtils:
     # source_obj_ref and source_obj_name will be None if done from upload.
     def interleave(self, source_obj_ref, source_obj_name, fwd_shock_filename,
                    fwd_shock_node, rev_shock_filename, rev_shock_node,
-                   fwdpath, revpath, targetpath):
+                   fwdpath, revpath, targetpath, reads_source, fwdsource, revsource):
         self.log('Interleaving files {} and {} to {}'.format(
             fwdpath, revpath, targetpath))
         with open(targetpath, 'w') as t:
@@ -492,6 +492,12 @@ class ReadsUtils:
                                                            rev_shock_node, rev_shock_filename])
                         error_message += 'Forward Path {}, Reverse Path {}.'
                         error_message_bindings.extend([fwdpath, revpath])
+                        if reads_source == 'web':
+                            error_message += 'Forward File URL {}, Reverse File URL {}.'
+                        if reads_source == 'staging':
+                            error_message += 'Forward Staging file name {}, '
+                            error_message += 'Reverse Staging file name {}.'
+                        error_message_bindings.extend([fwdsource, revsource])
                         raise ValueError(error_message.format(
                             *error_message_bindings))
                     if not frec:  # not rrec is implied at this point
@@ -573,7 +579,7 @@ class ReadsUtils:
             intpath = os.path.join(self.scratch, self.get_file_prefix() +
                                    '.inter.fastq')
             self.interleave(source_obj_ref, source_obj_name, fwdname, fwdhandle['id'],
-                            revname, revhandle['id'], fwdpath, revpath, intpath)
+                            revname, revhandle['id'], fwdpath, revpath, intpath, None, None, None)
             ret = {'fwd': intpath,
                    'fwd_name': fwdname,
                    'rev': None,
@@ -1299,7 +1305,7 @@ class ReadsUtils:
             actualpath = os.path.join(
                 self.scratch, self.get_file_prefix() + '.inter.fastq')
             self.interleave(None, None, fwdname, fwdid,
-                            revname, revid, fwdpath, revpath, actualpath)
+                            revname, revid, fwdpath, revpath, actualpath, reads_source, fwdsource, revsource)
 
         interleaved = 1 if not single_end else 0
         file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
