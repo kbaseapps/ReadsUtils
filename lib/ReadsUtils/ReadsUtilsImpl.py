@@ -741,7 +741,6 @@ class ReadsUtils:
         return: file path of downloaded staging file
 
         """
-
         staging_file_path = self._get_staging_file_path(
             token_user, staging_file_name)
 

@@ -53,7 +53,8 @@ class ReadsUtilsTest(unittest.TestCase):
                              'method': 'please_never_use_it_in_production',
                              'method_params': []
                              }],
-                        'authenticated': 1})
+                        'authenticated': 1,
+                        'user_id': ''})
         config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
         cls.cfg = {}
         config = ConfigParser()
@@ -1265,17 +1266,14 @@ class ReadsUtilsTest(unittest.TestCase):
             'File Fake_test.fastq does NOT exist in FTP path: ftp.uconn.edu/48_hour', )
 
     def test_upload_fail_rev_web_fwd_staging(self):
-        return_value = '/kb/module/work/tmp/Sample1.fastq'
-        func_name = '_get_staging_file_path'
-        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
-            self.fail_upload_reads(
-                {'sequencing_tech': 'tech',
-                 'wsname': self.ws_info[1],
-                 'name': 'foo',
-                 'fwd_staging_file_name': 'whoa',
-                 'rev_file_url': 'whoo'
-                 },
-                'Specified reverse file URL but missing forward file URL')
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'name': 'foo',
+             'fwd_staging_file_name': 'whoa',
+             'rev_file_url': 'whoo'
+             },
+            'Specified reverse file URL but missing forward file URL')
 
     def test_upload_fail_rev_local_fwd_staging(self):
         self.fail_upload_reads(
@@ -1451,9 +1449,9 @@ class ReadsUtilsTest(unittest.TestCase):
             'Invalid FASTQ file - Path: /kb/module/test/data/Sample1_invalid.fastq.')
 
     def test_upload_fail_bad_fastq_file_staging(self):
-        return_value = '/kb/module/work/tmp/Sample1_invalid.fastq'
-        func_name = '_get_staging_file_path'
-        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
+        return_value = '/kb/module/work/tmp'
+        func_name = 'STAGING_FILE_PREFIX'
+        with patch.object(ReadsUtils, func_name, new=return_value) as mock_obj:
             fq_filename = "Sample1_invalid.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
             shutil.copy(os.path.join("data", fq_filename), fq_path)
@@ -1466,7 +1464,7 @@ class ReadsUtilsTest(unittest.TestCase):
                 'Invalid FASTQ file - Path: /kb/module/work/tmp/Sample1_invalid.fastq. ' +
                 'Input Staging : Sample1_invalid.fastq.')
 
-    def test_upload_fail_bad_paired_fastq_file_staging(self):
+    def test_upload_fail_invalid_paired_fastq_file_staging(self):
         return_value = '/kb/module/work/tmp/Sample1_invalid.fastq'
         func_name = '_get_staging_file_path'
         with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
@@ -1637,6 +1635,27 @@ class ReadsUtilsTest(unittest.TestCase):
                                'an equal number of records. Forward Path ' +
                                '/kb/module/work/tmp/small.forward.fq, ' +
                                'Reverse Path /kb/module/work/tmp/Sample5_noninterleaved.1.fastq.')
+    
+    @patch.object(ReadsUtils, "STAGING_FILE_PREFIX", new='/kb/module/work/tmp')
+    def test_bad_paired_end_staging_reads_file(self):
+        fwdtf = 'small.forward.fq'
+        revtf = 'Sample5_noninterleaved.1.fastq'
+        fwdtarget = os.path.join(self.scratch, fwdtf)
+        revtarget = os.path.join(self.scratch, revtf)
+        shutil.copy('data/' + fwdtf, fwdtarget)
+        shutil.copy('data/' + revtf, revtarget)
+        self.fail_upload_reads({'fwd_staging_file_name': fwdtf,
+                                'rev_staging_file_name': revtf,
+                                'sequencing_tech': 'seqtech-pr1',
+                                'wsname': self.ws_info[1],
+                                'name': 'pairedreads1',
+                                'interleaved': 0},
+                               'Interleave failed - reads files do not have ' +
+                               'an equal number of records. Forward Path ' +
+                               '/kb/module/work/tmp/small.forward.fq, ' +
+                               'Reverse Path /kb/module/work/tmp/Sample5_noninterleaved.1.fastq.' +
+                               'Forward Staging file name small.forward.fq, '+
+                               'Reverse Staging file name Sample5_noninterleaved.1.fastq.')
 
     def test_missing_line_paired_end_reads_file(self):
         fwdtf = 'Sample5_noninterleaved.1.missing_line.fastq'
@@ -2784,6 +2803,50 @@ class ReadsUtilsTest(unittest.TestCase):
             node = d['lib']['file']['id']
             self.delete_shock_node(node)
 
+    @patch.object(ReadsUtils, "STAGING_FILE_PREFIX", new='/kb/module/work/tmp')
+    def test_upload_reads_from_staging_area_paired_ends(self):
+        fq_filename = "small.forward.fq"
+        fq_path = os.path.join(self.cfg['scratch'], fq_filename)
+        shutil.copy(os.path.join("data", fq_filename), fq_path)
+
+        fq_filename = "small.reverse.fq"
+        fq_path = os.path.join(self.cfg['scratch'], fq_filename)
+        shutil.copy(os.path.join("data", fq_filename), fq_path)
+
+        params = {
+            'fwd_staging_file_name': 'small.forward.fq',
+            'rev_staging_file_name': 'small.reverse.fq',
+            'sequencing_tech': 'Unknown',
+            'name': 'test_reads_file_name.reads',
+            'wsname': self.getWsName(),
+            'interleaved': 0
+        }
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+            'KBaseFile.PairedEndLibrary'), True)
+
+        d = obj['data']
+        file_name = d["lib1"]["file"]["file_name"]
+        self.assertTrue(file_name.endswith(".inter.fastq.gz"))
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.assertEqual(d['interleaved'], 1)
+        self.assertEqual(d['read_orientation_outward'], 0)
+        self.assertEqual(d['insert_size_mean'], None)
+        self.assertEqual(d['insert_size_std_dev'], None)
+        self.check_lib(d['lib1'], 2491520, file_name,
+                       '1c58d7d59c656db39cedcb431376514b')
+        node = d['lib1']['file']['id']
+        self.delete_shock_node(node)
+
     def test_upload_reads_from_web_direct_download(self):
         url = 'https://anl.box.com/shared/static/'
         url += 'qwadp20dxtwnhc8r3sjphen6h0k1hdyo.fastq'
@@ -2843,7 +2906,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 1341276, file_name,
+        self.check_lib(d['lib1'], 2491520, file_name,
                        '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
@@ -2931,7 +2994,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 1341276, file_name,
+        self.check_lib(d['lib1'], 2491520, file_name,
                        '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
