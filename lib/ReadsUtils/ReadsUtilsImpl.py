@@ -463,6 +463,7 @@ class ReadsUtils:
     # this assumes that the FASTQ files are properly formatted and matched,
     # which they should be if they're in KBase.
     # source_obj_ref and source_obj_name will be None if done from upload.
+    # reads_source, fwdsource, revsource will be None if done from process_paired.
     def interleave(self, source_obj_ref, source_obj_name, fwd_shock_filename,
                    fwd_shock_node, rev_shock_filename, rev_shock_node,
                    fwdpath, revpath, targetpath, reads_source, fwdsource, revsource):
@@ -799,7 +800,7 @@ class ReadsUtils:
             online_file = urllib2.urlopen(file_url)
         except urllib2.HTTPError as e:
             raise ValueError(
-                "The server couldn\'t fulfill the request.\nURL: %s\nError code: %s" % (file_url, e.code))
+                "The server couldn\'t fulfill request.\nURL: %s\nError code: %s" % (file_url, e.code))
         except urllib2.URLError as e:
             raise ValueError("Failed to reach a server\nURL: %s\nReason: %s" % (file_url, e.reason))
         else:
@@ -1305,7 +1306,8 @@ class ReadsUtils:
             actualpath = os.path.join(
                 self.scratch, self.get_file_prefix() + '.inter.fastq')
             self.interleave(None, None, fwdname, fwdid,
-                            revname, revid, fwdpath, revpath, actualpath, reads_source, fwdsource, revsource)
+                            revname, revid, fwdpath, revpath, actualpath, 
+                            reads_source, fwdsource, revsource)
 
         interleaved = 1 if not single_end else 0
         file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
