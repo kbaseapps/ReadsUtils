@@ -138,7 +138,8 @@ class ReadsUtils:
 
         if revid and reads_source != 'shock':
             raise ValueError(
-                'Specified reverse reads file in shock path but missing forward reads file in shock')
+                'Specified reverse reads file in shock path but missing ' +
+                'forward reads file in shock')
         if revfile and reads_source != 'local':
             raise ValueError(
                 'Specified local reverse file path but missing local forward file path')
@@ -816,9 +817,9 @@ class ReadsUtils:
             online_file = urllib2.urlopen(file_url)
         except urllib2.HTTPError as e:
             raise ValueError(
-                "The server couldn\'t fulfill request.\nURL: %s\nError code: %s" % (file_url, e.code))
+                "The server error\nURL: %s\nError code: %s" % (file_url, e.code))
         except urllib2.URLError as e:
-            raise ValueError("Failed to reach a server\nURL: %s\nReason: %s" % (file_url, e.reason))
+            raise ValueError("Failed to reach URL: %s\nReason: %s" % (file_url, e.reason))
         else:
             with closing(online_file):
                 with open(copy_file_path, 'wb') as output:

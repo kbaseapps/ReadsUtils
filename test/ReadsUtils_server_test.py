@@ -14,7 +14,8 @@ import ftplib
 from mock import patch
 
 import requests
-from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport
+# @UnresolvedImport
+from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
 from DataFileUtil.baseclient import ServerError as DFUError
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
@@ -163,13 +164,13 @@ class ReadsUtilsTest(unittest.TestCase):
         fwd_id, fwd_handle_id, fwd_md5, fwd_size = \
             cls.upload_file_to_shock_and_get_handle(fwd_reads['file'])
         fwd_handle = {
-                      'hid': fwd_handle_id,
-                      'file_name': fwd_reads['name'],
-                      'id': fwd_id,
-                      'url': cls.shockURL,
-                      'type': 'shock',
-                      'remote_md5': fwd_md5
-                      }
+            'hid': fwd_handle_id,
+            'file_name': fwd_reads['name'],
+            'id': fwd_id,
+            'url': cls.shockURL,
+            'type': 'shock',
+            'remote_md5': fwd_md5
+        }
 
         ob = dict(object_body)  # copy
         if kbase_assy:
@@ -200,13 +201,13 @@ class ReadsUtilsTest(unittest.TestCase):
             rev_id, rev_handle_id, rev_md5, rev_size = \
                 cls.upload_file_to_shock_and_get_handle(rev_reads['file'])
             rev_handle = {
-                          'hid': rev_handle_id,
-                          'file_name': rev_reads['name'],
-                          'id': rev_id,
-                          'url': cls.shockURL,
-                          'type': 'shock',
-                          'remote_md5': rev_md5
-                          }
+                'hid': rev_handle_id,
+                'file_name': rev_reads['name'],
+                'id': rev_id,
+                'url': cls.shockURL,
+                'type': 'shock',
+                'remote_md5': rev_md5
+            }
             if kbase_assy:
                 ob['handle_2'] = rev_handle
             else:
@@ -263,7 +264,7 @@ class ReadsUtilsTest(unittest.TestCase):
                          'data': obj,
                          'name': objname
                          }]
-            })[0]
+        })[0]
 
     @classmethod
     def gzip(cls, *files):
@@ -552,7 +553,7 @@ class ReadsUtilsTest(unittest.TestCase):
          'single_genome': None
          })
 
-    # FASTA/Q tests ########################################################
+    #FASTA/Q tests ########################################################
 
     def check_FASTA(self, filename, result):
         self.assertEqual(
@@ -610,9 +611,9 @@ class ReadsUtilsTest(unittest.TestCase):
         shutil.copyfile(f2, nfn2)
         self.assertEqual(self.impl.validateFASTQ(
             self.ctx, [{'file_path': nfn1,
-                       'interleaved': 0},
+                        'interleaved': 0},
                        {'file_path': nfn2,
-                       'interleaved': 1}
+                        'interleaved': 1}
                        ])[0], [{'validated': 1}, {'validated': 1}])
 
     def check_fq(self, filepath, interleaved, ok):
@@ -621,7 +622,7 @@ class ReadsUtilsTest(unittest.TestCase):
         shutil.copyfile(filepath, newfn)
         self.assertEqual(self.impl.validateFASTQ(
             self.ctx, [{'file_path': newfn,
-                       'interleaved': interleaved}])[0][0]['validated'], ok)
+                        'interleaved': interleaved}])[0][0]['validated'], ok)
         for l in open(newfn):
             self.assertNotEqual(l, '')
 
@@ -648,13 +649,14 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(ret['id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'seqtech')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
@@ -671,13 +673,14 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/filereads1']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'seqtech')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
@@ -693,7 +696,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/singlereads2']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'seqtech2')
         self.assertEqual(d['single_genome'], 0)
@@ -715,7 +718,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(ret['id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'seqtech2-1')
         self.assertEqual(d['single_genome'], 1)
@@ -751,7 +754,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(ret['id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'seqtech3')
         self.assertEqual(d['single_genome'], 1)
@@ -773,7 +776,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["gc_content"], 0.44)
         self.assertEqual(d["read_length_mean"], 50)
         self.assertEqual(d["read_length_stdev"], 0)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
@@ -794,7 +798,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(ret2['id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.PairedEndLibrary'), True)
+            'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
         self.assertTrue(file_name.endswith(".inter.fastq.gz"))
@@ -806,7 +810,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 2491520, file_name, '1c58d7d59c656db39cedcb431376514b')
+        self.check_lib(d['lib1'], 2491520, file_name,
+                       '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
@@ -831,7 +836,7 @@ class ReadsUtilsTest(unittest.TestCase):
         )['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.PairedEndLibrary'), True)
+            'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
         self.assertTrue(file_name.endswith(".inter.fastq.gz"),
@@ -862,7 +867,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["gc_content"], 0.679273)
         self.assertEqual(d["read_length_mean"], 100)
         self.assertEqual(d["read_length_stdev"], 0)
-        self.check_lib(d['lib1'], 2491520, file_name, '1c58d7d59c656db39cedcb431376514b')
+        self.check_lib(d['lib1'], 2491520, file_name,
+                       '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
@@ -881,11 +887,11 @@ class ReadsUtilsTest(unittest.TestCase):
                        })
         obj = self.ws.get_objects2(
             {'objects': [{'ref': self.ws_info[1] + '/pairedreads2'}]}
-            )['data'][0]
+        )['data'][0]
         self.delete_shock_node(ret['id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.PairedEndLibrary'), True)
+            'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'seqtech-pr2')
         self.assertEqual(d['single_genome'], 1)
@@ -933,7 +939,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/fileReadsSingleSource']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'illumina')
         self.assertEqual(d['single_genome'], 0)
@@ -946,9 +952,10 @@ class ReadsUtilsTest(unittest.TestCase):
                        'name': 'fileReadsSingleResult'})
         resultsObj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/fileReadsSingleResult']})['data'][0]
-        self.assertEqual(resultsRef[0]['obj_ref'], self.make_ref(resultsObj['info']))
+        self.assertEqual(resultsRef[0]['obj_ref'],
+                         self.make_ref(resultsObj['info']))
         self.assertEqual(resultsObj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         resultsD = resultsObj['data']
         self.assertEqual(resultsD['sequencing_tech'], 'illumina')
         self.assertEqual(resultsD['single_genome'], 0)
@@ -972,7 +979,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/fileReadsSingleSource2']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'illumina')
         self.assertEqual(d['single_genome'], 0)
@@ -1015,7 +1022,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/pairedreadssource']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.PairedEndLibrary'), True)
+            'KBaseFile.PairedEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'illumina')
         self.assertEqual(d['single_genome'], 0)
@@ -1029,9 +1036,10 @@ class ReadsUtilsTest(unittest.TestCase):
                        'name': 'pairedreadsResult'})
         resultsObj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreadsResult']})['data'][0]
-        self.assertEqual(resultsRef[0]['obj_ref'], self.make_ref(resultsObj['info']))
+        self.assertEqual(resultsRef[0]['obj_ref'],
+                         self.make_ref(resultsObj['info']))
         self.assertEqual(resultsObj['info'][2].startswith(
-                        'KBaseFile.PairedEndLibrary'), True)
+            'KBaseFile.PairedEndLibrary'), True)
         resultsD = resultsObj['data']
         self.assertEqual(resultsD['sequencing_tech'], 'illumina')
         self.assertEqual(resultsD['single_genome'], 0)
@@ -1040,7 +1048,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(resultsD['read_orientation_outward'], 1)
         self.assertEqual(resultsD['interleaved'], 1)
         resultsNode = resultsD['lib1']['file']['id']
-        # Now check single end uploaded from paired end source (singletons case)
+        # Now check single end uploaded from paired end source (singletons
+        # case)
         singleResultsRef = self.impl.upload_reads(
             self.ctx, {'fwd_file': fwdtarget,
                        'wsname': self.ws_info[1],
@@ -1048,16 +1057,18 @@ class ReadsUtilsTest(unittest.TestCase):
                        'name': 'paired2SingleResult'})
         singleResultsObj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/paired2SingleResult']})['data'][0]
-        self.assertEqual(singleResultsRef[0]['obj_ref'], self.make_ref(singleResultsObj['info']))
+        self.assertEqual(singleResultsRef[0][
+                         'obj_ref'], self.make_ref(singleResultsObj['info']))
         self.assertEqual(singleResultsObj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         singleResultsD = singleResultsObj['data']
         self.assertEqual(singleResultsD['sequencing_tech'], 'illumina')
         self.assertEqual(singleResultsD['single_genome'], 0)
         # CHECK THEY DO NOT EXIST. NOT APPROPRIATE FOR SINGLE END
         self.assertEqual('insert_size_mean' not in singleResultsD, True)
         self.assertEqual('insert_size_std_dev' not in singleResultsD, True)
-        self.assertEqual('read_orientation_outward' not in singleResultsD, True)
+        self.assertEqual(
+            'read_orientation_outward' not in singleResultsD, True)
         singleResultsNode = singleResultsD['lib']['file']['id']
         self.delete_shock_node(node)
         self.delete_shock_node(resultsNode)
@@ -1107,7 +1118,7 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/fileReadsSingleSource']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         node = d['lib']['file']['id']
         # Now upload fail a paired end upload with a single end source
@@ -1132,7 +1143,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'foo'
              },
             "No object with id 99999999 exists in workspace {} (name {})".format(
-             self.ws_info[0], self.ws_info[1]),
+                self.ws_info[0], self.ws_info[1]),
             exception=DFUError)
 
     def check_lib(self, lib, size, filename, md5):
@@ -1176,9 +1187,9 @@ class ReadsUtilsTest(unittest.TestCase):
         result = p.match(str(context.exception.message))
         self.assertIsNotNone(result,
                              "Error message {} does not match the regex of {}".format(
-                                str(context.exception.message),
-                                regex_test
-                                ))
+                                 str(context.exception.message),
+                                 regex_test
+                             ))
 
     def test_upload_fail_no_reads(self):
         self.fail_upload_reads(
@@ -1246,15 +1257,17 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_nonexist_ftp_file(self):
         self.fail_upload_reads(
             {'download_type': 'FTP',
-            'fwd_file_url': 'ftp://anonymous:anonymous@domain.com@ftp.uconn.edu/48_hour/Fake_test.fastq',
-            'sequencing_tech': 'Unknown',
-            'name': 'test_reads_file_name.reads',
-            'wsname': self.getWsName()
-            },
+             'fwd_file_url': 'ftp://anonymous:an@domain.com@ftp.uconn.edu/48_hour/Fake_test.fastq',
+             'sequencing_tech': 'Unknown',
+             'name': 'test_reads_file_name.reads',
+             'wsname': self.getWsName()
+             },
             'File Fake_test.fastq does NOT exist in FTP path: ftp.uconn.edu/48_hour', )
 
     def test_upload_fail_rev_web_fwd_staging(self):
-        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1.fastq') as mock_obj:
+        return_value = '/kb/module/work/tmp/Sample1.fastq'
+        func_name = '_get_staging_file_path'
+        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
             self.fail_upload_reads(
                 {'sequencing_tech': 'tech',
                  'wsname': self.ws_info[1],
@@ -1438,7 +1451,9 @@ class ReadsUtilsTest(unittest.TestCase):
             'Invalid FASTQ file - Path: /kb/module/test/data/Sample1_invalid.fastq.')
 
     def test_upload_fail_bad_fastq_file_staging(self):
-        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1_invalid.fastq') as mock_obj:
+        return_value = '/kb/module/work/tmp/Sample1_invalid.fastq'
+        func_name = '_get_staging_file_path'
+        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
             fq_filename = "Sample1_invalid.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
             shutil.copy(os.path.join("data", fq_filename), fq_path)
@@ -1452,7 +1467,9 @@ class ReadsUtilsTest(unittest.TestCase):
                 'Input Staging : Sample1_invalid.fastq.')
 
     def test_upload_fail_bad_paired_fastq_file_staging(self):
-        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1_invalid.fastq') as mock_obj:
+        return_value = '/kb/module/work/tmp/Sample1_invalid.fastq'
+        func_name = '_get_staging_file_path'
+        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
             fq_filename = "Sample1_invalid.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
             shutil.copy(os.path.join("data", fq_filename), fq_path)
@@ -1466,37 +1483,40 @@ class ReadsUtilsTest(unittest.TestCase):
                 'Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
                 'Input Staging files - FWD Staging file : Sample1_invalid.fastq, ' +
                 'REV Staging file : Sample1_invalid.fastq. ' +
-                'FWD Path : /kb/module/work/tmp/Sample1_invalid.fastq. '+
+                'FWD Path : /kb/module/work/tmp/Sample1_invalid.fastq. ' +
                 'REV Path : /kb/module/work/tmp/Sample1_invalid.fastq.')
 
     def test_upload_fail_bad_paired_end_reads_web(self):
+        url_prefix = 'https://anl.box.com/shared/static/'
         self.fail_upload_reads(
-        {'sequencing_tech': 'tech',
-         'wsname': self.ws_info[1],
-         'fwd_file_url': 'https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
-         'rev_file_url': 'https://anl.box.com/shared/static/k0y8lkkpt1bxr04h6necwm7vewsvgm28.fastq',
-         'download_type': 'Direct Download',
-         'name': 'bar',
-         'interleaved': 0
-         },
-         'Interleave failed - reads files do not have ' +
-         'an equal number of records. ' +
-         'Forward Path /kb/module/work/tmp/tmp/tmp_fwd_fastq.fastq, '
-         'Reverse Path /kb/module/work/tmp/tmp/tmp_rev_fastq.fastq.'
-         'Forward File URL https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq, '
-         'Reverse File URL https://anl.box.com/shared/static/k0y8lkkpt1bxr04h6necwm7vewsvgm28.fastq.'
-         )
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file_url': url_prefix + 'lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
+             'rev_file_url': url_prefix + 'k0y8lkkpt1bxr04h6necwm7vewsvgm28.fastq',
+             'download_type': 'Direct Download',
+             'name': 'bar',
+             'interleaved': 0
+             },
+            'Interleave failed - reads files do not have ' +
+            'an equal number of records. ' +
+            'Forward Path /kb/module/work/tmp/tmp/tmp_fwd_fastq.fastq, '
+            'Reverse Path /kb/module/work/tmp/tmp/tmp_rev_fastq.fastq.'
+            'Forward File URL https://anl.box.com/shared/static/' +
+            'lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq, ' +
+            'Reverse File URL https://anl.box.com/shared/static/' +
+            'k0y8lkkpt1bxr04h6necwm7vewsvgm28.fastq.'
+        )
 
     def test_upload_fail_bad_fastq_file_web(self):
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
-             'fwd_file_url': 'https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq?dl=0',
+             'fwd_file_url': 'https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq',
              'download_type': 'DropBox',
              'name': 'bar'
              },
             'Invalid FASTQ file - Path: /kb/module/work/tmp/tmp/tmp_fwd_fastq.fastq. ' +
-            'Input URL : https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq?dl=0.')
+            'Input URL : https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq.')
 
     def test_upload_fail_bad_paired_fastq_file_web(self):
         self.fail_upload_reads_regex(
@@ -1508,7 +1528,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'bar'
              },
             'Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
-            'Input URLs - '+
+            'Input URLs - ' +
             'FWD URL : https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq, ' +
             'REV URL : https://www.dropbox.com/s/cnq485m30e2h9sa/Sample_rev.fq. ' +
             'FWD Path : /kb/module/work/tmp/tmp/tmp_fwd_fastq.fastq. ' +
@@ -1583,7 +1603,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(ret2['id'])
 
     def test_missing_line_paired_end_reads(self):
-        ret1 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.missing_line.fastq')
+        ret1 = self.upload_file_to_shock(
+            'data/Sample5_noninterleaved.1.missing_line.fastq')
         ret2 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
         self.fail_upload_reads({'fwd_id': ret1['id'],
                                 'rev_id': ret2['id'],
@@ -1636,21 +1657,28 @@ class ReadsUtilsTest(unittest.TestCase):
                                )
 
     def test_missing_line_paired_end_reads_file_web(self):
+        fwd_file_url = 'https://www.dropbox.com/s/tgyutgfwn3qndxc/'
+        fwd_file_url += 'Sample5_noninterleaved.1.fastq?dl=0'
+        rev_file_url = 'https://www.dropbox.com/s/swex2harsj9z7c4/'
+        rev_file_url += 'Sample5_noninterleaved.1.missing_line.fastq'
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
-             'fwd_file_url': 'https://www.dropbox.com/s/tgyutgfwn3qndxc/Sample5_noninterleaved.1.fastq?dl=0',
-             'rev_file_url': 'https://www.dropbox.com/s/swex2harsj9z7c4/Sample5_noninterleaved.1.missing_line.fastq',
+             'fwd_file_url': fwd_file_url,
+             'rev_file_url': rev_file_url,
              'download_type': 'DropBox',
              'name': 'bar'
              },
             'Reading FASTQ record failed - non-blank lines are not a ' +
             'multiple of four. ' +
-            'File URL https://www.dropbox.com/s/swex2harsj9z7c4/Sample5_noninterleaved.1.missing_line.fastq, ' +
+            'File URL https://www.dropbox.com/s/swex2harsj9z7c4/'
+            + 'Sample5_noninterleaved.1.missing_line.fastq, ' +
             'Shock node None, Shock filename None')
 
     def test_upload_fail_bad_paired_fastq_file_staging(self):
-        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample5_noninterleaved.1.missing_line.fastq') as mock_obj:
+        return_value = '/kb/module/work/tmp/Sample5_noninterleaved.1.missing_line.fastq'
+        func_name = '_get_staging_file_path'
+        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
             fq_filename = "Sample5_noninterleaved.1.missing_line.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
             shutil.copy(os.path.join("data", fq_filename), fq_path)
@@ -1682,8 +1710,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic']['ref']
                      })
-                }
-             }
+            }
+            }
         )
 
     def test_multiple(self):
@@ -1700,8 +1728,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic']['ref']
                      })
-                },
-             'intbasic': {
+            },
+                'intbasic': {
                 'md5': {'fwd': self.MD5_SM_I},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1714,8 +1742,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
-                }
-             }
+            }
+            }
         )
 
     def test_single_end(self):
@@ -1733,8 +1761,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end']['ref']
                      })
-                },
-             'single_end_kbassy': {
+            },
+                'single_end_kbassy': {
                 'md5': {'fwd': self.MD5_SM_R},
                 'fileext': {'fwd': 'single'},
                 'obj': dictmerge(
@@ -1747,8 +1775,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end_kbassy']['ref']
                      })
-                },
-             'single_end_gz': {
+            },
+                'single_end_gz': {
                 'md5': {'fwd': self.MD5_SM_F},
                 'fileext': {'fwd': 'single'},
                 'obj': dictmerge(
@@ -1761,8 +1789,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end_gz']['ref']
                      })
-                },
-             'single_end_kbassy_gz': {
+            },
+                'single_end_kbassy_gz': {
                 'md5': {'fwd': self.MD5_SM_R},
                 'fileext': {'fwd': 'single'},
                 'obj': dictmerge(
@@ -1775,8 +1803,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
-                }
-             }
+            }
+            }
         )
 
     def test_paired(self):
@@ -1793,8 +1821,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic']['ref']
                      })
-                },
-             'frbasic_kbassy': {
+            },
+                'frbasic_kbassy': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
                 'obj': dictmerge(
@@ -1806,8 +1834,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic_kbassy']['ref']
                      })
-                },
-             'frbasic_gz': {
+            },
+                'frbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
                 'obj': dictmerge(
@@ -1819,8 +1847,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic_gz']['ref']
                      })
-                },
-             'frbasic_kbassy_gz': {
+            },
+                'frbasic_kbassy_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
                 'obj': dictmerge(
@@ -1832,8 +1860,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic_kbassy_gz']['ref']
                      })
-                }
-             }
+            }
+            }
         )
 
     def test_interleaved(self):
@@ -1851,8 +1879,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
-                },
-             'intbasic_kbassy': {
+            },
+                'intbasic_kbassy': {
                 'md5': {'fwd': self.MD5_SM_I},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1865,8 +1893,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
                      })
-                },
-             'intbasic_gz': {
+            },
+                'intbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_I},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1879,8 +1907,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic_gz']['ref']
                      })
-                },
-             'intbasic_kbassy_gz': {
+            },
+                'intbasic_kbassy_gz': {
                 'md5': {'fwd': self.MD5_SM_I},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1893,8 +1921,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
-                }
-             }, interleave='none'
+            }
+            }, interleave='none'
         )
 
     # test some compressed, some uncompressed
@@ -1914,8 +1942,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic']['ref']
                      })
-                },
-             'frbasic_kbassy_gz': {
+            },
+                'frbasic_kbassy_gz': {
                 'md5': {'fwd': self.MD5_FR_TO_I},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1928,8 +1956,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic_kbassy_gz']['ref']
                      })
-                },
-             'intbasic': {
+            },
+                'intbasic': {
                 'md5': {'fwd': self.MD5_SM_I},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1942,8 +1970,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
-                },
-             'intbasic_kbassy_gz': {
+            },
+                'intbasic_kbassy_gz': {
                 'md5': {'fwd': self.MD5_SM_I},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1956,8 +1984,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
-                },
-             'single_end': {
+            },
+                'single_end': {
                 'md5': {'fwd': self.MD5_SM_F},
                 'fileext': {'fwd': 'single'},
                 'obj': dictmerge(
@@ -1970,8 +1998,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end']['ref']
                      })
-                },
-             'single_end_kbassy_gz': {
+            },
+                'single_end_kbassy_gz': {
                 'md5': {'fwd': self.MD5_SM_R},
                 'fileext': {'fwd': 'single'},
                 'obj': dictmerge(
@@ -1984,8 +2012,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
-                },
-             'fr_blank_line': {
+            },
+                'fr_blank_line': {
                 'md5': {'fwd': self.MD5_FR_TO_I_BLANK},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -1998,8 +2026,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['fr_blank_line']['ref']
                      })
-                },
-             }, interleave='true'
+            },
+            }, interleave='true'
         )
 
     # test some compressed, some uncompressed
@@ -2017,8 +2045,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
-                },
-             'intbasic_kbassy_gz': {
+            },
+                'intbasic_kbassy_gz': {
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
                 'obj': dictmerge(
@@ -2030,8 +2058,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
-                },
-             'frbasic_gz': {
+            },
+                'frbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
                 'obj': dictmerge(
@@ -2043,8 +2071,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic_gz']['ref']
                      })
-                },
-             'frbasic_kbassy': {
+            },
+                'frbasic_kbassy': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
                 'obj': dictmerge(
@@ -2056,8 +2084,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic_kbassy']['ref']
                      })
-                },
-             'single_end_gz': {
+            },
+                'single_end_gz': {
                 'md5': {'fwd': self.MD5_SM_F},
                 'fileext': {'fwd': 'single'},
                 'obj': dictmerge(
@@ -2070,8 +2098,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end_gz']['ref']
                      })
-                },
-             'single_end_kbassy': {
+            },
+                'single_end_kbassy': {
                 'md5': {'fwd': self.MD5_SM_R},
                 'fileext': {'fwd': 'single'},
                 'obj': dictmerge(
@@ -2084,8 +2112,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['single_end_kbassy']['ref']
                      })
-                },
-             'int_blank_line': {
+            },
+                'int_blank_line': {
                 'md5': {'fwd': self.MD5_I_BLANK_TO_F,
                         'rev': self.MD5_I_BLANK_TO_R},
                 'fileext': {'fwd': 'fwd', 'rev': 'rev'},
@@ -2099,8 +2127,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['int_blank_line']['ref']
                      })
-                },
-             }, interleave='false'
+            },
+            }, interleave='false'
         )
 
     def test_compressed_file_extensions(self):
@@ -2118,8 +2146,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['gzip']['ref']
                      })
-                },
-             'bz': {
+            },
+                'bz': {
                 'md5': {'fwd': self.MD5_SM_F},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -2132,8 +2160,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['bz']['ref']
                      })
-                },
-             'bzip': {
+            },
+                'bzip': {
                 'md5': {'fwd': self.MD5_SM_F},
                 'fileext': {'fwd': 'inter'},
                 'obj': dictmerge(
@@ -2146,8 +2174,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                },
                      'ref': self.staged['bzip']['ref']
                      })
-                }
-             })
+            }
+            })
 
     def test_object_contents_single_end_single_genome(self):
         self.download_success(
@@ -2189,8 +2217,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                              'T': 34.5,
                                              'N': 1.0}
                         }
-                }
-             }
+            }
+            }
         )
 
     def test_object_contents_single_end_metagenome(self):
@@ -2229,8 +2257,8 @@ class ReadsUtilsTest(unittest.TestCase):
                         'qual_stdev': None,
                         'base_percentages': None
                         }
-                }
-             }
+            }
+            }
         )
 
     def test_object_contents_kbassy_roo_true(self):
@@ -2266,8 +2294,8 @@ class ReadsUtilsTest(unittest.TestCase):
                         'qual_stdev': None,
                         'base_percentages': None
                         }
-                }
-             }
+            }
+            }
         )
 
     def test_object_contents_kbassy_roo_false(self):
@@ -2303,8 +2331,8 @@ class ReadsUtilsTest(unittest.TestCase):
                         'qual_stdev': None,
                         'base_percentages': None
                         }
-                }
-             }
+            }
+            }
         )
 
     def test_object_contents_kbfile_true(self):
@@ -2343,8 +2371,8 @@ class ReadsUtilsTest(unittest.TestCase):
                         'qual_stdev': None,
                         'base_percentages': None
                         }
-                }
-             }
+            }
+            }
         )
 
     def test_object_contents_kbfile_false(self):
@@ -2383,8 +2411,8 @@ class ReadsUtilsTest(unittest.TestCase):
                         'qual_stdev': None,
                         'base_percentages': None
                         }
-                }
-             }
+            }
+            }
         )
 
     def test_no_workspace_param(self):
@@ -2723,7 +2751,9 @@ class ReadsUtilsTest(unittest.TestCase):
                 os.path.abspath(tempdir), str(os.listdir(tempdir))))
 
     def test_upload_reads_from_staging_area(self):
-        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample1.fastq') as mock_obj:
+        return_value = '/kb/module/work/tmp/Sample1.fastq'
+        func_name = '_get_staging_file_path'
+        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
             # copy test file to scratch area
             fq_filename = "Sample1.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
@@ -2743,20 +2773,23 @@ class ReadsUtilsTest(unittest.TestCase):
                 {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
             self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
             self.assertEqual(obj['info'][2].startswith(
-                            'KBaseFile.SingleEndLibrary'), True)
+                'KBaseFile.SingleEndLibrary'), True)
             d = obj['data']
             self.assertEqual(d['sequencing_tech'], 'Unknown')
             self.assertEqual(d['single_genome'], 1)
             self.assertEqual('source' not in d, True)
             self.assertEqual('strain' not in d, True)
-            self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+            self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+                           'f118ee769a5e1b40ec44629994dfc3cd')
             node = d['lib']['file']['id']
             self.delete_shock_node(node)
 
     def test_upload_reads_from_web_direct_download(self):
+        url = 'https://anl.box.com/shared/static/'
+        url += 'qwadp20dxtwnhc8r3sjphen6h0k1hdyo.fastq'
         params = {
             'download_type': 'Direct Download',
-            'fwd_file_url': 'https://anl.box.com/shared/static/qwadp20dxtwnhc8r3sjphen6h0k1hdyo.fastq',
+            'fwd_file_url': url,
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
@@ -2768,25 +2801,26 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'Unknown')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
     def test_upload_reads_from_web_direct_download_paired_ends(self):
         params = {
-            'download_type': 'Direct Download',
-            'fwd_file_url': 'https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
-            'rev_file_url': 'https://anl.box.com/shared/static/1u9fi158vquyrh9qt7l04t71eqbpvyrr.fq',
-            'sequencing_tech': 'seqtech-pr1',
-            'name': 'pairedreads1',
-            'wsname': self.getWsName(),
-            'interleaved': 0
+        'download_type': 'Direct Download',
+        'fwd_file_url': 'https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
+        'rev_file_url': 'https://anl.box.com/shared/static/1u9fi158vquyrh9qt7l04t71eqbpvyrr.fq',
+        'sequencing_tech': 'seqtech-pr1',
+        'name': 'pairedreads1',
+        'wsname': self.getWsName(),
+        'interleaved': 0
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
@@ -2796,8 +2830,8 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.PairedEndLibrary'), True)
-        
+            'KBaseFile.PairedEndLibrary'), True)
+
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
         self.assertTrue(file_name.endswith(".inter.fastq.gz"))
@@ -2809,7 +2843,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 1341276, file_name, '1c58d7d59c656db39cedcb431376514b')
+        self.check_lib(d['lib1'], 1341276, file_name,
+                       '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
@@ -2828,13 +2863,14 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'Unknown')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
@@ -2853,13 +2889,14 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'Unknown')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
@@ -2881,8 +2918,8 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.PairedEndLibrary'), True)
-        
+            'KBaseFile.PairedEndLibrary'), True)
+
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
         self.assertTrue(file_name.endswith(".inter.fastq.gz"))
@@ -2894,7 +2931,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 1341276, file_name, '1c58d7d59c656db39cedcb431376514b')
+        self.check_lib(d['lib1'], 1341276, file_name,
+                       '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
@@ -2917,7 +2955,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_file_url': 'ftp://anonymous:FAKE_PASSWORD@ftp.dlptest.com/24_Hour/Sample1.fastq'
              },
             'Cannot login',
-            do_startswith = True)
+            do_startswith=True)
 
     def test_upload_fail_invalid_ftp(self):
         self.fail_upload_reads(
@@ -2928,7 +2966,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_file_url': 'ftp://FAKE_SERVER.ftp.dlptest.com/24_Hour/Sample1.fastq'
              },
             'Cannot connect:',
-            do_startswith = True)
+            do_startswith=True)
 
     def test_upload_reads_from_web_ftp(self):
         # copy test file to scratch area
@@ -2959,13 +2997,14 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'Unknown')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
@@ -2986,7 +3025,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         params = {
             'download_type': 'FTP',
-            'fwd_file_url': 'ftp://anonymous:anonymous@domain.com@ftp.uconn.edu/48_hour/Sample1.fastq',
+            'fwd_file_url': 'ftp://anonymous:anon@domain.com@ftp.uconn.edu/48_hour/Sample1.fastq',
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
@@ -2998,13 +3037,14 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'Unknown')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
@@ -3037,20 +3077,23 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'Unknown')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
     def test_upload_reads_from_web_google_drive(self):
+        url = 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/'
+        url += 'view?usp=sharing'
         params = {
             'download_type': 'Google Drive',
-            'fwd_file_url': 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/view?usp=sharing',
+            'fwd_file_url': url,
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
@@ -3062,14 +3105,13 @@ class ReadsUtilsTest(unittest.TestCase):
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
-                        'KBaseFile.SingleEndLibrary'), True)
+            'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
         self.assertEqual(d['sequencing_tech'], 'Unknown')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz', 'f118ee769a5e1b40ec44629994dfc3cd')
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
-
-
