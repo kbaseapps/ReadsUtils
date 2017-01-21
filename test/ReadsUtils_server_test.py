@@ -1293,8 +1293,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_file': 'whee',
              'rev_id': 'whoo'
              },
-            'Cannot specify a reverse reads file in shock with a local ' +
-            'forward reads file')
+            'Specified reverse reads file in shock path but missing forward reads file in shock')
 
     def test_upload_fail_no_seqtech(self):
         self.fail_upload_reads(
@@ -1635,6 +1634,37 @@ class ReadsUtilsTest(unittest.TestCase):
                                'multiple of four.',
                                do_startswith=True
                                )
+
+    def test_missing_line_paired_end_reads_file_web(self):
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file_url': 'https://www.dropbox.com/s/tgyutgfwn3qndxc/Sample5_noninterleaved.1.fastq?dl=0',
+             'rev_file_url': 'https://www.dropbox.com/s/swex2harsj9z7c4/Sample5_noninterleaved.1.missing_line.fastq',
+             'download_type': 'DropBox',
+             'name': 'bar'
+             },
+            'Reading FASTQ record failed - non-blank lines are not a ' +
+            'multiple of four. ' +
+            'File URL https://www.dropbox.com/s/swex2harsj9z7c4/Sample5_noninterleaved.1.missing_line.fastq, ' +
+            'Shock node None, Shock filename None')
+
+    def test_upload_fail_bad_paired_fastq_file_staging(self):
+        with patch.object(ReadsUtils, '_get_staging_file_path', create=True, return_value='/kb/module/work/tmp/Sample5_noninterleaved.1.missing_line.fastq') as mock_obj:
+            fq_filename = "Sample5_noninterleaved.1.missing_line.fastq"
+            fq_path = os.path.join(self.cfg['scratch'], fq_filename)
+            shutil.copy(os.path.join("data", fq_filename), fq_path)
+            self.fail_upload_reads(
+                {'sequencing_tech': 'tech',
+                 'wsname': self.ws_info[1],
+                 'fwd_staging_file_name': 'Sample5_noninterleaved.1.missing_line.fastq',
+                 'rev_staging_file_name': 'Sample5_noninterleaved.1.missing_line.fastq',
+                 'name': 'bar'
+                 },
+                'Reading FASTQ record failed - non-blank lines are not a ' +
+                'multiple of four. ' +
+                'Staging file name Sample5_noninterleaved.1.missing_line.fastq, ' +
+                'Shock node None, Shock filename None')
 
     # Download tests ########################################################
 
@@ -2779,7 +2809,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 1341276, file_name, '04dac97530faa081c966e79af7c90883')
+        self.check_lib(d['lib1'], 1341276, file_name, '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
@@ -2864,7 +2894,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 1341276, file_name, '04dac97530faa081c966e79af7c90883')
+        self.check_lib(d['lib1'], 1341276, file_name, '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 

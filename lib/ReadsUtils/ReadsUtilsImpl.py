@@ -137,8 +137,8 @@ class ReadsUtils:
             raise ValueError('Cannot specify more than one rev file source')
 
         if revid and reads_source != 'shock':
-            raise ValueError('Cannot specify a reverse reads file in shock ' +
-                             'with a local forward reads file')
+            raise ValueError(
+                'Specified reverse reads file in shock path but missing forward reads file in shock')
         if revfile and reads_source != 'local':
             raise ValueError(
                 'Specified local reverse file path but missing local forward file path')
@@ -437,7 +437,8 @@ class ReadsUtils:
     # insane method sigs
 
     def _read_fq_record(self, source_obj_ref, source_obj_name,
-                        shock_filename, shock_node, f):
+                        shock_filename, shock_node, f,
+                        reads_source, filesource):
         r = ''
         for i in xrange(4):
             l = f.readline()
@@ -452,6 +453,15 @@ class ReadsUtils:
                         error_message += 'Workspace reads object {} ({}), '
                         error_message_bindings.insert(0, source_obj_ref)
                         error_message_bindings.insert(0, source_obj_name)
+
+                    if reads_source == 'web':
+                        error_message += 'File URL {}, '
+                        error_message_bindings.insert(0, filesource)
+
+                    if reads_source == 'staging':
+                        error_message += 'Staging file name {}, '
+                        error_message_bindings.insert(0, filesource)
+
                     error_message += 'Shock node {}, Shock filename {}'
                     raise ValueError(error_message.format(
                         *error_message_bindings))
@@ -474,10 +484,12 @@ class ReadsUtils:
                 while True:
                     frec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
-                        fwd_shock_filename, fwd_shock_node, f)
+                        fwd_shock_filename, fwd_shock_node, f, 
+                        reads_source, fwdsource)
                     rrec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
-                        rev_shock_filename, rev_shock_node, r)
+                        rev_shock_filename, rev_shock_node, r, 
+                        reads_source, revsource)
                     error_message_bindings = list()
                     if (not frec and rrec) or (frec and not rrec):
                         error_message = 'Interleave failed - reads files do not have '\
@@ -493,7 +505,7 @@ class ReadsUtils:
                                                            rev_shock_node, rev_shock_filename])
                         error_message += 'Forward Path {}, Reverse Path {}.'
                         error_message_bindings.extend([fwdpath, revpath])
-                        
+
                         if reads_source == 'web':
                             error_message += 'Forward File URL {}, Reverse File URL {}.'
                             error_message_bindings.extend([fwdsource, revsource])
