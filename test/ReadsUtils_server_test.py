@@ -1461,7 +1461,7 @@ class ReadsUtilsTest(unittest.TestCase):
                  'fwd_staging_file_name': 'Sample1_invalid.fastq',
                  'name': 'bar'
                  },
-                'Invalid FASTQ file - Path: /kb/module/work/tmp/Sample1_invalid.fastq. ' +
+                'Invalid FASTQ file - Path: /kb/module/work/tmp/tmp/Sample1_invalid.fastq. ' +
                 'Input Staging : Sample1_invalid.fastq.')
 
     def test_upload_fail_invalid_paired_fastq_file_staging(self):
@@ -1481,8 +1481,8 @@ class ReadsUtilsTest(unittest.TestCase):
                 'Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
                 'Input Staging files - FWD Staging file : Sample1_invalid.fastq, ' +
                 'REV Staging file : Sample1_invalid.fastq. ' +
-                'FWD Path : /kb/module/work/tmp/Sample1_invalid.fastq. ' +
-                'REV Path : /kb/module/work/tmp/Sample1_invalid.fastq.')
+                'FWD Path : /kb/module/work/tmp/tmp/Sample1_invalid.fastq. ' +
+                'REV Path : /kb/module/work/tmp/tmp/Sample1_invalid.fastq.')
 
     def test_upload_fail_bad_paired_end_reads_web(self):
         url_prefix = 'https://anl.box.com/shared/static/'
@@ -1652,8 +1652,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                 'interleaved': 0},
                                'Interleave failed - reads files do not have ' +
                                'an equal number of records. Forward Path ' +
-                               '/kb/module/work/tmp/small.forward.fq, ' +
-                               'Reverse Path /kb/module/work/tmp/Sample5_noninterleaved.1.fastq.' +
+                               '/kb/module/work/tmp/tmp/small.forward.fq, ' +
+                               'Reverse Path /kb/module/work/tmp/tmp/Sample5_noninterleaved.1.fastq.' +
                                'Forward Staging file name small.forward.fq, '+
                                'Reverse Staging file name Sample5_noninterleaved.1.fastq.')
 
