@@ -749,7 +749,7 @@ class ReadsUtils:
         if not os.path.exists(dstdir):
             os.makedirs(dstdir)
         shutil.copy2(staging_file_path, dstdir)
-        copy_file_path = os.path.join(dstdir, staging_file_path)
+        copy_file_path = os.path.join(dstdir, staging_file_name)
         self.log('Copied staging file from %s to %s' %
                  (staging_file_path, copy_file_path))
 
