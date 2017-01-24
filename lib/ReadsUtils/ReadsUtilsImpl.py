@@ -38,9 +38,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.1"
-    GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
-    GIT_COMMIT_HASH = "26056b45180356363b088c1ec33979dcc6be2df0"
+    VERSION = "0.3.4"
+    GIT_URL = "git@github.com:Tianhao-Gu/ReadsUtils.git"
+    GIT_COMMIT_HASH = "d96fa904641d8e5900be2bd3be62face57990887"
 
     #BEGIN_CLASS_HEADER
 
@@ -1096,6 +1096,7 @@ class ReadsUtils:
         #END_CONSTRUCTOR
         pass
 
+
     def validateFASTQ(self, ctx, params):
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
@@ -1207,14 +1208,14 @@ class ReadsUtils:
            either single end reads, forward/left reads, or interleaved reads.
            download_type - download type ['Direct Download', 'FTP',
            'DropBox', 'Google Drive'] - OR - fwd_staging_file_name - reads
-           data file name in staging area: either single end reads,
-           forward/left reads, or interleaved reads. sequencing_tech - the
-           sequencing technology used to produce the reads. (If
-           source_reads_ref is specified then sequencing_tech must not be
-           specified) One of: wsid - the id of the workspace where the reads
-           will be saved (preferred). wsname - the name of the workspace
-           where the reads will be saved. One of: objid - the id of the
-           workspace object to save over name - the name to which the
+           data file name/ subdirectory path in staging area: either single
+           end reads, forward/left reads, or interleaved reads.
+           sequencing_tech - the sequencing technology used to produce the
+           reads. (If source_reads_ref is specified then sequencing_tech must
+           not be specified) One of: wsid - the id of the workspace where the
+           reads will be saved (preferred). wsname - the name of the
+           workspace where the reads will be saved. One of: objid - the id of
+           the workspace object to save over name - the name to which the
            workspace object will be saved Optional parameters: rev_id - the
            shock node id containing the reverse/right reads for paired end,
            non-interleaved reads. - OR - rev_file - a local path to the reads
@@ -1316,7 +1317,8 @@ class ReadsUtils:
                                                     self._proc_upload_reads_params(params))
         # If reads_source == 'shock', fwdsource and revsource are shock nodes
         # If reads_source == 'web', fwdsource and revsource are urls
-        # If reads_source == 'staging', fwdsource and revsource are file name in staging area
+        # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory 
+        #                               in staging area
         # If reads_source == 'local', fwdsource and revsource are file paths
         dfu = DataFileUtil(self.callback_url)
         fwdname, revname, fwdid, revid = (None,) * 4
@@ -1628,7 +1630,6 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
-
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx

@@ -42,7 +42,7 @@ import us.kbase.kbasecommon.StrainInfo;
  *     either single end reads, forward/left reads, or interleaved reads.
  * download_type - download type ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
  * - OR - 
- * fwd_staging_file_name - reads data file name in staging area:
+ * fwd_staging_file_name - reads data file name/ subdirectory path in staging area:
  *     either single end reads, forward/left reads, or interleaved reads.
  * sequencing_tech - the sequencing technology used to produce the
  *     reads. (If source_reads_ref is specified then sequencing_tech
