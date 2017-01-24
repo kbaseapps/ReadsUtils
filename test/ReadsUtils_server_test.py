@@ -2906,12 +2906,25 @@ class ReadsUtilsTest(unittest.TestCase):
              'wsname': self.ws_info[1],
              'fwd_file_url': improper_url,
              'download_type': 'Direct Download',
-             'name': 'bar',
-             'interleaved': 0
+             'name': 'bar'
              },
              "Undownable File.\n" + 
              "Please make sure file is publicly accessible\n" +
              "File URL: " + improper_url
+        )
+
+    def test_upload_fail_improper_google_drive_url(self):
+        improper_url = 'https://anl.box.com/shared/static/'
+        improper_url += 'qwadp20dxtwnhc8r3sjphen6h0k1hdyo.fastq'
+        self.fail_upload_reads(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file_url': improper_url,
+             'download_type': 'Google Drive',
+             'name': 'bar'
+             },
+             "Unexpected Google Drive share link.\n" +
+             "URL: " + improper_url
         )
 
     def test_upload_reads_from_web_direct_download(self):
@@ -3221,6 +3234,34 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_upload_reads_from_web_google_drive(self):
         url = 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/'
         url += 'view?usp=sharing'
+        params = {
+            'download_type': 'Google Drive',
+            'fwd_file_url': url,
+            'sequencing_tech': 'Unknown',
+            'name': 'test_reads_file_name.reads',
+            'wsname': self.getWsName()
+        }
+
+        ref = self.impl.upload_reads(self.ctx, params)
+        self.assertTrue(ref[0].has_key('obj_ref'))
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+            'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2841, 'tmp_fwd_fastq.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
+
+    def test_upload_reads_from_web_google_drive_different_format(self):
+        url = 'https://drive.google.com/open?id='
+        url += '0B0exSa7ebQ0qcHdNS2NEYjJOTTg'
         params = {
             'download_type': 'Google Drive',
             'fwd_file_url': url,

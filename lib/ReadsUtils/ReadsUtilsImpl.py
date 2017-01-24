@@ -959,7 +959,13 @@ class ReadsUtils:
         """
         # translate Google Drive URL for direct download
         force_download_link_prefix = 'https://drive.google.com/uc?export=download&id='
-        file_id = file_url.partition('/d/')[-1].partition('/')[0]
+        if file_url.find('drive.google.com/file/d/') != -1:
+            file_id = file_url.partition('/d/')[-1].partition('/')[0]
+        elif file_url.find('drive.google.com/open?id=') != -1:
+            file_id = file_url..partition('id=')[-1]
+        else:
+            raise ValueError("Unexpected Google Drive share link.\n" +
+                            "URL: %s" % file_url)
         force_download_link = force_download_link_prefix + file_id
 
         self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (
