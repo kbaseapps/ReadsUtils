@@ -962,7 +962,7 @@ class ReadsUtils:
         if file_url.find('drive.google.com/file/d/') != -1:
             file_id = file_url.partition('/d/')[-1].partition('/')[0]
         elif file_url.find('drive.google.com/open?id=') != -1:
-            file_id = file_url..partition('id=')[-1]
+            file_id = file_url.partition('id=')[-1]
         else:
             raise ValueError("Unexpected Google Drive share link.\n" +
                             "URL: %s" % file_url)
