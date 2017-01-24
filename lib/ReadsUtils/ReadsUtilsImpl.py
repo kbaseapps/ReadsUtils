@@ -19,6 +19,7 @@ from contextlib import closing
 import ftplib
 import re
 import gzip
+from itertools import islice
 #END_HEADER
 
 
@@ -725,24 +726,25 @@ class ReadsUtils:
             reads_object[key] = ea_stats_dict[key]
         return reads_object
 
-    def _get_staging_file_path(self, token_user, upload_file_name):
+    def _get_staging_file_path(self, token_user, staging_file_subdir_path):
         """
         _get_staging_file_path: return staging area file path
 
         directory pattern: /data/bulk/user_name/file_name
 
         """
-        return self.STAGING_FILE_PREFIX + token_user + '/' + upload_file_name
+        return self.STAGING_FILE_PREFIX + token_user + '/' + staging_file_subdir_path
 
-    def _download_staging_file(self, token_user, staging_file_name):
+    def _download_staging_file(self, token_user, staging_file_subdir_path):
         """
         _download_staging_file: download staging file to scratch
 
         return: file path of downloaded staging file
 
         """
+        staging_file_name = staging_file_subdir_path.rpartition('/')[-1]
         staging_file_path = self._get_staging_file_path(
-            token_user, staging_file_name)
+            token_user, staging_file_subdir_path)
 
         self.log('Start downloading staging file: %s' % staging_file_path)
         dstdir = os.path.join(self.scratch, 'tmp')
@@ -823,6 +825,14 @@ class ReadsUtils:
             with closing(online_file):
                 with open(copy_file_path, 'wb') as output:
                     shutil.copyfileobj(online_file, output)
+            # check first 5 lines of file content
+            with open(copy_file_path) as copied_file:
+                for line in islice(copied_file, 5):
+                    if line.lower().find('html') != -1:
+                        raise ValueError("Undownable File.\n" + 
+                            "Please make sure file is publicly accessible\n" +
+                            "File URL: %s" % file_url)
+
             self.log('Downloaded file to %s' % copy_file_path)
 
     def _download_dropbox_link(self, file_url, copy_file_path):
@@ -963,10 +973,10 @@ class ReadsUtils:
 
         fwd: forward shock_id if reads_source is 'shock'
                forward url if reads_source is 'web'
-               forward file name in staging if reads_source is 'staging'
+               forward file subdirectory path in staging if reads_source is 'staging'
         rev: reverse shock_id if reads_source is 'shock'
                reverse url if reads_source is 'web'
-               reverse file name in staging if reads_source is 'staging'
+               reverse file subdirectory path in staging if reads_source is 'staging'
         reads_source: one of 'shock', 'web' or 'staging'
         download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
         user_id: current token user
