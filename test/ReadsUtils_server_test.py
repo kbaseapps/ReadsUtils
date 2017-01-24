@@ -561,7 +561,7 @@ class ReadsUtilsTest(unittest.TestCase):
             self.impl.validateFASTA(
                 self.ctx, {'file_path': filename})[0]['valid'], result)
 
-    # def test_FASTA_validation(self):
+    def test_FASTA_validation(self):
         self.check_FASTA('data/sample.fa', 1)
         self.check_FASTA('data/sample.fas', 1)
         self.check_FASTA('data/sample.fna', 1)
