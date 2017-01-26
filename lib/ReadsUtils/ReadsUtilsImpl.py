@@ -742,7 +742,8 @@ class ReadsUtils:
         return: file path of downloaded staging file
 
         """
-        staging_file_name = staging_file_subdir_path.rpartition('/')[-1]
+        staging_file_name = os.path.basename(staging_file_subdir_path)
+        # staging_file_subdir_path.rpartition('/')[-1]
         staging_file_path = self._get_staging_file_path(
             token_user, staging_file_subdir_path)
 
