@@ -82,14 +82,14 @@ class ReadsUtils(object):
            either single end reads, forward/left reads, or interleaved reads.
            download_type - download type ['Direct Download', 'FTP',
            'DropBox', 'Google Drive'] - OR - fwd_staging_file_name - reads
-           data file name in staging area: either single end reads,
-           forward/left reads, or interleaved reads. sequencing_tech - the
-           sequencing technology used to produce the reads. (If
-           source_reads_ref is specified then sequencing_tech must not be
-           specified) One of: wsid - the id of the workspace where the reads
-           will be saved (preferred). wsname - the name of the workspace
-           where the reads will be saved. One of: objid - the id of the
-           workspace object to save over name - the name to which the
+           data file name/ subdirectory path in staging area: either single
+           end reads, forward/left reads, or interleaved reads.
+           sequencing_tech - the sequencing technology used to produce the
+           reads. (If source_reads_ref is specified then sequencing_tech must
+           not be specified) One of: wsid - the id of the workspace where the
+           reads will be saved (preferred). wsname - the name of the
+           workspace where the reads will be saved. One of: objid - the id of
+           the workspace object to save over name - the name to which the
            workspace object will be saved Optional parameters: rev_id - the
            shock node id containing the reverse/right reads for paired end,
            non-interleaved reads. - OR - rev_file - a local path to the reads
