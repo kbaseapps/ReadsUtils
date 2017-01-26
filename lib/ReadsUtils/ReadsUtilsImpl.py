@@ -743,7 +743,6 @@ class ReadsUtils:
 
         """
         staging_file_name = os.path.basename(staging_file_subdir_path)
-        # staging_file_subdir_path.rpartition('/')[-1]
         staging_file_path = self._get_staging_file_path(
             token_user, staging_file_subdir_path)
 
@@ -826,13 +825,6 @@ class ReadsUtils:
             with closing(online_file):
                 with open(copy_file_path, 'wb') as output:
                     shutil.copyfileobj(online_file, output)
-            # check first 5 lines of file content
-            with open(copy_file_path) as copied_file:
-                for line in islice(copied_file, 5):
-                    if line.lower().find('html') != -1:
-                        raise ValueError("Undownable File.\n" + 
-                            "Please make sure file is publicly accessible\n" +
-                            "File URL: %s" % file_url)
 
             self.log('Downloaded file to %s' % copy_file_path)
 

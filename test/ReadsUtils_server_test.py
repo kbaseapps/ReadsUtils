@@ -2883,36 +2883,6 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
-    def test_upload_fail_non_publicly_accessible_web(self):
-        url_prefix = 'https://anl.box.com/shared/static/'
-        self.fail_upload_reads(
-            {'sequencing_tech': 'tech',
-             'wsname': self.ws_info[1],
-             'fwd_file_url': url_prefix + 'my9xod9ncj3dy344w5rrjxzl59bk0o6i.fq',
-             'download_type': 'Direct Download',
-             'name': 'bar',
-             'interleaved': 0
-             },
-             "Undownable File.\n" + 
-             "Please make sure file is publicly accessible\n" +
-             "File URL: " + url_prefix +
-             'my9xod9ncj3dy344w5rrjxzl59bk0o6i.fq'
-        )
-
-    def test_upload_fail_improper_url_web(self):
-        improper_url = 'https://www.google.com'
-        self.fail_upload_reads(
-            {'sequencing_tech': 'tech',
-             'wsname': self.ws_info[1],
-             'fwd_file_url': improper_url,
-             'download_type': 'Direct Download',
-             'name': 'bar'
-             },
-             "Undownable File.\n" + 
-             "Please make sure file is publicly accessible\n" +
-             "File URL: " + improper_url
-        )
-
     def test_upload_fail_improper_google_drive_url(self):
         improper_url = 'https://anl.box.com/shared/static/'
         improper_url += 'qwadp20dxtwnhc8r3sjphen6h0k1hdyo.fastq'
