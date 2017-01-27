@@ -19,6 +19,7 @@ from contextlib import closing
 import ftplib
 import re
 import gzip
+from itertools import islice
 #END_HEADER
 
 
@@ -37,9 +38,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.1"
-    GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
-    GIT_COMMIT_HASH = "26056b45180356363b088c1ec33979dcc6be2df0"
+    VERSION = "0.3.4"
+    GIT_URL = "git@github.com:Tianhao-Gu/ReadsUtils.git"
+    GIT_COMMIT_HASH = "d96fa904641d8e5900be2bd3be62face57990887"
 
     #BEGIN_CLASS_HEADER
 
@@ -724,31 +725,32 @@ class ReadsUtils:
             reads_object[key] = ea_stats_dict[key]
         return reads_object
 
-    def _get_staging_file_path(self, token_user, upload_file_name):
+    def _get_staging_file_path(self, token_user, staging_file_subdir_path):
         """
         _get_staging_file_path: return staging area file path
 
         directory pattern: /data/bulk/user_name/file_name
 
         """
-        return self.STAGING_FILE_PREFIX + token_user + '/' + upload_file_name
+        return self.STAGING_FILE_PREFIX + token_user + '/' + staging_file_subdir_path
 
-    def _download_staging_file(self, token_user, staging_file_name):
+    def _download_staging_file(self, token_user, staging_file_subdir_path):
         """
         _download_staging_file: download staging file to scratch
 
         return: file path of downloaded staging file
 
         """
+        staging_file_name = os.path.basename(staging_file_subdir_path)
         staging_file_path = self._get_staging_file_path(
-            token_user, staging_file_name)
+            token_user, staging_file_subdir_path)
 
         self.log('Start downloading staging file: %s' % staging_file_path)
         dstdir = os.path.join(self.scratch, 'tmp')
         if not os.path.exists(dstdir):
             os.makedirs(dstdir)
         shutil.copy2(staging_file_path, dstdir)
-        copy_file_path = os.path.join(dstdir, staging_file_path)
+        copy_file_path = os.path.join(dstdir, staging_file_name)
         self.log('Copied staging file from %s to %s' %
                  (staging_file_path, copy_file_path))
 
@@ -822,6 +824,7 @@ class ReadsUtils:
             with closing(online_file):
                 with open(copy_file_path, 'wb') as output:
                     shutil.copyfileobj(online_file, output)
+
             self.log('Downloaded file to %s' % copy_file_path)
 
     def _download_dropbox_link(self, file_url, copy_file_path):
@@ -948,7 +951,13 @@ class ReadsUtils:
         """
         # translate Google Drive URL for direct download
         force_download_link_prefix = 'https://drive.google.com/uc?export=download&id='
-        file_id = file_url.partition('/d/')[-1].partition('/')[0]
+        if file_url.find('drive.google.com/file/d/') != -1:
+            file_id = file_url.partition('/d/')[-1].partition('/')[0]
+        elif file_url.find('drive.google.com/open?id=') != -1:
+            file_id = file_url.partition('id=')[-1]
+        else:
+            raise ValueError("Unexpected Google Drive share link.\n" +
+                            "URL: %s" % file_url)
         force_download_link = force_download_link_prefix + file_id
 
         self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (
@@ -962,10 +971,10 @@ class ReadsUtils:
 
         fwd: forward shock_id if reads_source is 'shock'
                forward url if reads_source is 'web'
-               forward file name in staging if reads_source is 'staging'
+               forward file subdirectory path in staging if reads_source is 'staging'
         rev: reverse shock_id if reads_source is 'shock'
                reverse url if reads_source is 'web'
-               reverse file name in staging if reads_source is 'staging'
+               reverse file subdirectory path in staging if reads_source is 'staging'
         reads_source: one of 'shock', 'web' or 'staging'
         download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
         user_id: current token user
@@ -1079,6 +1088,7 @@ class ReadsUtils:
         #END_CONSTRUCTOR
         pass
 
+
     def validateFASTQ(self, ctx, params):
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
@@ -1190,14 +1200,14 @@ class ReadsUtils:
            either single end reads, forward/left reads, or interleaved reads.
            download_type - download type ['Direct Download', 'FTP',
            'DropBox', 'Google Drive'] - OR - fwd_staging_file_name - reads
-           data file name in staging area: either single end reads,
-           forward/left reads, or interleaved reads. sequencing_tech - the
-           sequencing technology used to produce the reads. (If
-           source_reads_ref is specified then sequencing_tech must not be
-           specified) One of: wsid - the id of the workspace where the reads
-           will be saved (preferred). wsname - the name of the workspace
-           where the reads will be saved. One of: objid - the id of the
-           workspace object to save over name - the name to which the
+           data file name/ subdirectory path in staging area: either single
+           end reads, forward/left reads, or interleaved reads.
+           sequencing_tech - the sequencing technology used to produce the
+           reads. (If source_reads_ref is specified then sequencing_tech must
+           not be specified) One of: wsid - the id of the workspace where the
+           reads will be saved (preferred). wsname - the name of the
+           workspace where the reads will be saved. One of: objid - the id of
+           the workspace object to save over name - the name to which the
            workspace object will be saved Optional parameters: rev_id - the
            shock node id containing the reverse/right reads for paired end,
            non-interleaved reads. - OR - rev_file - a local path to the reads
@@ -1299,7 +1309,8 @@ class ReadsUtils:
                                                     self._proc_upload_reads_params(params))
         # If reads_source == 'shock', fwdsource and revsource are shock nodes
         # If reads_source == 'web', fwdsource and revsource are urls
-        # If reads_source == 'staging', fwdsource and revsource are file name in staging area
+        # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory 
+        #                               in staging area
         # If reads_source == 'local', fwdsource and revsource are file paths
         dfu = DataFileUtil(self.callback_url)
         fwdname, revname, fwdid, revid = (None,) * 4
@@ -1611,7 +1622,6 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
-
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx
