@@ -19,7 +19,6 @@ from contextlib import closing
 import ftplib
 import re
 import gzip
-from itertools import islice
 #END_HEADER
 
 
@@ -113,22 +112,19 @@ class ReadsUtils:
             raise ValueError(
                 'Exactly one of the object ID or name must be provided')
 
-        revsource = self._process_rev_params(params.get('rev_id'), params.get('rev_file'),
-            params.get('rev_file_url'), params.get('rev_staging_file_name'), reads_source)
+        revsource = self._process_rev_params(
+            params.get('rev_id'), params.get('rev_file'), params.get('rev_file_url'),
+            params.get('rev_staging_file_name'), reads_source)
 
-        interleaved = 0
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
         if params.get('interleaved') or revsource:
-            interleaved = 1
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
 
         source_reads_ref = params.get('source_reads_ref')
         if source_reads_ref:
-            o = self._propagate_reference_reads_info(params, dfu,
-                                                     source_reads_ref,
-                                                     interleaved, single_end)
+            o = self._propagate_reference_reads_info(params, dfu, source_reads_ref, single_end)
         else:
             o = self._build_up_reads_data(params, single_end)
         return o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source
@@ -190,8 +186,7 @@ class ReadsUtils:
 
         return fwdsource, reads_source
 
-    def _propagate_reference_reads_info(self, params, dfu, source_reads_ref,
-                                        interleaved, single_end):
+    def _propagate_reference_reads_info(self, params, dfu, source_reads_ref, single_end):
         # Means the uploaded reads is a result of an input reads object being filtered/trimmed
         # Make sure that no non file related parameters are set. If so throw
         # error.
@@ -214,7 +209,7 @@ class ReadsUtils:
                       '\n{}').format(source_reads_ref, e.data))
             raise
         # Check that it is a reads object. If not throw an eror.
-        single_input, kbasefile = self.check_reads(source_reads_object)
+        single_input, _ = self.check_reads(source_reads_object)
         if not single_input and not single_end:
             is_single_end = False
         elif single_input and not single_end:
@@ -956,8 +951,7 @@ class ReadsUtils:
         elif file_url.find('drive.google.com/open?id=') != -1:
             file_id = file_url.partition('id=')[-1]
         else:
-            raise ValueError("Unexpected Google Drive share link.\n" +
-                            "URL: %s" % file_url)
+            raise ValueError('Unexpected Google Drive share link.\nURL: {}'.format(file_url))
         force_download_link = force_download_link_prefix + file_id
 
         self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (
@@ -1087,7 +1081,6 @@ class ReadsUtils:
         self.ws_url = config['workspace-url']
         #END_CONSTRUCTOR
         pass
-
 
     def validateFASTQ(self, ctx, params):
         """
@@ -1309,7 +1302,7 @@ class ReadsUtils:
                                                     self._proc_upload_reads_params(params))
         # If reads_source == 'shock', fwdsource and revsource are shock nodes
         # If reads_source == 'web', fwdsource and revsource are urls
-        # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory 
+        # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory
         #                               in staging area
         # If reads_source == 'local', fwdsource and revsource are file paths
         dfu = DataFileUtil(self.callback_url)
@@ -1622,6 +1615,7 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
+
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx

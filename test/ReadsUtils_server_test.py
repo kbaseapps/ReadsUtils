@@ -1450,7 +1450,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_upload_fail_bad_fastq_file_staging(self):
         return_value = '/kb/module/work/tmp'
         func_name = 'STAGING_FILE_PREFIX'
-        with patch.object(ReadsUtils, func_name, new=return_value) as mock_obj:
+        with patch.object(ReadsUtils, func_name, new=return_value):
             fq_filename = "Sample1_invalid.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
             shutil.copy(os.path.join("data", fq_filename), fq_path)
@@ -1466,7 +1466,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_upload_fail_invalid_paired_fastq_file_staging(self):
         return_value = '/kb/module/work/tmp/Sample1_invalid.fastq'
         func_name = '_get_staging_file_path'
-        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
+        with patch.object(ReadsUtils, func_name, return_value=return_value):
             fq_filename = "Sample1_invalid.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
             shutil.copy(os.path.join("data", fq_filename), fq_path)
@@ -1643,18 +1643,19 @@ class ReadsUtilsTest(unittest.TestCase):
         revtarget = os.path.join(self.scratch, revtf)
         shutil.copy('data/' + fwdtf, fwdtarget)
         shutil.copy('data/' + revtf, revtarget)
-        self.fail_upload_reads({'fwd_staging_file_name': fwdtf,
-                                'rev_staging_file_name': revtf,
-                                'sequencing_tech': 'seqtech-pr1',
-                                'wsname': self.ws_info[1],
-                                'name': 'pairedreads1',
-                                'interleaved': 0},
-                               'Interleave failed - reads files do not have ' +
-                               'an equal number of records. Forward Path ' +
-                               '/kb/module/work/tmp/tmp/small.forward.fq, ' +
-                               'Reverse Path /kb/module/work/tmp/tmp/Sample5_noninterleaved.1.fastq.' +
-                               'Forward Staging file name small.forward.fq, ' +
-                               'Reverse Staging file name Sample5_noninterleaved.1.fastq.')
+        self.fail_upload_reads(
+            {'fwd_staging_file_name': fwdtf,
+             'rev_staging_file_name': revtf,
+             'sequencing_tech': 'seqtech-pr1',
+             'wsname': self.ws_info[1],
+             'name': 'pairedreads1',
+             'interleaved': 0},
+            'Interleave failed - reads files do not have ' +
+            'an equal number of records. Forward Path ' +
+            '/kb/module/work/tmp/tmp/small.forward.fq, ' +
+            'Reverse Path /kb/module/work/tmp/tmp/Sample5_noninterleaved.1.fastq.' +
+            'Forward Staging file name small.forward.fq, ' +
+            'Reverse Staging file name Sample5_noninterleaved.1.fastq.')
 
     def test_missing_line_paired_end_reads_file(self):
         fwdtf = 'Sample5_noninterleaved.1.missing_line.fastq'
@@ -1696,7 +1697,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_upload_fail_bad_paired_fastq_file_staging(self):
         return_value = '/kb/module/work/tmp/Sample5_noninterleaved.1.missing_line.fastq'
         func_name = '_get_staging_file_path'
-        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
+        with patch.object(ReadsUtils, func_name, return_value=return_value):
             fq_filename = "Sample5_noninterleaved.1.missing_line.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
             shutil.copy(os.path.join("data", fq_filename), fq_path)
@@ -2771,7 +2772,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_upload_reads_from_staging_area(self):
         return_value = '/kb/module/work/tmp/Sample1.fastq'
         func_name = '_get_staging_file_path'
-        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
+        with patch.object(ReadsUtils, func_name, return_value=return_value):
             # copy test file to scratch area
             fq_filename = "Sample1.fastq"
             fq_path = os.path.join(self.cfg['scratch'], fq_filename)
@@ -2785,7 +2786,7 @@ class ReadsUtilsTest(unittest.TestCase):
             }
 
             ref = self.impl.upload_reads(self.ctx, params)
-            self.assertTrue(ref[0].has_key('obj_ref'))
+            self.assertTrue('obj_ref' in ref[0])
 
             obj = self.dfu.get_objects(
                 {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
@@ -2805,7 +2806,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_upload_reads_from_staging_area_subdirectory(self):
         return_value = '/kb/module/work/tmp/subdirectory/Sample1.fastq'
         func_name = '_get_staging_file_path'
-        with patch.object(ReadsUtils, func_name, return_value=return_value) as mock_obj:
+        with patch.object(ReadsUtils, func_name, return_value=return_value):
             # copy test file to scratch_area/subdirectory
             fq_filename = "Sample1.fastq"
             if not os.path.exists(self.cfg['scratch'] + '/subdirectory'):
@@ -2821,7 +2822,7 @@ class ReadsUtilsTest(unittest.TestCase):
             }
 
             ref = self.impl.upload_reads(self.ctx, params)
-            self.assertTrue(ref[0].has_key('obj_ref'))
+            self.assertTrue('obj_ref' in ref[0])
 
             obj = self.dfu.get_objects(
                 {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
@@ -2858,7 +2859,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
 
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
@@ -2892,8 +2893,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'download_type': 'Google Drive',
              'name': 'bar'
              },
-             "Unexpected Google Drive share link.\n" +
-             "URL: " + improper_url
+            'Unexpected Google Drive share link.\nURL: ' + improper_url
         )
 
     def test_upload_reads_from_web_direct_download(self):
@@ -2908,7 +2908,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
@@ -2926,17 +2926,19 @@ class ReadsUtilsTest(unittest.TestCase):
 
     def test_upload_reads_from_web_direct_download_paired_ends(self):
         params = {
-        'download_type': 'Direct Download',
-        'fwd_file_url': 'https://anl.box.com/shared/static/lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
-        'rev_file_url': 'https://anl.box.com/shared/static/1u9fi158vquyrh9qt7l04t71eqbpvyrr.fq',
-        'sequencing_tech': 'seqtech-pr1',
-        'name': 'pairedreads1',
-        'wsname': self.getWsName(),
-        'interleaved': 0
+            'download_type': 'Direct Download',
+            'fwd_file_url': 'https://anl.box.com/shared/static/' +
+                            'lph9l0ye6yqetnbk04cx33mqgrj4b85j.fq',
+            'rev_file_url': 'https://anl.box.com/shared/static/' +
+                            '1u9fi158vquyrh9qt7l04t71eqbpvyrr.fq',
+            'sequencing_tech': 'seqtech-pr1',
+            'name': 'pairedreads1',
+            'wsname': self.getWsName(),
+            'interleaved': 0
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
 
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
@@ -2970,7 +2972,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
@@ -2996,7 +2998,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
@@ -3024,7 +3026,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
 
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
@@ -3104,7 +3106,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
@@ -3144,7 +3146,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
@@ -3184,7 +3186,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
@@ -3212,7 +3214,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
@@ -3240,7 +3242,7 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue(ref[0].has_key('obj_ref'))
+        self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
