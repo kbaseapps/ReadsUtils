@@ -91,7 +91,7 @@ class ReadsUtils:
     def _proc_upload_reads_params(self, params):
 
         fwdsource, reads_source = (self._process_fwd_params(
-            params.get('fwd_id'), params.get('fwd_file'), params.get('fwd_file_url'), 
+            params.get('fwd_id'), params.get('fwd_file'), params.get('fwd_file_url'),
             params.get('fwd_staging_file_name'), params.get('download_type')))
 
         wsid = params.get('wsid')
@@ -113,7 +113,7 @@ class ReadsUtils:
             raise ValueError(
                 'Exactly one of the object ID or name must be provided')
 
-        revsource = self._process_rev_params(params.get('rev_id'), params.get('rev_file'), 
+        revsource = self._process_rev_params(params.get('rev_id'), params.get('rev_file'),
             params.get('rev_file_url'), params.get('rev_staging_file_name'), reads_source)
 
         interleaved = 0
@@ -165,7 +165,6 @@ class ReadsUtils:
             revsource = revid
 
         return revsource
-
 
     def _process_fwd_params(self, fwdid, fwdfile, fwdurl, fwdstaging, download_type):
 
@@ -486,11 +485,11 @@ class ReadsUtils:
                 while True:
                     frec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
-                        fwd_shock_filename, fwd_shock_node, f, 
+                        fwd_shock_filename, fwd_shock_node, f,
                         reads_source, fwdsource)
                     rrec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
-                        rev_shock_filename, rev_shock_node, r, 
+                        rev_shock_filename, rev_shock_node, r,
                         reads_source, revsource)
                     error_message_bindings = list()
                     if (not frec and rrec) or (frec and not rrec):
@@ -516,7 +515,7 @@ class ReadsUtils:
                             error_message += 'Forward Staging file name {}, '
                             error_message += 'Reverse Staging file name {}.'
                             error_message_bindings.extend([fwdsource, revsource])
-                        
+
                         raise ValueError(error_message.format(
                             *error_message_bindings))
                     if not frec:  # not rrec is implied at this point
@@ -805,7 +804,7 @@ class ReadsUtils:
 
     def _download_direct_download_link(self, file_url, copy_file_path):
         """
-        _download_direct_download_link: direct download link handler 
+        _download_direct_download_link: direct download link handler
 
         params:
         file_url: direct download URL
@@ -831,7 +830,7 @@ class ReadsUtils:
     def _download_dropbox_link(self, file_url, copy_file_path):
         """
         _download_dropbox_link: dropbox download link handler
-                                file needs to be shared publicly 
+                                file needs to be shared publicly
 
         params:
         file_url: dropbox download link
@@ -852,7 +851,7 @@ class ReadsUtils:
     def _download_ftp_link(self, file_url, copy_file_path):
         """
         _download_ftp_link: FTP download link handler
-                            URL fomat: ftp://anonymous:email@ftp_link 
+                            URL fomat: ftp://anonymous:email@ftp_link
                                     or ftp://ftp_link
                             defualt user_name: 'anonymous'
                                     password: 'anonymous@domain.com'
@@ -919,7 +918,7 @@ class ReadsUtils:
         password: FTP user password
         domain: FTP domain
         file_path: target file directory
-        file_name: target file name 
+        file_name: target file name
 
         """
 
@@ -943,7 +942,7 @@ class ReadsUtils:
     def _download_google_drive_link(self, file_url, copy_file_path):
         """
         _download_google_drive_link: Google Drive download link handler
-                                     file needs to be shared publicly 
+                                     file needs to be shared publicly
 
         params:
         file_url: Google Drive download link
@@ -1333,7 +1332,7 @@ class ReadsUtils:
             actualpath = os.path.join(
                 self.scratch, self.get_file_prefix() + '.inter.fastq')
             self.interleave(None, None, fwdname, fwdid,
-                            revname, revid, fwdpath, revpath, actualpath, 
+                            revname, revid, fwdpath, revpath, actualpath,
                             reads_source, fwdsource, revsource)
 
         interleaved = 1 if not single_end else 0

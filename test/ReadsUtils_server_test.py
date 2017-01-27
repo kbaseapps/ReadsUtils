@@ -11,11 +11,10 @@ from os import environ
 from pprint import pprint
 from zipfile import ZipFile
 import ftplib
-from mock import patch
+from mock import patch  # @UnresolvedImport
 
 import requests
-# @UnresolvedImport
-from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
+from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport
 from DataFileUtil.baseclient import ServerError as DFUError
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
@@ -88,7 +87,7 @@ class ReadsUtilsTest(unittest.TestCase):
             for node in cls.nodes_to_delete:
                 cls.delete_shock_node(node)
         if hasattr(cls, 'handles_to_delete'):
-            cls.hs.delete_handles(cls.hs.ids_to_handles(cls.handles_to_delete))
+            cls.hs.delete_handles(cls.hs.hids_to_handles(cls.handles_to_delete))
             print('Deleted handles ' + str(cls.handles_to_delete))
 
     @classmethod
@@ -554,7 +553,7 @@ class ReadsUtilsTest(unittest.TestCase):
          'single_genome': None
          })
 
-    #FASTA/Q tests ########################################################
+    # FASTA/Q tests ########################################################
 
     def check_FASTA(self, filename, result):
         self.assertEqual(
@@ -1635,7 +1634,7 @@ class ReadsUtilsTest(unittest.TestCase):
                                'an equal number of records. Forward Path ' +
                                '/kb/module/work/tmp/small.forward.fq, ' +
                                'Reverse Path /kb/module/work/tmp/Sample5_noninterleaved.1.fastq.')
-    
+
     @patch.object(ReadsUtils, "STAGING_FILE_PREFIX", new='/kb/module/work/tmp')
     def test_bad_paired_end_staging_reads_file(self):
         fwdtf = 'small.forward.fq'
@@ -1654,7 +1653,7 @@ class ReadsUtilsTest(unittest.TestCase):
                                'an equal number of records. Forward Path ' +
                                '/kb/module/work/tmp/tmp/small.forward.fq, ' +
                                'Reverse Path /kb/module/work/tmp/tmp/Sample5_noninterleaved.1.fastq.' +
-                               'Forward Staging file name small.forward.fq, '+
+                               'Forward Staging file name small.forward.fq, ' +
                                'Reverse Staging file name Sample5_noninterleaved.1.fastq.')
 
     def test_missing_line_paired_end_reads_file(self):
@@ -1690,8 +1689,8 @@ class ReadsUtilsTest(unittest.TestCase):
              },
             'Reading FASTQ record failed - non-blank lines are not a ' +
             'multiple of four. ' +
-            'File URL https://www.dropbox.com/s/swex2harsj9z7c4/'
-            + 'Sample5_noninterleaved.1.missing_line.fastq, ' +
+            'File URL https://www.dropbox.com/s/swex2harsj9z7c4/' +
+            'Sample5_noninterleaved.1.missing_line.fastq, ' +
             'Shock node None, Shock filename None')
 
     def test_upload_fail_bad_paired_fastq_file_staging(self):
