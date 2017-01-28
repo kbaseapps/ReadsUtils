@@ -1074,6 +1074,40 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(resultsNode)
         self.delete_shock_node(singleResultsNode)
 
+    def test_paired_end_obj_as_input_missing_seqtech(self):
+        # tests that when a legacy source object is used for propagating object properties
+        # sequencing_tech, a required field, is set to Unknown.
+
+        # Upload reads file that propagates properties from the legacy type.
+        fwdtf = 'small.forward.fq'
+        revtf = 'small.reverse.fq'
+        fwdtarget = os.path.join(self.scratch, fwdtf)
+        revtarget = os.path.join(self.scratch, revtf)
+        shutil.copy('data/' + fwdtf, fwdtarget)
+        shutil.copy('data/' + revtf, revtarget)
+
+        resultsRef = self.impl.upload_reads(
+            self.ctx, {'fwd_file': fwdtarget,
+                       'rev_file': revtarget,
+                       'wsname': self.ws_info[1],
+                       'source_reads_ref': self.staged['kbassy_roo_t']['ref'],
+                       'name': 'propagateNoSeqTech'})
+
+        resultsObj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/propagateNoSeqTech']})['data'][0]
+        self.assertEqual(resultsRef[0]['obj_ref'],
+                         self.make_ref(resultsObj['info']))
+        self.assertEqual(resultsObj['info'][2].startswith('KBaseFile.PairedEndLibrary'), True)
+        resultsD = resultsObj['data']
+        self.assertEqual(resultsD['sequencing_tech'], 'Unknown')
+        self.assertEqual(resultsD['single_genome'], 1)
+        self.assertEqual(resultsD['insert_size_mean'], 42)
+        self.assertEqual(resultsD['insert_size_std_dev'], 1000000)
+        self.assertEqual(resultsD['read_orientation_outward'], 1)
+        self.assertEqual(resultsD['interleaved'], 1)
+        resultsNode = resultsD['lib1']['file']['id']
+        self.delete_shock_node(resultsNode)
+
     def test_wrong_obj_as_input(self):
         # GET initial object in.
         # First load source single ends reads file.

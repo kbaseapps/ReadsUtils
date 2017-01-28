@@ -217,6 +217,8 @@ class ReadsUtils:
                               "give rise to a paired end object."))
         else:
             is_single_end = True
+        if not source_reads_object['data'].get('sequencing_tech'):
+            source_reads_object['data']['sequencing_tech'] = 'Unknown'
         return self._build_up_reads_data(source_reads_object['data'], is_single_end)
 
     def _build_up_reads_data(self, params, is_single_end):
