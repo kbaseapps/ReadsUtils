@@ -564,16 +564,17 @@ class ReadsUtils:
                    'otype': 'interleaved',
                    'type': 'interleaved'}
         else:
-            fwdpath = os.path.join(self.scratch, self.get_file_prefix() +
-                                   '.fwd.fastq')
-            revpath = os.path.join(self.scratch, self.get_file_prefix() +
-                                   '.rev.fastq')
+            fwd_name = self.get_file_prefix() + '.fwd.fastq'
+            rev_name = self.get_file_prefix() + '.rev.fastq'
+            fwdpath = os.path.join(self.scratch, fwd_name)
+            revpath = os.path.join(self.scratch, rev_name)
+
             self.deinterleave(source_obj_ref, source_obj_name, name,
                               handle['id'], path, fwdpath, revpath)
             ret = {'fwd': fwdpath,
-                   'fwd_name': name,
+                   'fwd_name': fwd_name,
                    'rev': revpath,
-                   'rev_name': None,
+                   'rev_name': rev_name,
                    'otype': 'interleaved',
                    'type': 'paired'
                    }
