@@ -154,7 +154,8 @@ class ReadsUtilsTest(unittest.TestCase):
 
     @classmethod
     def upload_assembly(cls, wsobjname, object_body, fwd_reads,
-                        rev_reads=None, kbase_assy=False, single_end=False):
+                        rev_reads=None, kbase_assy=False, single_end=False,
+                        no_file_name=False):
         if single_end and rev_reads:
             raise ValueError('u r supr dum')
 
@@ -171,6 +172,8 @@ class ReadsUtilsTest(unittest.TestCase):
             'type': 'shock',
             'remote_md5': fwd_md5
         }
+        if no_file_name:
+            del fwd_handle['file_name']
 
         ob = dict(object_body)  # copy
         if kbase_assy:
@@ -208,6 +211,8 @@ class ReadsUtilsTest(unittest.TestCase):
                 'type': 'shock',
                 'remote_md5': rev_md5
             }
+            if no_file_name:
+                del rev_handle['file_name']
             if kbase_assy:
                 ob['handle_2'] = rev_handle
             else:
@@ -469,6 +474,9 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.upload_assy_with_file(
             'int_miss_line', sq,
             'data/Sample5_interleaved_missing_line.fastq')
+
+        # testing handles without a filename
+        cls.upload_assembly('no_filename', sq, fwd_reads, rev_reads=rev_reads, no_file_name=True)
 
         print('Data staged.')
 
@@ -1762,6 +1770,24 @@ class ReadsUtilsTest(unittest.TestCase):
                                'rev_name': 'small.reverse.fq'
                                },
                      'ref': self.staged['frbasic']['ref']
+                     })
+            }
+            }
+        )
+
+    def test_download_with_no_handle_filename(self):
+        self.download_success(
+            {'no_filename': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'fileext': {'fwd': 'fwd', 'rev': 'rev'},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF_P,
+                    {'files': {'type': 'paired',
+                               'otype': 'paired',
+                               'fwd_name': u'small.forward.fq',
+                               'rev_name': u'small.reverse.fq'
+                               },
+                     'ref': self.staged['no_filename']['ref']
                      })
             }
             }
