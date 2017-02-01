@@ -389,7 +389,7 @@ class ReadsUtils:
         if file_type and not file_type.startswith('.'):
             file_type = '.' + file_type
         ok = False
-        for f, n in zip([fn, handle['file_name'], file_type],
+        for f, n in zip([fn, handle.get('file_name'), file_type],
                         ['Shock file name',
                          'Handle file name from reads Workspace object',
                          'File type from reads Workspace object']):
