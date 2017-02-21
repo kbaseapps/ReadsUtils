@@ -96,14 +96,6 @@
           "display": "Illumina"
         },
         {
-          "value": "PacBio CLR",
-          "display": "PacBio CLR"
-        },
-        {
-          "value": "PacBio CCS",
-          "display": "PacBio CCS"
-        },
-        {
           "value": "IonTorrent",
           "display": "IonTorrent"
         },
