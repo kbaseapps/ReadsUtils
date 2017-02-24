@@ -1510,21 +1510,21 @@ class ReadsUtilsTest(unittest.TestCase):
             'Invalid FASTQ file - Path: /kb/module/work/tmp/(.*)/Sample1_invalid.fastq. ' +
             'Input URL : https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq.')
 
-    # def test_upload_fail_bad_paired_fastq_file_web(self):
-    #     self.fail_upload_reads_regex(
-    #         {'sequencing_tech': 'tech',
-    #          'wsname': self.ws_info[1],
-    #          'fwd_file_url': 'https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq',
-    #          'rev_file_url': 'https://www.dropbox.com/s/whw8ho6ipwv3gpl/Sample_rev.fq?dl=0',
-    #          'download_type': 'DropBox',
-    #          'name': 'bar'
-    #          },
-    #         'Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
-    #         'Input URLs - ' +
-    #         'FWD URL : https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq, ' +
-    #         'REV URL : https://www.dropbox.com/s/whw8ho6ipwv3gpl/Sample_rev.fq?dl=0. ' +
-    #         'FWD Path : /kb/module/work/tmp/(.*)/Sample1_invalid.fastq. ' +
-    #         'REV Path : /kb/module/work/tmp/(.*)/Sample_rev.fq.')
+    def test_upload_fail_bad_paired_fastq_file_web(self):
+        self.fail_upload_reads_regex(
+            {'sequencing_tech': 'tech',
+             'wsname': self.ws_info[1],
+             'fwd_file_url': 'https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq',
+             'rev_file_url': 'https://www.dropbox.com/s/whw8ho6ipwv3gpl/Sample_rev.fq',
+             'download_type': 'DropBox',
+             'name': 'bar'
+             },
+            'Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
+            'Input URLs - ' +
+            'FWD URL : https://www.dropbox.com/s/0qndz66qopp5kyt/Sample1_invalid.fastq, ' +
+            'REV URL : https://www.dropbox.com/s/whw8ho6ipwv3gpl/Sample_rev.fq. ' +
+            'FWD Path : /kb/module/work/tmp/(.*)/Sample1_invalid.fastq. ' +
+            'REV Path : /kb/module/work/tmp/(.*)/Sample_rev.fq.')
 
     def test_upload_fail_paired_bad_fastq_file(self):
         print('*** upload_fail_bad_fastq_file***')
