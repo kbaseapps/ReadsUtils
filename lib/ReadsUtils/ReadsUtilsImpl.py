@@ -14,11 +14,6 @@ from Workspace.baseclient import ServerError as WorkspaceError
 from numbers import Number
 import six
 import uuid
-import urllib2
-from contextlib import closing
-import ftplib
-import re
-import gzip
 #END_HEADER
 
 
@@ -64,9 +59,6 @@ class ReadsUtils:
     KBASE_ASSEMBLY = 'KBaseAssembly'
     MODULE_NAMES = [KBASE_FILE, KBASE_ASSEMBLY]
     TYPE_NAMES = [SINGLE_END_TYPE, PAIRED_END_TYPE]
-
-    # staging file prefix
-    STAGING_FILE_PREFIX = '/data/bulk/'
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') +
@@ -722,245 +714,6 @@ class ReadsUtils:
             reads_object[key] = ea_stats_dict[key]
         return reads_object
 
-    def _get_staging_file_path(self, token_user, staging_file_subdir_path):
-        """
-        _get_staging_file_path: return staging area file path
-
-        directory pattern: /data/bulk/user_name/file_name
-
-        """
-        return self.STAGING_FILE_PREFIX + token_user + '/' + staging_file_subdir_path
-
-    def _download_staging_file(self, token_user, staging_file_subdir_path):
-        """
-        _download_staging_file: download staging file to scratch
-
-        return: file path of downloaded staging file
-
-        """
-        staging_file_name = os.path.basename(staging_file_subdir_path)
-        staging_file_path = self._get_staging_file_path(
-            token_user, staging_file_subdir_path)
-
-        self.log('Start downloading staging file: %s' % staging_file_path)
-        dstdir = os.path.join(self.scratch, 'tmp')
-        if not os.path.exists(dstdir):
-            os.makedirs(dstdir)
-        shutil.copy2(staging_file_path, dstdir)
-        copy_file_path = os.path.join(dstdir, staging_file_name)
-        self.log('Copied staging file from %s to %s' %
-                 (staging_file_path, copy_file_path))
-
-        return copy_file_path
-
-    def _download_web_file(self, file_url, download_type, rev_file=False):
-        """
-        _download_web_file: download reads source file from web
-
-        file_url: file URL
-        download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
-        rev_file: optional, default as False. Set to True if file_url is for rev_file
-
-        return: file path of downloaded web file
-
-        """
-
-        # prepare local copy file path for copy
-        self.log('Start downloading web file from: %s' % file_url)
-        tmp_file_name = 'tmp_rev_fastq.fastq' if rev_file else 'tmp_fwd_fastq.fastq'
-        dstdir = os.path.join(self.scratch, 'tmp')
-        if not os.path.exists(dstdir):
-            os.makedirs(dstdir)
-        copy_file_path = os.path.join(dstdir, tmp_file_name)
-
-        self._download_file(download_type, file_url, copy_file_path)
-        self.log('Copied web file to %s' % copy_file_path)
-
-        return copy_file_path
-
-    def _download_file(self, download_type, file_url, copy_file_path):
-        """
-        _download_file: download execution distributor
-
-        params:
-        download_type: download type for web source file
-        file_url: file URL
-        copy_file_path: output file saving path
-
-        """
-        if download_type == 'Direct Download':
-            self._download_direct_download_link(file_url, copy_file_path)
-        elif download_type == 'DropBox':
-            self._download_dropbox_link(file_url, copy_file_path)
-        elif download_type == 'FTP':
-            self._download_ftp_link(file_url, copy_file_path)
-        elif download_type == 'Google Drive':
-            self._download_google_drive_link(file_url, copy_file_path)
-        else:
-            raise ValueError('Invalid download type: %s' % download_type)
-
-    def _download_direct_download_link(self, file_url, copy_file_path):
-        """
-        _download_direct_download_link: direct download link handler
-
-        params:
-        file_url: direct download URL
-        copy_file_path: output file saving path
-
-        """
-
-        self.log('Connecting and downloading web source: %s' % file_url)
-        try:
-            online_file = urllib2.urlopen(file_url)
-        except urllib2.HTTPError as e:
-            raise ValueError(
-                "The server error\nURL: %s\nError code: %s" % (file_url, e.code))
-        except urllib2.URLError as e:
-            raise ValueError("Failed to reach URL: %s\nReason: %s" % (file_url, e.reason))
-        else:
-            with closing(online_file):
-                with open(copy_file_path, 'wb') as output:
-                    shutil.copyfileobj(online_file, output)
-
-            self.log('Downloaded file to %s' % copy_file_path)
-
-    def _download_dropbox_link(self, file_url, copy_file_path):
-        """
-        _download_dropbox_link: dropbox download link handler
-                                file needs to be shared publicly
-
-        params:
-        file_url: dropbox download link
-        copy_file_path: output file saving path
-
-        """
-        # translate dropbox URL for direct download
-        if "?" not in file_url:
-            force_download_link = file_url + '?raw=1'
-        else:
-            force_download_link = file_url.partition('?')[0] + '?raw=1'
-
-        self.log('Generating DropBox direct download link\n from: %s\n to: %s' % (
-            file_url, force_download_link))
-        self._download_direct_download_link(
-            force_download_link, copy_file_path)
-
-    def _download_ftp_link(self, file_url, copy_file_path):
-        """
-        _download_ftp_link: FTP download link handler
-                            URL fomat: ftp://anonymous:email@ftp_link
-                                    or ftp://ftp_link
-                            defualt user_name: 'anonymous'
-                                    password: 'anonymous@domain.com'
-
-                            Note: Currenlty we only support anonymous FTP due to securty reasons.
-
-        params:
-        file_url: FTP download link
-        copy_file_path: output file saving path
-
-        """
-        self.log('Connecting FTP link: %s' % file_url)
-        ftp_url_format = re.match(r'ftp://.*:.*@.*/.*', file_url)
-        # process ftp credentials
-        if ftp_url_format:
-            self.ftp_user_name = re.search('ftp://(.+?):', file_url).group(1)
-            if self.ftp_user_name.lower() != 'anonymous':
-                raise ValueError("Currently we only support anonymous FTP")
-            self.ftp_password = file_url.rpartition('@')[0].rpartition(':')[-1]
-            self.ftp_domain = re.search(
-                'ftp://.*:.*@(.+?)/', file_url).group(1)
-            self.ftp_file_path = file_url.partition(
-                'ftp://')[-1].partition('/')[-1].rpartition('/')[0]
-            self.ftp_file_name = re.search(
-                'ftp://.*:.*@.*/(.+$)', file_url).group(1)
-        else:
-            self.log('Setting anonymous FTP user_name and password')
-            self.ftp_user_name = 'anonymous'
-            self.ftp_password = 'anonymous@domain.com'
-            self.ftp_domain = re.search('ftp://(.+?)/', file_url).group(1)
-            self.ftp_file_path = file_url.partition(
-                'ftp://')[-1].partition('/')[-1].rpartition('/')[0]
-            self.ftp_file_name = re.search('ftp://.*/(.+$)', file_url).group(1)
-
-        self._check_ftp_connection(self.ftp_user_name, self.ftp_password,
-                                   self.ftp_domain, self.ftp_file_path, self.ftp_file_name)
-
-        ftp_connection = ftplib.FTP(self.ftp_domain)
-        ftp_connection.login(self.ftp_user_name, self.ftp_password)
-        ftp_connection.cwd(self.ftp_file_path)
-
-        ftp_copy_file_path = copy_file_path + \
-            '.gz' if self.ftp_file_name.endswith('.gz') else copy_file_path
-        with open(ftp_copy_file_path, 'wb') as output:
-            ftp_connection.retrbinary('RETR %s' %
-                                      self.ftp_file_name, output.write)
-        self.log('Copied FTP file to: %s' % ftp_copy_file_path)
-
-        if self.ftp_file_name.endswith('.gz'):
-            self._unpack_gz_file(copy_file_path)
-
-    def _unpack_gz_file(self, copy_file_path):
-        with gzip.open(copy_file_path + '.gz', 'rb') as in_file:
-            with open(copy_file_path, 'w') as f:
-                f.write(in_file.read())
-        self.log('Unzipped file: %s' % copy_file_path + '.gz')
-
-    def _check_ftp_connection(self, user_name, password, domain, file_path, file_name):
-        """
-        _check_ftp_connection: ftp connection checker
-
-        params:
-        user_name: FTP user name
-        password: FTP user password
-        domain: FTP domain
-        file_path: target file directory
-        file_name: target file name
-
-        """
-
-        try:
-            ftp = ftplib.FTP(domain)
-        except ftplib.all_errors, error:
-            raise ValueError("Cannot connect: %s" % error)
-        else:
-            try:
-                ftp.login(user_name, password)
-            except ftplib.all_errors, error:
-                raise ValueError("Cannot login: %s" % error)
-            else:
-                ftp.cwd(file_path)
-                if file_name in ftp.nlst():
-                    pass
-                else:
-                    raise ValueError("File %s does NOT exist in FTP path: %s" % (
-                        file_name, domain + '/' + file_path))
-
-    def _download_google_drive_link(self, file_url, copy_file_path):
-        """
-        _download_google_drive_link: Google Drive download link handler
-                                     file needs to be shared publicly
-
-        params:
-        file_url: Google Drive download link
-        copy_file_path: output file saving path
-
-        """
-        # translate Google Drive URL for direct download
-        force_download_link_prefix = 'https://drive.google.com/uc?export=download&id='
-        if file_url.find('drive.google.com/file/d/') != -1:
-            file_id = file_url.partition('/d/')[-1].partition('/')[0]
-        elif file_url.find('drive.google.com/open?id=') != -1:
-            file_id = file_url.partition('id=')[-1]
-        else:
-            raise ValueError('Unexpected Google Drive share link.\nURL: {}'.format(file_url))
-        force_download_link = force_download_link_prefix + file_id
-
-        self.log('Generating Google Drive direct download link\n from: %s\n to: %s' % (
-            file_url, force_download_link))
-        self._download_direct_download_link(
-            force_download_link, copy_file_path)
-
     def _process_download(self, fwd, rev, reads_source, download_type, user_id):
         """
         _process_download: processing different type of downloads
@@ -981,9 +734,9 @@ class ReadsUtils:
         revname = None
         revpath = None
 
+        dfu = DataFileUtil(self.callback_url)
         if reads_source == 'shock':
             # Grab files from Shock
-            dfu = DataFileUtil(self.callback_url)
             fileinput = [{'shock_id': fwd,
                           'file_path': self.scratch + '/fwd/',
                           'unpack': 'uncompress'}]
@@ -999,15 +752,21 @@ class ReadsUtils:
                 revpath = files[1]["file_path"]
                 revname = files[1]["node_file_name"]
         elif reads_source == 'web':
-            # TODO: Tian move _download_web_file to DFU
-            fwdpath = self._download_web_file(fwd, download_type)
-            revpath = self._download_web_file(
-                rev, download_type, rev_file=True) if rev else None
+            fwdpath = dfu.download_web_file(
+                        {'file_url': fwd,
+                        'download_type': download_type}).get(
+                                        'copy_file_path')
+            revpath = dfu.download_web_file(
+                        {'file_url': rev,
+                        'download_type': download_type}).get(
+                                        'copy_file_path') if rev else None
         elif reads_source == 'staging':
-            # TODO: Tian move _download_staging_file to DFU
-            fwdpath = self._download_staging_file(user_id, fwd)
-            revpath = self._download_staging_file(
-                user_id, rev) if rev else None
+            fwdpath = dfu.download_staging_file(
+                        {'staging_file_subdir_path': fwd}).get(
+                                        'copy_file_path')
+            revpath = dfu.download_staging_file(
+                        {'staging_file_subdir_path': rev}).get(
+                                        'copy_file_path') if rev else None
         elif reads_source == 'local':
             fwdpath = fwd
             revpath = rev
