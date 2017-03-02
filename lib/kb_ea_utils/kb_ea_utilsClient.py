@@ -25,7 +25,7 @@ class kb_ea_utils(object):
             password=None, token=None, ignore_authrc=False,
             trust_all_ssl_certificates=False,
             auth_svc='https://kbase.us/services/authorization/Sessions/Login',
-            service_ver='dev',
+            service_ver='release',
             async_job_check_time_ms=100, async_job_check_time_scale_percent=150, 
             async_job_check_max_time_ms=300000):
         if url is None:
@@ -53,11 +53,12 @@ class kb_ea_utils(object):
         This function should be used for getting statistics on read library object types 
         The results are returned as a string.
         :param input_params: instance of type
-           "get_fastq_ea_utils_stats_params" (if read_library_ref is set,
-           then workspace_name and read_library_name are ignored) ->
+           "get_fastq_ea_utils_stats_params" (This module has methods to  get
+           fastq statistics workspace_name    - the name of the workspace for
+           input/output read_library_name - the name of 
+           KBaseFile.SingleEndLibrary or KBaseFile.PairedEndLibrary) ->
            structure: parameter "workspace_name" of String, parameter
-           "read_library_name" of String, parameter "read_library_ref" of
-           String
+           "read_library_name" of String
         :returns: instance of String
         """
         job_id = self._get_fastq_ea_utils_stats_submit(input_params, context)
@@ -82,11 +83,8 @@ class kb_ea_utils(object):
         This function should be used for getting statistics on read library object type.
         The results are returned as a report type object.
         :param input_params: instance of type
-           "run_app_fastq_ea_utils_stats_params" (if read_library_ref is set,
-           then workspace_name and read_library_name are ignored) ->
-           structure: parameter "workspace_name" of String, parameter
-           "read_library_name" of String, parameter "read_library_ref" of
-           String
+           "run_app_fastq_ea_utils_stats_params" -> structure: parameter
+           "workspace_name" of String, parameter "read_library_name" of String
         :returns: instance of type "Report" -> structure: parameter
            "report_name" of String, parameter "report_ref" of String
         """
