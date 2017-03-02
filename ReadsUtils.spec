@@ -55,9 +55,19 @@ module ReadsUtils {
         
         If local files are specified for upload, they must be uncompressed.
         Files will be gzipped prior to upload.
+
+        If web files are specified for upload, a download type one of
+        ['Direct Download', 'DropBox', 'FTP', 'Google Drive'] must be specified too. 
+        The downloadable file must be uncompressed (except for FTP, .gz file is acceptable). 
+
+        If staging files are specified for upload, the staging file must be uncompressed
+        and must be accessible by current user.
         
         Note that if a reverse read file is specified, it must be a local file
         if the forward reads file is a local file, or a shock id if not.
+
+        If a reverse web file or staging file is specified, the reverse file category must match 
+        the forward file category.
 
         If a reverse file is specified the uploader will will automatically
         intereave the forward and reverse files and store that in shock.
@@ -69,9 +79,18 @@ module ReadsUtils {
         - OR -
         fwd_file - a local path to the reads data file: either single end
             reads, forward/left reads, or interleaved reads.
-        sequencing_tech - the sequencing technology used to produce the
-            reads.
+        - OR - 
+        fwd_file_url - a download link that contains reads data file:
+            either single end reads, forward/left reads, or interleaved reads.
+        download_type - download type ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
+        - OR - 
+        fwd_staging_file_name - reads data file name/ subdirectory path in staging area:
+            either single end reads, forward/left reads, or interleaved reads.
         
+        sequencing_tech - the sequencing technology used to produce the
+            reads. (If source_reads_ref is specified then sequencing_tech
+            must not be specified)
+
         One of:
         wsid - the id of the workspace where the reads will be saved
             (preferred).
@@ -86,8 +105,16 @@ module ReadsUtils {
             paired end, non-interleaved reads.
         - OR -
         rev_file - a local path to the reads data file containing the
-            reverse/right reads for paired end, non-interleaved reads, note the
-+           reverse file will get interleaved with the forward file.
+            reverse/right reads for paired end, non-interleaved reads, 
+            note the reverse file will get interleaved 
+            with the forward file.
+        - OR - 
+        rev_file_url - a download link that contains reads data file:
+            reverse/right reads for paired end, non-interleaved reads.
+        - OR - 
+        rev_staging_file_name - reads data file name in staging area:
+            reverse/right reads for paired end, non-interleaved reads.
+
         single_genome - whether the reads are from a single genome or a
             metagenome. Default is single genome.
         strain - information about the organism strain
@@ -103,6 +130,13 @@ module ReadsUtils {
             single end reads.
         insert_size_std_dev - the standard deviation of the size of the
             genetic fragments. Ignored for single end reads.
+        source_reads_ref - A workspace reference to a source reads object.
+            This is used to propogate user defined info from the source reads
+            object to the new reads object (used for filtering or 
+            trimming services). Note this causes a passed in 
+            insert_size_mean, insert_size_std_dev, sequencing_tech,
+            read_orientation_outward, strain, source and/or 
+            single_genome to throw an error.
     */
     typedef structure {
         string fwd_id;
@@ -121,6 +155,13 @@ module ReadsUtils {
         boolean read_orientation_outward;
         float insert_size_mean;
         float insert_size_std_dev;
+        string source_reads_ref;
+        string fwd_file_url;
+        string rev_file_url;
+        string fwd_staging_file_name;
+        string rev_staging_file_name;
+        string download_type;
+
     } UploadReadsParams;
     
     /* The output of the upload_reads function.
@@ -266,4 +307,5 @@ module ReadsUtils {
      */
     funcdef export_reads(ExportParams params)
                 returns (ExportOutput output) authentication required;
+
 };

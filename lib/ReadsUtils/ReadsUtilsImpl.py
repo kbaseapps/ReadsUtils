@@ -26,15 +26,15 @@ class ReadsUtils:
     Utilities for handling reads files.
     '''
 
-    ######## WARNING FOR GEVENT USERS #######
+    ######## WARNING FOR GEVENT USERS ####### noqa
     # Since asynchronous IO can lead to methods - even the same method -
     # interrupting each other, you must be *very* careful when using global
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
-    #########################################
-    VERSION = "0.1.1"
-    GIT_URL = "https://github.com/mrcreosote/ReadsUtils"
-    GIT_COMMIT_HASH = "43386a99be668244c08048afbe190fdbde3245f6"
+    ######################################### noqa
+    VERSION = "0.3.4"
+    GIT_URL = "git@github.com:Tianhao-Gu/ReadsUtils.git"
+    GIT_COMMIT_HASH = "d96fa904641d8e5900be2bd3be62face57990887"
 
     #BEGIN_CLASS_HEADER
 
@@ -80,14 +80,11 @@ class ReadsUtils:
                 raise ValueError(name + ' must be > 0')
 
     def _proc_upload_reads_params(self, params):
-        fwdid = params.get('fwd_id')
-        fwdfile = params.get('fwd_file')
-        if not self.xor(fwdid, fwdfile):
-            raise ValueError('Exactly one of a file or shock id containing ' +
-                             'a forwards reads file must be specified')
-        shock = True if fwdid else False
-        fwdid = fwdid if shock else os.path.abspath(
-            os.path.expanduser(fwdfile))
+
+        fwdsource, reads_source = (self._process_fwd_params(
+            params.get('fwd_id'), params.get('fwd_file'), params.get('fwd_file_url'),
+            params.get('fwd_staging_file_name'), params.get('download_type')))
+
         wsid = params.get('wsid')
         wsname = params.get('wsname')
         if not self.xor(wsid, wsname):
@@ -106,53 +103,145 @@ class ReadsUtils:
         if not self.xor(objid, name):
             raise ValueError(
                 'Exactly one of the object ID or name must be provided')
-        revid = params.get('rev_id')
-        revfile = params.get('rev_file')
-        if revid and revfile:
-            raise ValueError('Specified both a local file and a shock node ' +
-                             'for the reverse reads file')
-        if shock and revfile:
-            raise ValueError('Cannot specify a local reverse reads file ' +
-                             'with a forward reads file in shock')
-        if not shock and revid:
-            raise ValueError('Cannot specify a reverse reads file in shock ' +
-                             'with a local forward reads file')
-        if not shock and revfile:
-            revid = os.path.abspath(os.path.expanduser(revfile))
-        interleaved = 0
+
+        revsource = self._process_rev_params(
+            params.get('rev_id'), params.get('rev_file'), params.get('rev_file_url'),
+            params.get('rev_staging_file_name'), reads_source)
+
         kbtype = 'KBaseFile.SingleEndLibrary'
         single_end = True
-        if params.get('interleaved') or revid:
-            interleaved = 1
+        if params.get('interleaved') or revsource:
             kbtype = 'KBaseFile.PairedEndLibrary'
             single_end = False
+
+        source_reads_ref = params.get('source_reads_ref')
+        if source_reads_ref:
+            o = self._propagate_reference_reads_info(params, dfu, source_reads_ref, single_end)
+        else:
+            o = self._build_up_reads_data(params, single_end)
+        return o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source
+
+    def _check_rev_params(self, revid, revfile, revurl, revstaging, reads_source):
+        if sum(bool(e) for e in [revid, revfile, revurl, revstaging]) > 1:
+            raise ValueError('Cannot specify more than one rev file source')
+
+        if revid and reads_source != 'shock':
+            raise ValueError(
+                'Specified reverse reads file in shock path but missing ' +
+                'forward reads file in shock')
+        if revfile and reads_source != 'local':
+            raise ValueError(
+                'Specified local reverse file path but missing local forward file path')
+        if revurl and reads_source != 'web':
+            raise ValueError(
+                'Specified reverse file URL but missing forward file URL')
+        if revstaging and reads_source != 'staging':
+            raise ValueError(
+                'Specified reverse staging file but missing forward staging file')
+
+    def _process_rev_params(self, revid, revfile, revurl, revstaging, reads_source):
+
+        self._check_rev_params(revid, revfile, revurl, revstaging, reads_source)
+
+        if revurl:
+            revsource = revurl
+        elif revstaging:
+            revsource = revstaging
+        elif revfile:
+            revsource = os.path.abspath(os.path.expanduser(revfile))
+        else:
+            revsource = revid
+
+        return revsource
+
+    def _process_fwd_params(self, fwdid, fwdfile, fwdurl, fwdstaging, download_type):
+
+        if sum(bool(e) for e in [fwdid, fwdfile, fwdurl, fwdstaging]) != 1:
+            raise ValueError('Exactly one of a file, shock id, staging ' +
+                             'file name or file url containing ' +
+                             'a forwards reads file must be specified')
+        if fwdurl:
+            if not download_type:
+                raise ValueError(
+                    'Both download_type and fwd_file_url must be provided')
+            reads_source = 'web'
+            fwdsource = fwdurl
+        elif fwdstaging:
+            reads_source = 'staging'
+            fwdsource = fwdstaging
+        elif fwdid:
+            reads_source = 'shock'
+            fwdsource = fwdid
+        else:
+            reads_source = 'local'
+            fwdsource = os.path.abspath(os.path.expanduser(fwdfile))
+
+        return fwdsource, reads_source
+
+    def _propagate_reference_reads_info(self, params, dfu, source_reads_ref, single_end):
+        # Means the uploaded reads is a result of an input reads object being filtered/trimmed
+        # Make sure that no non file related parameters are set. If so throw
+        # error.
+        parameters_should_unfilled = ['insert_size_mean', 'insert_size_std_dev',
+                                      'sequencing_tech', 'strain',
+                                      'source', 'read_orientation_outward']
+        if any(x in params for x in parameters_should_unfilled):
+            self.log(("'source_reads_ref' was passed, making the following list of " +
+                      "parameters {} erroneous to " +
+                      "include").format(",".join(parameters_should_unfilled)))
+            raise ValueError(("'source_reads_ref' was passed, making the following list of " +
+                              "parameters : {} erroneous to " +
+                              "include").format(", ".join(parameters_should_unfilled)))
+        try:
+            source_reads_object = dfu.get_objects({'object_refs':
+                                                   [source_reads_ref]})['data'][0]
+        except DFUError as e:
+            self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
+                      'Logging stacktrace from workspace exception:' +
+                      '\n{}').format(source_reads_ref, e.data))
+            raise
+        # Check that it is a reads object. If not throw an eror.
+        single_input, _ = self.check_reads(source_reads_object)
+        if not single_input and not single_end:
+            is_single_end = False
+        elif single_input and not single_end:
+            raise ValueError(("The input reference reads is single end, that should not " +
+                              "give rise to a paired end object."))
+        else:
+            is_single_end = True
+        if not source_reads_object['data'].get('sequencing_tech'):
+            source_reads_object['data']['sequencing_tech'] = 'Unknown'
+        return self._build_up_reads_data(source_reads_object['data'], is_single_end)
+
+    def _build_up_reads_data(self, params, is_single_end):
         seqtype = params.get('sequencing_tech')
         if not seqtype:
             raise ValueError('The sequencing technology must be provided')
-
         sg = 1
         if 'single_genome' in params and not params['single_genome']:
             sg = 0
         o = {'sequencing_tech': seqtype,
-             'single_genome': sg,
-             # 'read_count': params.get('read_count'),
-             # 'read_size': params.get('read_size'),
-             # 'gc_content': params.get('gc_content')
+             'single_genome': sg
              }
         self._add_field(o, params, 'strain')
         self._add_field(o, params, 'source')
-        ism = params.get('insert_size_mean')
-        self._check_pos(ism, 'insert_size_mean')
-        issd = params.get('insert_size_std_dev')
-        self._check_pos(issd, 'insert_size_std_dev')
-        if not single_end:
-            read_orientation_out = 1 if params.get('read_orientation_outward') else 0
+        if not is_single_end:
+            # is a paired end input and trying to upload a filtered/trimmed
+            # paired end ReadsUtils. need to check for more fields.
+            ism = params.get('insert_size_mean')
+            self._check_pos(ism, 'insert_size_mean')
+            issd = params.get('insert_size_std_dev')
+            self._check_pos(issd, 'insert_size_std_dev')
+            if params.get('read_orientation_outward'):
+                read_orientation_out = 1
+            else:
+                read_orientation_out = 0
             o.update({'insert_size_mean': ism,
                       'insert_size_std_dev': issd,
-                      'interleaved': interleaved,
+                      'interleaved': 1,
                       'read_orientation_outward': read_orientation_out
                       })
-        return o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock
+        return o
 
     def process_ternary(self, params, boolname):
         if params.get(boolname) is None:
@@ -284,14 +373,15 @@ class ReadsUtils:
                   }
         # TODO LATER may want to do dl en masse, but that means if there's a bad file it won't be caught until everythings dl'd @IgnorePep8 # noqa
         # TODO LATER add method to DFU to get shock attribs and check filename prior to download @IgnorePep8 # noqa
-        # TODO LATER at least check handle filename & file type are ok before download
+        # TODO LATER at least check handle filename & file type are ok before
+        # download
         dfu = DataFileUtil(self.callback_url)
         ret = dfu.shock_to_file(params)
         fn = ret['node_file_name']
         if file_type and not file_type.startswith('.'):
             file_type = '.' + file_type
         ok = False
-        for f, n in zip([fn, handle['file_name'], file_type],
+        for f, n in zip([fn, handle.get('file_name'), file_type],
                         ['Shock file name',
                          'Handle file name from reads Workspace object',
                          'File type from reads Workspace object']):
@@ -337,7 +427,8 @@ class ReadsUtils:
     # insane method sigs
 
     def _read_fq_record(self, source_obj_ref, source_obj_name,
-                        shock_filename, shock_node, f):
+                        shock_filename, shock_node, f,
+                        reads_source, filesource):
         r = ''
         for i in xrange(4):
             l = f.readline()
@@ -352,8 +443,18 @@ class ReadsUtils:
                         error_message += 'Workspace reads object {} ({}), '
                         error_message_bindings.insert(0, source_obj_ref)
                         error_message_bindings.insert(0, source_obj_name)
+
+                    if reads_source == 'web':
+                        error_message += 'File URL {}, '
+                        error_message_bindings.insert(0, filesource)
+
+                    if reads_source == 'staging':
+                        error_message += 'Staging file name {}, '
+                        error_message_bindings.insert(0, filesource)
+
                     error_message += 'Shock node {}, Shock filename {}'
-                    raise ValueError(error_message.format(*error_message_bindings))
+                    raise ValueError(error_message.format(
+                        *error_message_bindings))
                 else:
                     return ''
             r = r + l
@@ -362,9 +463,10 @@ class ReadsUtils:
     # this assumes that the FASTQ files are properly formatted and matched,
     # which they should be if they're in KBase.
     # source_obj_ref and source_obj_name will be None if done from upload.
+    # reads_source, fwdsource, revsource will be None if done from process_paired.
     def interleave(self, source_obj_ref, source_obj_name, fwd_shock_filename,
                    fwd_shock_node, rev_shock_filename, rev_shock_node,
-                   fwdpath, revpath, targetpath):
+                   fwdpath, revpath, targetpath, reads_source, fwdsource, revsource):
         self.log('Interleaving files {} and {} to {}'.format(
             fwdpath, revpath, targetpath))
         with open(targetpath, 'w') as t:
@@ -372,10 +474,12 @@ class ReadsUtils:
                 while True:
                     frec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
-                        fwd_shock_filename, fwd_shock_node, f)
+                        fwd_shock_filename, fwd_shock_node, f,
+                        reads_source, fwdsource)
                     rrec = self._read_fq_record(
                         source_obj_ref, source_obj_name,
-                        rev_shock_filename, rev_shock_node, r)
+                        rev_shock_filename, rev_shock_node, r,
+                        reads_source, revsource)
                     error_message_bindings = list()
                     if (not frec and rrec) or (frec and not rrec):
                         error_message = 'Interleave failed - reads files do not have '\
@@ -391,7 +495,18 @@ class ReadsUtils:
                                                            rev_shock_node, rev_shock_filename])
                         error_message += 'Forward Path {}, Reverse Path {}.'
                         error_message_bindings.extend([fwdpath, revpath])
-                        raise ValueError(error_message.format(*error_message_bindings))
+
+                        if reads_source == 'web':
+                            error_message += 'Forward File URL {}, Reverse File URL {}.'
+                            error_message_bindings.extend([fwdsource, revsource])
+
+                        if reads_source == 'staging':
+                            error_message += 'Forward Staging file name {}, '
+                            error_message += 'Reverse Staging file name {}.'
+                            error_message_bindings.extend([fwdsource, revsource])
+
+                        raise ValueError(error_message.format(
+                            *error_message_bindings))
                     if not frec:  # not rrec is implied at this point
                         break
                     t.write(frec)
@@ -471,7 +586,7 @@ class ReadsUtils:
             intpath = os.path.join(self.scratch, self.get_file_prefix() +
                                    '.inter.fastq')
             self.interleave(source_obj_ref, source_obj_name, fwdname, fwdhandle['id'],
-                            revname, revhandle['id'], fwdpath, revpath, intpath)
+                            revname, revhandle['id'], fwdpath, revpath, intpath, None, None, None)
             ret = {'fwd': intpath,
                    'fwd_name': fwdname,
                    'rev': None,
@@ -591,57 +706,130 @@ class ReadsUtils:
         # return the results
         return [out]
 
-    def calculate_fq_stats(self, reads_object, file_path):
-        # TODO : Remove the ", service_ver='dev'" below once kb_ea_utils is released and this is released @IgnorePep8 # noqa
-        # TODO : Once TASK-158 is complete the EA-utils report parsing should be moved out of here and use the data_structure returned instead @IgnorePep8 # noqa
-        eautils = kb_ea_utils(self.callback_url, service_ver='dev')
-        ea_report = eautils.get_ea_utils_stats({'read_library_path': file_path})
-#        print "Full Report : {}".format(ea_report)
-
-        report_lines = ea_report.splitlines()
-        report_to_object_mappings = {'reads': 'read_count',
-                                     'total bases': 'total_bases',
-                                     'len mean': 'read_length_mean',
-                                     'len stdev': 'read_length_stdev',
-                                     'phred': 'phred_type',
-                                     'dups': 'number_of_duplicates',
-                                     'qual min': 'qual_min',
-                                     'qual max': 'qual_max',
-                                     'qual mean': 'qual_mean',
-                                     'qual stdev': 'qual_stdev'}
-        integer_fields = ['read_count', 'total_bases', 'number_of_duplicates']
-        for line in report_lines:
-            line_elements = line.split()
-            line_value = line_elements.pop()
-            line_key = " ".join(line_elements)
-            line_key = line_key.strip()
-            if line_key in report_to_object_mappings:
-                # print ":{}: = :{}:".format(report_to_object_mappings[line_key],line_value)
-                value_to_use = None
-                if line_key == 'phred':
-                    value_to_use = line_value.strip()
-                elif report_to_object_mappings[line_key] in integer_fields:
-                    value_to_use = int(line_value.strip())
-                else:
-                    value_to_use = float(line_value.strip())
-                reads_object[report_to_object_mappings[line_key]] = value_to_use
-            elif line_key.startswith("%") and not line_key.startswith("%dup"):
-                if 'base_percentages' not in reads_object:
-                    reads_object['base_percentages'] = dict()
-                dict_key = line_key.strip("%")
-                reads_object['base_percentages'][dict_key] = float(line_value.strip())
-        # populate the GC content (as a value betwwen 0 and 1)
-        if 'base_percentages' in reads_object:
-            gc_content = 0
-            if "G" in reads_object['base_percentages']:
-                gc_content += reads_object['base_percentages']["G"]
-            if "C" in reads_object['base_percentages']:
-                gc_content += reads_object['base_percentages']["C"]
-            reads_object["gc_content"] = gc_content / 100
-        # set number of dups if no dups, but read_count
-        if 'read_count' in reads_object and 'number_of_duplicates' not in reads_object:
-            reads_object["number_of_duplicates"] = 0
+    def get_fq_stats(self, reads_object, file_path):
+        eautils = kb_ea_utils(self.callback_url)
+        ea_stats_dict = eautils.calculate_fastq_stats(
+            {'read_library_path': file_path})
+        for key in ea_stats_dict:
+            reads_object[key] = ea_stats_dict[key]
         return reads_object
+
+    def _process_download(self, fwd, rev, reads_source, download_type, user_id):
+        """
+        _process_download: processing different type of downloads
+
+        fwd: forward shock_id if reads_source is 'shock'
+               forward url if reads_source is 'web'
+               forward file subdirectory path in staging if reads_source is 'staging'
+        rev: reverse shock_id if reads_source is 'shock'
+               reverse url if reads_source is 'web'
+               reverse file subdirectory path in staging if reads_source is 'staging'
+        reads_source: one of 'shock', 'web' or 'staging'
+        download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
+        user_id: current token user
+        """
+
+        # return values
+        fwdname = None
+        revname = None
+        revpath = None
+
+        dfu = DataFileUtil(self.callback_url)
+        if reads_source == 'shock':
+            # Grab files from Shock
+            fileinput = [{'shock_id': fwd,
+                          'file_path': self.scratch + '/fwd/',
+                          'unpack': 'uncompress'}]
+            if rev:
+                fileinput.append({'shock_id': rev,
+                                  'file_path': self.scratch + '/rev/',
+                                  'unpack': 'uncompress'})
+            self.log('downloading reads file(s) from Shock')
+            files = dfu.shock_to_file_mass(fileinput)
+            fwdpath = files[0]["file_path"]
+            fwdname = files[0]["node_file_name"]
+            if rev:
+                revpath = files[1]["file_path"]
+                revname = files[1]["node_file_name"]
+        elif reads_source == 'web':
+            fwdpath = dfu.download_web_file(
+                        {'file_url': fwd,
+                        'download_type': download_type}).get(
+                                        'copy_file_path')
+            revpath = dfu.download_web_file(
+                        {'file_url': rev,
+                        'download_type': download_type}).get(
+                                        'copy_file_path') if rev else None
+        elif reads_source == 'staging':
+            fwdpath = dfu.download_staging_file(
+                        {'staging_file_subdir_path': fwd}).get(
+                                        'copy_file_path')
+            revpath = dfu.download_staging_file(
+                        {'staging_file_subdir_path': rev}).get(
+                                        'copy_file_path') if rev else None
+        elif reads_source == 'local':
+            fwdpath = fwd
+            revpath = rev
+        else:
+            raise ValueError(
+                "Unexpected reads_source value. reads_source: %s" % reads_source)
+
+        returnVal = {'fwdpath': fwdpath,
+                     'revpath': revpath,
+                     'fwdname': fwdname,
+                     'revname': revname}
+
+        return returnVal
+
+    def _generate_validation_error_message(self, reads_source, actualpath, file_info):
+        fwdpath = file_info.get('fwdpath')
+        revpath = file_info.get('revpath')
+        fwdname = file_info.get('fwdname')
+        revname = file_info.get('revname')
+        fwdsource = file_info.get('fwdsource')
+        revsource = file_info.get('revsource')
+
+        validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
+        if reads_source == 'shock':
+            if revsource:
+                validation_error_message += (
+                    " Input Shock IDs - FWD Shock ID : " +
+                    fwdsource + ", REV Shock ID : " + revsource +
+                    ". FWD File Name : " + fwdname +
+                    ". REV File Name : " + revname +
+                    ". FWD Path : " + fwdpath +
+                    ". REV Path : " + revpath + ".")
+            else:
+                validation_error_message += (" Input Shock ID : " +
+                                             fwdsource + ". File Name : " + fwdname + ".")
+        elif reads_source == 'web':
+            if revsource:
+                validation_error_message += (" Input URLs - FWD URL : " +
+                                             fwdsource + ", REV URL : " + revsource +
+                                             ". FWD Path : " + fwdpath +
+                                             ". REV Path : " + revpath + ".")
+            else:
+                validation_error_message += (" Input URL : " + fwdsource + ".")
+        elif reads_source == 'staging':
+            if revsource:
+                validation_error_message += (" Input Staging files - FWD Staging file : " +
+                                             fwdsource +
+                                             ", REV Staging file : " +
+                                             revsource +
+                                             ". FWD Path : " + fwdpath +
+                                             ". REV Path : " + revpath + ".")
+            else:
+                validation_error_message += (" Input Staging : " +
+                                             fwdsource + ".")
+        elif reads_source == 'local':
+            if revpath:
+                validation_error_message += (" Input Files Paths - FWD Path : " +
+                                             fwdpath + ", REV Path : " + revpath + ".")
+        else:
+            raise ValueError(
+                "Unexpected reads_source value. reads_source: %s" % reads_source)
+
+        return validation_error_message
 
     #END_CLASS_HEADER
 
@@ -745,39 +933,68 @@ class ReadsUtils:
         :param params: instance of type "UploadReadsParams" (Input to the
            upload_reads function. If local files are specified for upload,
            they must be uncompressed. Files will be gzipped prior to upload.
-           Note that if a reverse read file is specified, it must be a local
-           file if the forward reads file is a local file, or a shock id if
-           not. Required parameters: fwd_id - the id of the shock node
-           containing the reads data file: either single end reads,
-           forward/left reads, or interleaved reads. - OR - fwd_file - a
-           local path to the reads data file: either single end reads,
-           forward/left reads, or interleaved reads. sequencing_tech - the
-           sequencing technology used to produce the reads. One of: wsid -
-           the id of the workspace where the reads will be saved (preferred).
-           wsname - the name of the workspace where the reads will be saved.
-           One of: objid - the id of the workspace object to save over name -
-           the name to which the workspace object will be saved Optional
-           parameters: rev_id - the shock node id containing the
-           reverse/right reads for paired end, non-interleaved reads. - OR -
-           rev_file - a local path to the reads data file containing the
-           single_genome - whether the reads are from a single genome or a
-           metagenome. Default is single genome. strain - information about
-           the organism strain that was sequenced. source - information about
-           the organism source. interleaved - specify that the fwd reads file
-           is an interleaved paired end reads file as opposed to a single end
-           reads file. Default true, ignored if rev_id is specified.
-           read_orientation_outward - whether the read orientation is outward
-           from the set of primers. Default is false and is ignored for
-           single end reads. insert_size_mean - the mean size of the genetic
-           fragments. Ignored for single end reads. insert_size_std_dev - the
-           standard deviation of the size of the genetic fragments. Ignored
-           for single end reads.) -> structure: parameter "fwd_id" of String,
-           parameter "fwd_file" of String, parameter "wsid" of Long,
-           parameter "wsname" of String, parameter "objid" of Long, parameter
-           "name" of String, parameter "rev_id" of String, parameter
-           "rev_file" of String, parameter "sequencing_tech" of String,
-           parameter "single_genome" of type "boolean" (A boolean - 0 for
-           false, 1 for true. @range (0, 1)), parameter "strain" of type
+           If web files are specified for upload, a download type one of
+           ['Direct Download', 'DropBox', 'FTP', 'Google Drive'] must be
+           specified too. The downloadable file must be uncompressed (except
+           for FTP, .gz file is acceptable). If staging files are specified
+           for upload, the staging file must be uncompressed and must be
+           accessible by current user. Note that if a reverse read file is
+           specified, it must be a local file if the forward reads file is a
+           local file, or a shock id if not. If a reverse web file or staging
+           file is specified, the reverse file category must match the
+           forward file category. If a reverse file is specified the uploader
+           will will automatically intereave the forward and reverse files
+           and store that in shock. Additionally the statistics generated are
+           on the resulting interleaved file. Required parameters: fwd_id -
+           the id of the shock node containing the reads data file: either
+           single end reads, forward/left reads, or interleaved reads. - OR -
+           fwd_file - a local path to the reads data file: either single end
+           reads, forward/left reads, or interleaved reads. - OR -
+           fwd_file_url - a download link that contains reads data file:
+           either single end reads, forward/left reads, or interleaved reads.
+           download_type - download type ['Direct Download', 'FTP',
+           'DropBox', 'Google Drive'] - OR - fwd_staging_file_name - reads
+           data file name/ subdirectory path in staging area: either single
+           end reads, forward/left reads, or interleaved reads.
+           sequencing_tech - the sequencing technology used to produce the
+           reads. (If source_reads_ref is specified then sequencing_tech must
+           not be specified) One of: wsid - the id of the workspace where the
+           reads will be saved (preferred). wsname - the name of the
+           workspace where the reads will be saved. One of: objid - the id of
+           the workspace object to save over name - the name to which the
+           workspace object will be saved Optional parameters: rev_id - the
+           shock node id containing the reverse/right reads for paired end,
+           non-interleaved reads. - OR - rev_file - a local path to the reads
+           data file containing the reverse/right reads for paired end,
+           non-interleaved reads, note the reverse file will get interleaved
+           with the forward file. - OR - rev_file_url - a download link that
+           contains reads data file: reverse/right reads for paired end,
+           non-interleaved reads. - OR - rev_staging_file_name - reads data
+           file name in staging area: reverse/right reads for paired end,
+           non-interleaved reads. single_genome - whether the reads are from
+           a single genome or a metagenome. Default is single genome. strain
+           - information about the organism strain that was sequenced. source
+           - information about the organism source. interleaved - specify
+           that the fwd reads file is an interleaved paired end reads file as
+           opposed to a single end reads file. Default true, ignored if
+           rev_id is specified. read_orientation_outward - whether the read
+           orientation is outward from the set of primers. Default is false
+           and is ignored for single end reads. insert_size_mean - the mean
+           size of the genetic fragments. Ignored for single end reads.
+           insert_size_std_dev - the standard deviation of the size of the
+           genetic fragments. Ignored for single end reads. source_reads_ref
+           - A workspace reference to a source reads object. This is used to
+           propogate user defined info from the source reads object to the
+           new reads object (used for filtering or trimming services). Note
+           this causes a passed in insert_size_mean, insert_size_std_dev,
+           sequencing_tech, read_orientation_outward, strain, source and/or
+           single_genome to throw an error.) -> structure: parameter "fwd_id"
+           of String, parameter "fwd_file" of String, parameter "wsid" of
+           Long, parameter "wsname" of String, parameter "objid" of Long,
+           parameter "name" of String, parameter "rev_id" of String,
+           parameter "rev_file" of String, parameter "sequencing_tech" of
+           String, parameter "single_genome" of type "boolean" (A boolean - 0
+           for false, 1 for true. @range (0, 1)), parameter "strain" of type
            "StrainInfo" (Information about a strain. genetic_code - the
            genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
@@ -826,7 +1043,12 @@ class ReadsUtils:
            0 for false, 1 for true. @range (0, 1)), parameter
            "read_orientation_outward" of type "boolean" (A boolean - 0 for
            false, 1 for true. @range (0, 1)), parameter "insert_size_mean" of
-           Double, parameter "insert_size_std_dev" of Double
+           Double, parameter "insert_size_std_dev" of Double, parameter
+           "source_reads_ref" of String, parameter "fwd_file_url" of String,
+           parameter "rev_file_url" of String, parameter
+           "fwd_staging_file_name" of String, parameter
+           "rev_staging_file_name" of String, parameter "download_type" of
+           String
         :returns: instance of type "UploadReadsOutput" (The output of the
            upload_reads function. obj_ref - a reference to the new Workspace
            object in the form X/Y/Z, where X is the workspace ID, Y is the
@@ -836,66 +1058,47 @@ class ReadsUtils:
         # ctx is the context object
         # return variables are: returnVal
         #BEGIN upload_reads
-        del ctx
         self.log('Starting upload reads, parsing args')
-        o, wsid, name, objid, kbtype, single_end, fwdid, revid, shock = (
-            self._proc_upload_reads_params(params))
-        # IF from shock fwdid and revid are shock nodes, if not shock they are file paths
+        o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source = (
+                                                    self._proc_upload_reads_params(params))
+        # If reads_source == 'shock', fwdsource and revsource are shock nodes
+        # If reads_source == 'web', fwdsource and revsource are urls
+        # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory
+        #                               in staging area
+        # If reads_source == 'local', fwdsource and revsource are file paths
         dfu = DataFileUtil(self.callback_url)
-        fwdpath = None
-        revpath = None
-        if shock:
-            # Grab files from Shock
-            fileinput = [{'shock_id': fwdid,
-                          'file_path': self.scratch + '/fwd/',
-                          'unpack': 'uncompress'}]
-            if revid:
-                fileinput.append({'shock_id': revid,
-                                  'file_path': self.scratch + '/rev/',
-                                  'unpack': 'uncompress'})
-            self.log('downloading reads file(s) from Shock')
-            files = dfu.shock_to_file_mass(fileinput)
-            fwdpath = files[0]["file_path"]
-            fwdname = files[0]["node_file_name"]
-            if revid:
-                revpath = files[1]["file_path"]
-                revname = files[1]["node_file_name"]
-        else:
-            # Not shock
-            fwdpath = fwdid
-            revpath = revid
-            fwdname = None
-            revname = None
-            fwdid = None
-            revid = None
+        fwdname, revname, fwdid, revid = (None,) * 4
+        ret = self._process_download(fwdsource, revsource, reads_source,
+                                     params.get('download_type'), ctx['user_id'])
+
+        fwdpath = ret.get('fwdpath')
+        revpath = ret.get('revpath')
+
+        if reads_source == 'shock':
+            fwdname = ret.get('fwdname')
+            revname = ret.get('revname')
+            fwdid = fwdsource
+            revid = revsource
 
         actualpath = fwdpath
         if revpath:
             # now interleave the files
-            actualpath = os.path.join(self.scratch, self.get_file_prefix() + '.inter.fastq')
+            actualpath = os.path.join(
+                self.scratch, self.get_file_prefix() + '.inter.fastq')
             self.interleave(None, None, fwdname, fwdid,
-                            revname, revid, fwdpath, revpath, actualpath)
+                            revname, revid, fwdpath, revpath, actualpath,
+                            reads_source, fwdsource, revsource)
 
         interleaved = 1 if not single_end else 0
         file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
-                                        'interleaved': interleaved}])
+                                              'interleaved': interleaved}])
+
         if not file_valid[0][0]['validated']:
-            validation_error_message = "Invalid FASTQ file - Path: " + actualpath + "."
-            if shock:
-                if revid:
-                    validation_error_message += (
-                        " Input Shock IDs - FWD Shock ID : " +
-                        fwdid + ", REV Shock ID : " + revid +
-                        ". FWD File Name : " + fwdname +
-                        ". REV File Name : " + revname +
-                        ". FWD Path : " + fwdpath +
-                        ". REV Path : " + revpath + ".")
-                else:
-                    validation_error_message += (" Input Shock ID : " + fwdid +
-                                                 ". File Name : " + fwdname + ".")
-            elif revpath:
-                validation_error_message += (" Input Files Paths - FWD Path : " +
-                                             fwdpath + ", REV Path : " + revpath + ".")
+            file_info = ret
+            file_info['fwdsource'] = fwdsource
+            file_info['revsource'] = revsource
+            validation_error_message = self._generate_validation_error_message(
+                reads_source, actualpath, file_info)
             raise ValueError(validation_error_message)
 
         self.log('validation complete, uploading files to shock')
@@ -907,7 +1110,7 @@ class ReadsUtils:
         fsize = uploadedfile['size']
 
         # calculate the stats for file.
-        o = self.calculate_fq_stats(o, actualpath)
+        o = self.get_fq_stats(o, actualpath)
 
         fwdfile = {'file': fhandle,
                    'encoding': 'ascii',
@@ -985,30 +1188,43 @@ class ReadsUtils:
            deviation of the size of the genetic fragments. null if
            unavailable or single end reads. int read_count - the number of
            reads in the this dataset. null if unavailable. int read_size -
-           the total size of the reads, in bases. null if unavailable. float
-           gc_content - the GC content of the reads. null if unavailable.) ->
-           structure: parameter "files" of type "ReadsFiles" (Reads file
-           information. Note that the file names provided are those *prior
-           to* interleaving or deinterleaving the reads. string fwd - the
-           path to the forward / left reads. string fwd_name - the name of
-           the forwards reads file from Shock, or if not available, from the
-           Shock handle. string rev - the path to the reverse / right reads.
-           null if the reads are single end or interleaved. string rev_name -
-           the name of the reverse reads file from Shock, or if not
-           available, from the Shock handle. null if the reads are single end
-           or interleaved. string otype - the original type of the reads. One
-           of 'single', 'paired', or 'interleaved'. string type - one of
-           'single', 'paired', or 'interleaved'.) -> structure: parameter
-           "fwd" of String, parameter "fwd_name" of String, parameter "rev"
-           of String, parameter "rev_name" of String, parameter "otype" of
-           String, parameter "type" of String, parameter "ref" of String,
-           parameter "single_genome" of type "tern" (A ternary. Allowed
+           sequencing parameter defining the expected read length. For paired
+           end reads, this is the expected length of the total of the two
+           reads. null if unavailable. float gc_content - the GC content of
+           the reads. null if unavailable. int total_bases - The total number
+           of bases in all the reads float read_length_mean - The mean read
+           length. null if unavailable. float read_length_stdev - The std dev
+           of read length. null if unavailable. string phred_type - Phred
+           type: 33 or 64. null if unavailable. int number_of_duplicates -
+           Number of duplicate reads. null if unavailable. float qual_min -
+           Minimum Quality Score. null if unavailable. float qual_max -
+           Maximum Quality Score. null if unavailable. float qual_mean - Mean
+           Quality Score. null if unavailable. float qual_stdev - Std dev of
+           Quality Scores. null if unavailable. mapping<string, float>
+           base_percentages - percentage of total bases being a particular
+           nucleotide.  Null if unavailable.) -> structure: parameter "files"
+           of type "ReadsFiles" (Reads file information. Note that the file
+           names provided are those *prior to* interleaving or deinterleaving
+           the reads. string fwd - the path to the forward / left reads.
+           string fwd_name - the name of the forwards reads file from Shock,
+           or if not available, from the Shock handle. string rev - the path
+           to the reverse / right reads. null if the reads are single end or
+           interleaved. string rev_name - the name of the reverse reads file
+           from Shock, or if not available, from the Shock handle. null if
+           the reads are single end or interleaved. string otype - the
+           original type of the reads. One of 'single', 'paired', or
+           'interleaved'. string type - one of 'single', 'paired', or
+           'interleaved'.) -> structure: parameter "fwd" of String, parameter
+           "fwd_name" of String, parameter "rev" of String, parameter
+           "rev_name" of String, parameter "otype" of String, parameter
+           "type" of String, parameter "ref" of String, parameter
+           "single_genome" of type "tern" (A ternary. Allowed values are
+           'false', 'true', or null. Any other value is invalid.), parameter
+           "read_orientation_outward" of type "tern" (A ternary. Allowed
            values are 'false', 'true', or null. Any other value is invalid.),
-           parameter "read_orientation_outward" of type "tern" (A ternary.
-           Allowed values are 'false', 'true', or null. Any other value is
-           invalid.), parameter "sequencing_tech" of String, parameter
-           "strain" of type "StrainInfo" (Information about a strain.
-           genetic_code - the genetic code of the strain. See
+           parameter "sequencing_tech" of String, parameter "strain" of type
+           "StrainInfo" (Information about a strain. genetic_code - the
+           genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information
@@ -1053,7 +1269,13 @@ class ReadsUtils:
            for a project encompassing a piece of data at its source. @id
            external), parameter "insert_size_mean" of Double, parameter
            "insert_size_std_dev" of Double, parameter "read_count" of Long,
-           parameter "read_size" of Long, parameter "gc_content" of Double
+           parameter "read_size" of Long, parameter "gc_content" of Double,
+           parameter "total_bases" of Long, parameter "read_length_mean" of
+           Double, parameter "read_length_stdev" of Double, parameter
+           "phred_type" of String, parameter "number_of_duplicates" of Long,
+           parameter "qual_min" of Double, parameter "qual_max" of Double,
+           parameter "qual_mean" of Double, parameter "qual_stdev" of Double,
+           parameter "base_percentages" of mapping from String to Double
         """
         # ctx is the context object
         # return variables are: output

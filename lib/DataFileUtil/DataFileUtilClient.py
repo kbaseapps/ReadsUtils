@@ -26,10 +26,10 @@ class DataFileUtil(object):
             trust_all_ssl_certificates=False,
             auth_svc='https://kbase.us/services/authorization/Sessions/Login',
             service_ver='release',
-            async_job_check_time_ms=100, async_job_check_time_scale_percent=150,
+            async_job_check_time_ms=100, async_job_check_time_scale_percent=150, 
             async_job_check_max_time_ms=300000):
         if url is None:
-            url = 'https://kbase.us/services/njs_wrapper'
+            raise ValueError('A url is required')
         self._service_ver = service_ver
         self._client = _BaseClient(
             url, timeout=timeout, user_id=user_id, password=password,
@@ -44,8 +44,9 @@ class DataFileUtil(object):
         return self._client._check_job('DataFileUtil', job_id)
 
     def _shock_to_file_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.shock_to_file', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.shock_to_file', [params],
+             self._service_ver, context)
 
     def shock_to_file(self, params, context=None):
         """
@@ -88,8 +89,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -97,8 +97,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _shock_to_file_mass_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.shock_to_file_mass', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.shock_to_file_mass', [params],
+             self._service_ver, context)
 
     def shock_to_file_mass(self, params, context=None):
         """
@@ -141,8 +142,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -150,8 +150,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _file_to_shock_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.file_to_shock', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.file_to_shock', [params],
+             self._service_ver, context)
 
     def file_to_shock(self, params, context=None):
         """
@@ -169,15 +170,16 @@ class DataFileUtil(object):
            compressed, it will be skipped. If file_path is a directory and
            tarring or zipping is specified, the created file name will be set
            to the directory name, possibly overwriting an existing file.
-           Attempting to pack the root directory is an error. The allowed
-           values are: gzip - gzip the file given by file_path. targz - tar
-           and gzip the directory specified by the directory portion of the
-           file_path into the file specified by the file_path. zip - as targz
-           but zip the directory.) -> structure: parameter "file_path" of
-           String, parameter "attributes" of mapping from String to
-           unspecified object, parameter "make_handle" of type "boolean" (A
-           boolean - 0 for false, 1 for true. @range (0, 1)), parameter
-           "pack" of String
+           Attempting to pack the root directory is an error. Do not attempt
+           to pack the scratch space root as noted in the module description.
+           The allowed values are: gzip - gzip the file given by file_path.
+           targz - tar and gzip the directory specified by the directory
+           portion of the file_path into the file specified by the file_path.
+           zip - as targz but zip the directory.) -> structure: parameter
+           "file_path" of String, parameter "attributes" of mapping from
+           String to unspecified object, parameter "make_handle" of type
+           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1)),
+           parameter "pack" of String
         :returns: instance of type "FileToShockOutput" (Output of the
            file_to_shock function. shock_id - the ID of the new Shock node.
            handle - the new handle, if created. Null otherwise.
@@ -199,8 +201,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -208,15 +209,16 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _unpack_file_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.unpack_file', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.unpack_file', [params],
+             self._service_ver, context)
 
     def unpack_file(self, params, context=None):
         """
         Using the same logic as unpacking a Shock file, this method will cause
         any bzip or gzip files to be uncompressed, and then unpack tar and zip
-        archive files (uncompressing gzipped or bzipped archive files if
-        necessary). If the file is an archive, it will be unbundled into the
+        archive files (uncompressing gzipped or bzipped archive files if 
+        necessary). If the file is an archive, it will be unbundled into the 
         directory containing the original output file.
         :param params: instance of type "UnpackFileParams" -> structure:
            parameter "file_path" of String
@@ -228,8 +230,48 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
+            if async_job_check_time > self._client.async_job_check_max_time:
+                async_job_check_time = self._client.async_job_check_max_time
+            job_state = self._check_job(job_id)
+            if job_state['finished']:
+                return job_state['result'][0]
+
+    def _pack_file_submit(self, params, context=None):
+        return self._client._submit_job(
+             'DataFileUtil.pack_file', [params],
+             self._service_ver, context)
+
+    def pack_file(self, params, context=None):
+        """
+        Pack a file or directory into gzip, targz, or zip archives.
+        :param params: instance of type "PackFileParams" (Input for the
+           pack_file function. Required parameters: file_path - the location
+           of the file (or directory if using the pack parameter) to load to
+           Shock. pack - The format into which the file or files will be
+           packed. The file_path argument will be appended with the
+           appropriate file extension prior to writing. For gzips only, if
+           the file extension denotes that the file is already compressed, it
+           will be skipped. If file_path is a directory and tarring or
+           zipping is specified, the created file name will be set to the
+           directory name, possibly overwriting an existing file. Attempting
+           to pack the root directory is an error. Do not attempt to pack the
+           scratch space root as noted in the module description. The allowed
+           values are: gzip - gzip the file given by file_path. targz - tar
+           and gzip the directory specified by the directory portion of the
+           file_path into the file specified by the file_path. zip - as targz
+           but zip the directory.) -> structure: parameter "file_path" of
+           String, parameter "pack" of String
+        :returns: instance of type "PackFileResult" (Output from the
+           pack_file function. file_path - the path to the packed file.) ->
+           structure: parameter "file_path" of String
+        """
+        job_id = self._pack_file_submit(params, context)
+        async_job_check_time = self._client.async_job_check_time
+        while True:
+            time.sleep(async_job_check_time)
+            async_job_check_time = (async_job_check_time *
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -237,8 +279,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _package_for_download_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.package_for_download', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.package_for_download', [params],
+             self._service_ver, context)
 
     def package_for_download(self, params, context=None):
         """
@@ -249,16 +292,17 @@ class DataFileUtil(object):
            file extension prior to writing. If it is a directory, file name
            of the created archive will be set to the directory name followed
            by '.zip', possibly overwriting an existing file. Attempting to
-           pack the root directory is an error. ws_ref - list of references
-           to workspace objects which will be used to produce info-files in
-           JSON format containing workspace metadata and provenane structures
-           each. It produces new files in folder pointed by file_path (or
-           folder containing file pointed by file_path if it's not folder).
-           Optional parameters: attributes - user-specified attributes to
-           save to the Shock node along with the file.) -> structure:
-           parameter "file_path" of String, parameter "attributes" of mapping
-           from String to unspecified object, parameter "ws_refs" of list of
-           String
+           pack the root directory is an error. Do not attempt to pack the
+           scratch space root as noted in the module description. ws_ref -
+           list of references to workspace objects which will be used to
+           produce info-files in JSON format containing workspace metadata
+           and provenance structures. It produces new files in folder pointed
+           by file_path (or folder containing file pointed by file_path if
+           it's not folder). Optional parameters: attributes - user-specified
+           attributes to save to the Shock node along with the file.) ->
+           structure: parameter "file_path" of String, parameter "attributes"
+           of mapping from String to unspecified object, parameter "ws_refs"
+           of list of String
         :returns: instance of type "PackageForDownloadOutput" (Output of the
            package_for_download function. shock_id - the ID of the new Shock
            node. node_file_name - the name of the file stored in Shock. size
@@ -271,8 +315,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -280,8 +323,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _file_to_shock_mass_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.file_to_shock_mass', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.file_to_shock_mass', [params],
+             self._service_ver, context)
 
     def file_to_shock_mass(self, params, context=None):
         """
@@ -299,15 +343,16 @@ class DataFileUtil(object):
            compressed, it will be skipped. If file_path is a directory and
            tarring or zipping is specified, the created file name will be set
            to the directory name, possibly overwriting an existing file.
-           Attempting to pack the root directory is an error. The allowed
-           values are: gzip - gzip the file given by file_path. targz - tar
-           and gzip the directory specified by the directory portion of the
-           file_path into the file specified by the file_path. zip - as targz
-           but zip the directory.) -> structure: parameter "file_path" of
-           String, parameter "attributes" of mapping from String to
-           unspecified object, parameter "make_handle" of type "boolean" (A
-           boolean - 0 for false, 1 for true. @range (0, 1)), parameter
-           "pack" of String
+           Attempting to pack the root directory is an error. Do not attempt
+           to pack the scratch space root as noted in the module description.
+           The allowed values are: gzip - gzip the file given by file_path.
+           targz - tar and gzip the directory specified by the directory
+           portion of the file_path into the file specified by the file_path.
+           zip - as targz but zip the directory.) -> structure: parameter
+           "file_path" of String, parameter "attributes" of mapping from
+           String to unspecified object, parameter "make_handle" of type
+           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1)),
+           parameter "pack" of String
         :returns: instance of list of type "FileToShockOutput" (Output of the
            file_to_shock function. shock_id - the ID of the new Shock node.
            handle - the new handle, if created. Null otherwise.
@@ -329,8 +374,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -338,8 +382,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _copy_shock_node_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.copy_shock_node', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.copy_shock_node', [params],
+             self._service_ver, context)
 
     def copy_shock_node(self, params, context=None):
         """
@@ -370,8 +415,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -379,8 +423,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _own_shock_node_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.own_shock_node', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.own_shock_node', [params],
+             self._service_ver, context)
 
     def own_shock_node(self, params, context=None):
         """
@@ -419,8 +464,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -428,8 +472,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _ws_name_to_id_submit(self, name, context=None):
-        return self._client._submit_job('DataFileUtil.ws_name_to_id', [name],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.ws_name_to_id', [name],
+             self._service_ver, context)
 
     def ws_name_to_id(self, name, context=None):
         """
@@ -442,8 +487,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -451,8 +495,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _save_objects_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.save_objects', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.save_objects', [params],
+             self._service_ver, context)
 
     def save_objects(self, params, context=None):
         """
@@ -502,8 +547,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -511,8 +555,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _get_objects_submit(self, params, context=None):
-        return self._client._submit_job('DataFileUtil.get_objects', [params],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.get_objects', [params],
+             self._service_ver, context)
 
     def get_objects(self, params, context=None):
         """
@@ -556,8 +601,7 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
@@ -565,8 +609,9 @@ class DataFileUtil(object):
                 return job_state['result'][0]
 
     def _versions_submit(self, context=None):
-        return self._client._submit_job('DataFileUtil.versions', [],
-                                        self._service_ver, context)
+        return self._client._submit_job(
+             'DataFileUtil.versions', [],
+             self._service_ver, context)
 
     def versions(self, context=None):
         """
@@ -579,23 +624,83 @@ class DataFileUtil(object):
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)
             if job_state['finished']:
                 return job_state['result']
 
-    def status(self, context=None):
-        job_id = self._client._submit_job('DataFileUtil.status',
-                                          [], self._service_ver, context)
+    def _download_staging_file_submit(self, params, context=None):
+        return self._client._submit_job(
+             'DataFileUtil.download_staging_file', [params],
+             self._service_ver, context)
+
+    def download_staging_file(self, params, context=None):
+        """
+        Download a staging area file to scratch area
+        :param params: instance of type "DownloadStagingFileParams" (Input
+           parameters for the "download_staging_file" function. Required
+           parameters: staging_file_subdir_path: subdirectory file path e.g.
+           for file: /data/bulk/user_name/file_name staging_file_subdir_path
+           is file_name for file:
+           /data/bulk/user_name/subdir_1/subdir_2/file_name
+           staging_file_subdir_path is subdir_1/subdir_2/file_name) ->
+           structure: parameter "staging_file_subdir_path" of String
+        :returns: instance of type "DownloadStagingFileOutput" (Results from
+           the download_staging_file function. copy_file_path: copied file
+           scratch area path) -> structure: parameter "copy_file_path" of
+           String
+        """
+        job_id = self._download_staging_file_submit(params, context)
         async_job_check_time = self._client.async_job_check_time
         while True:
             time.sleep(async_job_check_time)
             async_job_check_time = (async_job_check_time *
-                                    self._client.async_job_check_time_scale_percent /
-                                    100.0)
+                self._client.async_job_check_time_scale_percent / 100.0)
+            if async_job_check_time > self._client.async_job_check_max_time:
+                async_job_check_time = self._client.async_job_check_max_time
+            job_state = self._check_job(job_id)
+            if job_state['finished']:
+                return job_state['result'][0]
+
+    def _download_web_file_submit(self, params, context=None):
+        return self._client._submit_job(
+             'DataFileUtil.download_web_file', [params],
+             self._service_ver, context)
+
+    def download_web_file(self, params, context=None):
+        """
+        Download a web file to scratch area
+        :param params: instance of type "DownloadWebFileParams" (Input
+           parameters for the "download_web_file" function. Required
+           parameters: file_url: file URL download_type: one of ['Direct
+           Download', 'FTP', 'DropBox', 'Google Drive']) -> structure:
+           parameter "file_url" of String, parameter "download_type" of String
+        :returns: instance of type "DownloadWebFileOutput" (Results from the
+           download_web_file function. copy_file_path: copied file scratch
+           area path) -> structure: parameter "copy_file_path" of String
+        """
+        job_id = self._download_web_file_submit(params, context)
+        async_job_check_time = self._client.async_job_check_time
+        while True:
+            time.sleep(async_job_check_time)
+            async_job_check_time = (async_job_check_time *
+                self._client.async_job_check_time_scale_percent / 100.0)
+            if async_job_check_time > self._client.async_job_check_max_time:
+                async_job_check_time = self._client.async_job_check_max_time
+            job_state = self._check_job(job_id)
+            if job_state['finished']:
+                return job_state['result'][0]
+
+    def status(self, context=None):
+        job_id = self._client._submit_job('DataFileUtil.status', 
+            [], self._service_ver, context)
+        async_job_check_time = self._client.async_job_check_time
+        while True:
+            time.sleep(async_job_check_time)
+            async_job_check_time = (async_job_check_time *
+                self._client.async_job_check_time_scale_percent / 100.0)
             if async_job_check_time > self._client.async_job_check_max_time:
                 async_job_check_time = self._client.async_job_check_max_time
             job_state = self._check_job(job_id)

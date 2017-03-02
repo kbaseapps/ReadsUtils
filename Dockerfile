@@ -7,26 +7,33 @@ MAINTAINER KBase Developer
 
 # RUN apt-get update
 
-RUN cd /opt \
-    && git clone https://github.com/kbase/jars \
-    && mkdir lib \
-    && cp jars/lib/jars/FastaValidator/FastaValidator-1.0.jar lib \
-    && git clone https://github.com/statgen/libStatGen.git \
-    && cd libStatGen \
-    && make \
-    && cd .. \
-    && git clone https://github.com/statgen/fastQValidator.git \
-    && cd fastQValidator \
-    && make \
-    && cd .. \
-    && sudo apt-get install python-dev libffi-dev libssl-dev \
-    && pip install pyopenssl ndg-httpsclient pyasn1 \
-    && pip install requests --upgrade \
-    && pip install 'requests[security]' --upgrade \
-    && pip install six \
+RUN sudo apt-get install python-dev libffi-dev libssl-dev
+RUN pip install cffi --upgrade
+RUN pip install pyopenssl --upgrade
+RUN pip install ndg-httpsclient --upgrade
+RUN pip install pyasn1 --upgrade
+RUN pip install requests --upgrade \
+    && pip install 'requests[security]' --upgrade
+
+RUN pip install six \
     && pip install ipython \
     && apt-get install nano \
     && apt-get install tree
+
+RUN cd /opt \
+    && git clone https://github.com/kbase/jars \
+    && mkdir lib \
+    && cp jars/lib/jars/FastaValidator/FastaValidator-1.0.jar lib
+
+RUN cd /opt \
+    && git clone https://github.com/statgen/libStatGen.git \
+    && cd libStatGen \
+    && make
+
+RUN cd /opt \
+    && git clone https://github.com/statgen/fastQValidator.git \
+    && cd fastQValidator \
+    && make
 
 ENV PATH $PATH:/opt/fastQValidator/bin/
 
@@ -34,7 +41,7 @@ ENV PATH $PATH:/opt/fastQValidator/bin/
 
 COPY ./ /kb/module
 RUN mkdir -p /kb/module/work
-RUN chmod 777 /kb/module
+RUN chmod -R a+rw /kb/module
 
 WORKDIR /kb/module
 
