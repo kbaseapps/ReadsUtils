@@ -21,6 +21,7 @@ from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
 from Workspace.baseclient import ServerError as WorkspaceError
 from Workspace.WorkspaceClient import Workspace
+from ReadsUtils.authclient import KBaseAuth as _KBaseAuth
 
 try:
     from ConfigParser import ConfigParser  # py2 @UnusedImport
@@ -43,10 +44,21 @@ class ReadsUtilsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.token = environ.get('KB_AUTH_TOKEN', None)
+        config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
+        cls.cfg = {}
+        config = ConfigParser()
+        config.read(config_file)
+        for nameval in config.items('ReadsUtils'):
+            cls.cfg[nameval[0]] = nameval[1]
+        authServiceUrl = cls.cfg.get('auth-service-url',
+                "https://kbase.us/services/authorization/Sessions/Login")
+        auth_client = _KBaseAuth(authServiceUrl)
+        user_id = auth_client.get_user(cls.token)
         # WARNING: don't call any logging methods on the context object,
         # it'll result in a NoneType error
         cls.ctx = MethodContext(None)
         cls.ctx.update({'token': cls.token,
+                        'user_id': user_id,
                         'provenance': [
                             {'service': 'ReadsUtils',
                              'method': 'please_never_use_it_in_production',
@@ -54,12 +66,6 @@ class ReadsUtilsTest(unittest.TestCase):
                              }],
                         'authenticated': 1,
                         'user_id': ''})
-        config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
-        cls.cfg = {}
-        config = ConfigParser()
-        config.read(config_file)
-        for nameval in config.items('ReadsUtils'):
-            cls.cfg[nameval[0]] = nameval[1]
         cls.shockURL = cls.cfg['shock-url']
         cls.ws = Workspace(cls.cfg['workspace-url'], token=cls.token)
         cls.hs = HandleService(url=cls.cfg['handle-service-url'],

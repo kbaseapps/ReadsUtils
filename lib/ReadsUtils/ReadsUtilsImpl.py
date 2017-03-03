@@ -32,9 +32,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.4"
-    GIT_URL = "git@github.com:Tianhao-Gu/ReadsUtils.git"
-    GIT_COMMIT_HASH = "d96fa904641d8e5900be2bd3be62face57990887"
+    VERSION = "0.3.8"
+    GIT_URL = "https://github.com/rsutormin/ReadsUtils"
+    GIT_COMMIT_HASH = "0d6ce8b60d2bb6906f06f53853562761d6b37a57"
 
     #BEGIN_CLASS_HEADER
 
@@ -843,6 +843,7 @@ class ReadsUtils:
         #END_CONSTRUCTOR
         pass
 
+
     def validateFASTQ(self, ctx, params):
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
@@ -1376,7 +1377,6 @@ class ReadsUtils:
                              'output is not type dict as required.')
         # return the results
         return [output]
-
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx
