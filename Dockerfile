@@ -15,8 +15,9 @@ RUN pip install pyasn1 --upgrade
 RUN pip install requests --upgrade \
     && pip install 'requests[security]' --upgrade
 
+# Debug tools = all below six
 RUN pip install six \
-    && pip install ipython \
+    && pip install ipython==5.3.0 \
     && apt-get install nano \
     && apt-get install tree
 
