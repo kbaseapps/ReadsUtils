@@ -1207,7 +1207,11 @@ class ReadsUtilsTest(unittest.TestCase):
         file_md5 = hashlib.md5(open(path, 'rb').read()).hexdigest()
         libfile = lib['file']
         self.assertEqual(file_md5, md5)
-        self.assertEqual(lib['size'], size)
+        size_buffer = 0.15  # allow +-15% size to permit a chagne in compression algorithm
+        min_size = int(float(size) * size_buffer - float(size))
+        max_size = int(float(size) * size_buffer + float(size))
+        self.assertGreater(lib['size'], min_size)
+        self.assertLess(lib['size'], max_size)
         self.assertEqual(lib['type'], 'fq')
         self.assertEqual(lib['encoding'], 'ascii')
 
