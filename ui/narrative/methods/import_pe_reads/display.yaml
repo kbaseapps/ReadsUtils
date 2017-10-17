@@ -19,13 +19,13 @@ suggestions :
 
 parameters :
     fwd :
-        ui-name : READS FILE
+        ui-name : FIRST PAIRED END READS FILE OR SINGLE INTERLEAVED
         short-hint : File of short reads containing a paired end library in FASTQ format
         long-hint  : |
             Valid file extensions for FASTQ: .fastq, .fnq, .fq. Gzipped or bzipped
             files are acceptable.
     rev :
-        ui-name : READS FILE
+        ui-name : SECOND PAIRED END READS FILE (IGNORE IF FIRST FILE WAS INTERLEAVED)
         short-hint : Optional second short read file containing a paired end library in FASTQ format
         long-hint  : Not needed in an interleaved library
 

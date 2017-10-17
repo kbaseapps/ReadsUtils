@@ -19,11 +19,11 @@ suggestions :
 
 parameters :
     reads :
-        ui-name : READS FILE
+        ui-name : SINGLE END READS FILE
         short-hint : Short read file containing a single end library in FASTQ format
         long-hint  : |
             Valid file extensions for FASTQ: .fastq, .fnq, .fq. Gzipped or bzipped
-            files are acceptable.
+            files are acceptable. For paired end reads or interleaved use the PAIRED END READS upload.
 
     objname :
         ui-name : OBJECT NAME
