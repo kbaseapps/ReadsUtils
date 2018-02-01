@@ -5,7 +5,7 @@ tooltip  : |
 
            Valid file extensions for FASTQ: .fastq, .fnq, .fq.
            Gzipped (.gz, .gzip) or bzipped files (.bz, .bz2, .bzip, .bzip2) are acceptable.
-           (<i>Note: .zip files are not currently supported<i>)
+           (<i>Note: .zip files are not currently supported</i>)
 
 screenshots :
     []
