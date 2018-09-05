@@ -5,10 +5,8 @@ MAINTAINER KBase Developer
 # Insert apt-get instructions here to install
 # any required dependencies for your module.
 
-RUN apt-get clean
-RUN apt-get update
+# RUN apt-get update
 
-RUN sudo apt-get install -y python-dev libffi-dev libssl-dev
 RUN pip install cffi --upgrade
 RUN pip install pyopenssl --upgrade
 RUN pip install ndg-httpsclient --upgrade
