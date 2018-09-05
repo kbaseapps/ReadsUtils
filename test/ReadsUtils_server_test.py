@@ -617,18 +617,24 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_FASTQ_multiple(self):
         f1 = 'data/Sample1.fastq'
         f2 = 'data/Sample4_interleaved_NCBI_SRA.fastq'
+        f3 = 'data/Sample1.FQ'  # testing upper case file extension
         fn1 = os.path.basename(f1)
         fn2 = os.path.basename(f2)
+        fn3 = os.path.basename(f3)
         nfn1 = self.cfg['scratch'] + '/' + fn1
         nfn2 = self.cfg['scratch'] + '/' + fn2
+        nfn3 = self.cfg['scratch'] + '/' + fn3
         shutil.copyfile(f1, nfn1)
         shutil.copyfile(f2, nfn2)
+        shutil.copyfile(f3, nfn3)
         self.assertEqual(self.impl.validateFASTQ(
             self.ctx, [{'file_path': nfn1,
                         'interleaved': 0},
                        {'file_path': nfn2,
-                        'interleaved': 1}
-                       ])[0], [{'validated': 1}, {'validated': 1}])
+                        'interleaved': 1},
+                       {'file_path': nfn3,
+                        'interleaved': 0}
+                       ])[0], [{'validated': 1}, {'validated': 1}, {'validated': 1}])
 
     def check_fq(self, filepath, interleaved, ok):
         fn = os.path.basename(filepath)
