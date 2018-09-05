@@ -617,18 +617,24 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_FASTQ_multiple(self):
         f1 = 'data/Sample1.fastq'
         f2 = 'data/Sample4_interleaved_NCBI_SRA.fastq'
+        f3 = 'data/Sample1.FQ'  # testing upper case file extension
         fn1 = os.path.basename(f1)
         fn2 = os.path.basename(f2)
+        fn3 = os.path.basename(f3)
         nfn1 = self.cfg['scratch'] + '/' + fn1
         nfn2 = self.cfg['scratch'] + '/' + fn2
+        nfn3 = self.cfg['scratch'] + '/' + fn3
         shutil.copyfile(f1, nfn1)
         shutil.copyfile(f2, nfn2)
+        shutil.copyfile(f3, nfn3)
         self.assertEqual(self.impl.validateFASTQ(
             self.ctx, [{'file_path': nfn1,
                         'interleaved': 0},
                        {'file_path': nfn2,
-                        'interleaved': 1}
-                       ])[0], [{'validated': 1}, {'validated': 1}])
+                        'interleaved': 1},
+                       {'file_path': nfn3,
+                        'interleaved': 0}
+                       ])[0], [{'validated': 1}, {'validated': 1}, {'validated': 1}])
 
     def check_fq(self, filepath, interleaved, ok):
         fn = os.path.basename(filepath)
@@ -669,7 +675,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -693,7 +699,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -716,7 +722,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 0)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 604, 'Sample5_noninterleaved.1.fastq.gz',
+        self.check_lib(d['lib'], 611, 'Sample5_noninterleaved.1.fastq.gz',
                        '140a61c7f183dd6a2b93ef195bb3ec63')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -738,7 +744,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 604, 'Sample5_noninterleaved.1.fastq.gz',
+        self.check_lib(d['lib'], 611, 'Sample5_noninterleaved.1.fastq.gz',
                        '140a61c7f183dd6a2b93ef195bb3ec63')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -790,7 +796,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["gc_content"], 0.44)
         self.assertEqual(d["read_length_mean"], 50)
         self.assertEqual(d["read_length_stdev"], 0)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -824,7 +830,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 2491520, file_name,
+        self.check_lib(d['lib1'], 2696029, file_name,
                        '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
@@ -881,7 +887,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["gc_content"], 0.679273)
         self.assertEqual(d["read_length_mean"], 100)
         self.assertEqual(d["read_length_stdev"], 0)
-        self.check_lib(d['lib1'], 2491520, file_name,
+        self.check_lib(d['lib1'], 2696029, file_name,
                        '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
@@ -932,7 +938,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d["gc_content"], 0.6)
         self.assertEqual(d["read_length_mean"], 251)
         self.assertEqual(d["read_length_stdev"], 0)
-        self.check_lib(d['lib1'], 1050, 'Sample5_interleaved.fastq.gz',
+        self.check_lib(d['lib1'], 1063, 'Sample5_interleaved.fastq.gz',
                        '971a5f445055c85fd45b17459e15e3ed')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
@@ -2843,7 +2849,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                     'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -2880,7 +2886,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 2491520, file_name,
+        self.check_lib(d['lib1'], 2696029, file_name,
                         '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
@@ -2908,7 +2914,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -2946,7 +2952,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 2491520, file_name,
+        self.check_lib(d['lib1'], 2696029, file_name,
                        '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
@@ -2972,7 +2978,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -2998,7 +3004,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -3034,7 +3040,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['read_orientation_outward'], 0)
         self.assertEqual(d['insert_size_mean'], None)
         self.assertEqual(d['insert_size_std_dev'], None)
-        self.check_lib(d['lib1'], 2491520, file_name,
+        self.check_lib(d['lib1'], 2696029, file_name,
                        '1c58d7d59c656db39cedcb431376514b')
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
@@ -3074,7 +3080,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -3114,7 +3120,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -3154,7 +3160,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -3182,7 +3188,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
@@ -3210,7 +3216,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
         self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2835, 'Sample1.fastq.gz',
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)

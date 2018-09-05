@@ -32,9 +32,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.8"
-    GIT_URL = "https://github.com/rsutormin/ReadsUtils"
-    GIT_COMMIT_HASH = "0d6ce8b60d2bb6906f06f53853562761d6b37a57"
+    VERSION = "0.3.9"
+    GIT_URL = "git@github.com:Tianhao-Gu/ReadsUtils.git"
+    GIT_COMMIT_HASH = "b50243a0c1bf4312b255b7e830442bf6f7883345"
 
     #BEGIN_CLASS_HEADER
 
@@ -680,7 +680,7 @@ class ReadsUtils:
         file_path = params.get('file_path')
         if not file_path or not os.path.isfile(file_path):
             raise ValueError('No such file: ' + str(file_path))
-        if os.path.splitext(file_path)[1] not in self.FASTA_EXT:
+        if os.path.splitext(file_path)[1].lower() not in self.FASTA_EXT:
             raise ValueError('File {} is not a FASTA file'.format(file_path))
         self.log('Validating FASTA file ' + file_path)
         # TODO per transform service notes, we need a better fasta validator
@@ -872,7 +872,8 @@ class ReadsUtils:
             file_path = p.get('file_path')
             if not file_path or not os.path.isfile(file_path):
                 raise ValueError('No such file: ' + str(file_path))
-            if os.path.splitext(file_path)[1] not in self.FASTQ_EXT:
+
+            if os.path.splitext(file_path)[1].lower() not in self.FASTQ_EXT:
                 raise ValueError('File {} is not a FASTQ file'
                                  .format(file_path))
             self.log('Validating FASTQ file ' + file_path)

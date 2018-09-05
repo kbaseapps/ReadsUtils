@@ -1,19 +1,9 @@
-FROM kbase/kbase:sdkbase.latest
+FROM kbase/kbase:sdkbase2.latest
 MAINTAINER KBase Developer
 # -----------------------------------------
 
 # Insert apt-get instructions here to install
 # any required dependencies for your module.
-
-# RUN apt-get update
-
-RUN sudo apt-get install python-dev libffi-dev libssl-dev
-RUN pip install cffi --upgrade
-RUN pip install pyopenssl --upgrade
-RUN pip install ndg-httpsclient --upgrade
-RUN pip install pyasn1 --upgrade
-RUN pip install requests --upgrade \
-    && pip install 'requests[security]' --upgrade
 
 # Debug tools = all below six
 RUN pip install six \
