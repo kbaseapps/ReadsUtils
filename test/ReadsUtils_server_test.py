@@ -1,27 +1,28 @@
+import ftplib
 import hashlib
 import inspect
 import os
+import re
 import shutil
 import subprocess
 import tempfile
 import time
 import unittest
-import re
 from os import environ
 from pprint import pprint
 from zipfile import ZipFile
-import ftplib
-from mock import patch
 
 import requests
+from mock import patch
+
 from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport
-from DataFileUtil.baseclient import ServerError as DFUError
-from DataFileUtil.DataFileUtilClient import DataFileUtil
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
-from Workspace.baseclient import ServerError as WorkspaceError
-from Workspace.WorkspaceClient import Workspace
-from ReadsUtils.authclient import KBaseAuth as _KBaseAuth
+from installed_clients.DataFileUtilClient import DataFileUtil
+from installed_clients.WorkspaceClient import Workspace
+from installed_clients.authclient import KBaseAuth as _KBaseAuth
+from installed_clients.baseclient import ServerError as DFUError
+from installed_clients.baseclient import ServerError as WorkspaceError
 
 try:
     from ConfigParser import ConfigParser  # py2 @UnusedImport
@@ -1492,8 +1493,8 @@ class ReadsUtilsTest(unittest.TestCase):
             'Invalid FASTQ file - Path: /kb/module/test/data/Sample1_invalid.fastq.')
 
     def mock_download_staging_file(params):
-        print 'Mocking DataFileUtilClient.download_staging_file'
-        print params
+        print('Mocking DataFileUtilClient.download_staging_file')
+        print(params)
 
         fq_filename = params.get('staging_file_subdir_path')
         fq_path = os.path.join('/kb/module/work/tmp', fq_filename)

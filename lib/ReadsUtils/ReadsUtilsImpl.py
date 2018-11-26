@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 #BEGIN_HEADER
-import time
-import subprocess
 import os
-import tempfile
 import shutil
-from pprint import pformat
-from DataFileUtil.DataFileUtilClient import DataFileUtil
-from DataFileUtil.baseclient import ServerError as DFUError
-from kb_ea_utils.kb_ea_utilsClient import kb_ea_utils
-from Workspace.WorkspaceClient import Workspace
-from Workspace.baseclient import ServerError as WorkspaceError
-from numbers import Number
-import six
+import subprocess
+import tempfile
+import time
 import uuid
+from numbers import Number
+from pprint import pformat
+
+import six
+
+from installed_clients.DataFileUtilClient import DataFileUtil
+from installed_clients.WorkspaceClient import Workspace
+from installed_clients.baseclient import ServerError as DFUError
+from installed_clients.baseclient import ServerError as WorkspaceError
+from installed_clients.kb_ea_utilsClient import kb_ea_utils
 #END_HEADER
 
 
@@ -430,7 +432,7 @@ class ReadsUtils:
                         shock_filename, shock_node, f,
                         reads_source, filesource):
         r = ''
-        for i in xrange(4):
+        for i in range(4):
             l = f.readline()
             while (l == '\n'):  # skip blank lines
                 l = f.readline()
