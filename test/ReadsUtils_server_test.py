@@ -15,12 +15,12 @@ from mock import patch
 
 import requests
 from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport
-from DataFileUtil.baseclient import ServerError as DFUError
-from DataFileUtil.DataFileUtilClient import DataFileUtil
+from installed_clients.baseclient import ServerError as DFUError
+from installed_clients.DataFileUtilClient import DataFileUtil
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
-from Workspace.baseclient import ServerError as WorkspaceError
-from Workspace.WorkspaceClient import Workspace
+from installed_clients.baseclient import ServerError as WorkspaceError
+from installed_clients.WorkspaceClient import Workspace
 from ReadsUtils.authclient import KBaseAuth as _KBaseAuth
 
 try:
