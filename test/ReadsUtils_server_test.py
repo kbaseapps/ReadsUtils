@@ -1,3 +1,4 @@
+import ftplib
 import hashlib
 import inspect
 import os
@@ -6,27 +7,21 @@ import subprocess
 import tempfile
 import time
 import unittest
-import re
+from configparser import ConfigParser
 from os import environ
 from pprint import pprint
+from unittest.mock import patch
 from zipfile import ZipFile
-import ftplib
-from mock import patch
 
 import requests
-from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport
-from installed_clients.baseclient import ServerError as DFUError
-from installed_clients.DataFileUtilClient import DataFileUtil
+
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
 from ReadsUtils.ReadsUtilsServer import MethodContext
-from installed_clients.baseclient import ServerError as WorkspaceError
-from installed_clients.WorkspaceClient import Workspace
 from ReadsUtils.authclient import KBaseAuth as _KBaseAuth
-
-try:
-    from ConfigParser import ConfigParser  # py2 @UnusedImport
-except:
-    from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
+from installed_clients.AbstractHandleClient import AbstractHandle as HandleService
+from installed_clients.DataFileUtilClient import DataFileUtil
+from installed_clients.WorkspaceClient import Workspace
+from installed_clients.baseclient import ServerError
 
 
 class TestError(Exception):
@@ -165,8 +160,7 @@ class ReadsUtilsTest(unittest.TestCase):
         if single_end and rev_reads:
             raise ValueError('u r supr dum')
 
-        print('\n===============staging data for object ' + wsobjname +
-              '================')
+        print(f'\n===============staging data for object {wsobjname}================')
         print('uploading forward reads file ' + fwd_reads['file'])
         fwd_id, fwd_handle_id, fwd_md5, fwd_size = \
             cls.upload_file_to_shock_and_get_handle(fwd_reads['file'])
@@ -288,7 +282,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def setupTestData(cls):
         print('Shock url ' + cls.shockURL)
         print('WS url ' + cls.ws._client.url)
-        print('Handle service url ' + cls.hs.url)
+        print('Handle service url ' + cls.hs._client.url)
         print('staging data')
         sq = {'sequencing_tech': 'fake data'}
         cls.gzip('data/small.forward.fq', 'data/small.reverse.fq',
@@ -542,7 +536,7 @@ class ReadsUtilsTest(unittest.TestCase):
                      'read_count': None,
                      'read_orientation_outward': 'false',
                      'read_size': None,
-                     'sequencing_tech': u'fake data',
+                     'sequencing_tech': 'fake data',
                      'single_genome': 'true',
                      'source': None,
                      'strain': None,
@@ -582,14 +576,12 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_FASTA('data/sample_missing_data.fa', 0)
 
     def fail_val_FASTA(self, filename, error, exception=ValueError):
-        with self.assertRaises(exception) as context:
+        with self.assertRaisesRegex(exception, error):
             self.impl.validateFASTA(self.ctx, {'file_path': filename})
-        self.assertEqual(error, str(context.exception.message))
 
     def fail_val_FASTQ(self, params, error, exception=ValueError):
-        with self.assertRaises(exception) as context:
+        with self.assertRaisesRegex(exception, error):
             self.impl.validateFASTQ(self.ctx, params)
-        self.assertEqual(error, str(context.exception.message))
 
     def test_FASTA_val_fail_no_file(self):
         self.fail_val_FASTA('nofile', 'No such file: nofile')
@@ -1198,16 +1190,16 @@ class ReadsUtilsTest(unittest.TestCase):
              },
             "No object with id 99999999 exists in workspace {} (name {})".format(
                 self.ws_info[0], self.ws_info[1]),
-            exception=DFUError)
+            exception=ServerError)
 
     def check_lib(self, lib, size, filename, md5):
         shock_id = lib["file"]["id"]
-        print "LIB: {}".format(str(lib))
-        print "Shock ID: {}".format(str(shock_id))
+        print("LIB: {}".format(str(lib)))
+        print("Shock ID: {}".format(str(shock_id)))
         fileinput = [{'shock_id': shock_id,
                       'file_path': self.scratch + '/temp',
                       'unpack': 'uncompress'}]
-        print "File Input: {}".format(str(fileinput))
+        print("File Input: {}".format(str(fileinput)))
         files = self.dfu.shock_to_file_mass(fileinput)
         path = files[0]["file_path"]
         file_md5 = hashlib.md5(open(path, 'rb').read()).hexdigest()
@@ -1226,24 +1218,11 @@ class ReadsUtilsTest(unittest.TestCase):
     def fail_upload_reads(self, params, error, exception=ValueError, do_startswith=False):
         with self.assertRaises(exception) as context:
             self.impl.upload_reads(self.ctx, params)
-        if do_startswith:
-            self.assertTrue(str(context.exception.message).startswith(error),
-                            "Error message {} does not start with {}".format(
-                                str(context.exception.message),
-                                error))
-        else:
-            self.assertEqual(error, str(context.exception.message))
+            self.assertIn(error, str(context.exception))
 
     def fail_upload_reads_regex(self, params, regex_test, exception=ValueError):
-        with self.assertRaises(exception) as context:
+        with self.assertRaisesRegex(exception, regex_test):
             self.impl.upload_reads(self.ctx, params)
-        p = re.compile(regex_test)
-        result = p.match(str(context.exception.message))
-        self.assertIsNotNone(result,
-                             "Error message {} does not match the regex of {}".format(
-                                 str(context.exception.message),
-                                 regex_test
-                             ))
 
     def test_upload_fail_no_reads(self):
         self.fail_upload_reads(
@@ -1381,7 +1360,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': ret['id'],
              'objid': 1000000
              },
-            'There is no object with id 1000000', exception=DFUError)
+            'There is no object with id 1000000', exception=ServerError)
         self.delete_shock_node(ret['id'])
 
     def test_upload_fail_non_existant_shockid(self):
@@ -1393,7 +1372,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'name': 'bar'
              },
             'Error downloading file from shock node foo: Node not found',
-            exception=DFUError)
+            exception=ServerError)
         self.delete_shock_node(ret['id'])
 
     def test_upload_fail_non_existant_file(self):
@@ -1421,7 +1400,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'fwd_id': 'bar',
              'name': 'foo'
              },
-            'Illegal character in workspace name &bad: &', exception=DFUError)
+            'Illegal character in workspace name &bad: &', exception=ServerError)
 
     def test_upload_fail_non_num_mean(self):
         self.fail_upload_reads(
@@ -1492,8 +1471,8 @@ class ReadsUtilsTest(unittest.TestCase):
             'Invalid FASTQ file - Path: /kb/module/test/data/Sample1_invalid.fastq.')
 
     def mock_download_staging_file(params):
-        print 'Mocking DataFileUtilClient.download_staging_file'
-        print params
+        print('Mocking DataFileUtilClient.download_staging_file')
+        print(params)
 
         fq_filename = params.get('staging_file_subdir_path')
         fq_path = os.path.join('/kb/module/work/tmp', fq_filename)
@@ -1781,8 +1760,8 @@ class ReadsUtilsTest(unittest.TestCase):
                     self.STD_OBJ_KBF_P,
                     {'files': {'type': 'paired',
                                'otype': 'paired',
-                               'fwd_name': u'small.forward.fq',
-                               'rev_name': u'small.reverse.fq'
+                               'fwd_name': 'small.forward.fq',
+                               'rev_name': 'small.reverse.fq'
                                },
                      'ref': self.staged['no_filename']['ref']
                      })
@@ -2266,12 +2245,12 @@ class ReadsUtilsTest(unittest.TestCase):
                                   },
                         'ref': self.staged['kbfile_sing_sg_t']['ref'],
                         'single_genome': 'true',
-                        'strain': {u'genus': u'Yersinia',
-                                   u'species': u'pestis',
-                                   u'strain': u'happypants'
+                        'strain': {'genus': 'Yersinia',
+                                   'species': 'pestis',
+                                   'strain': 'happypants'
                                    },
-                        'source': {u'source': u'my pants'},
-                        'sequencing_tech': u'IonTorrent',
+                        'source': {'source': 'my pants'},
+                        'sequencing_tech': 'IonTorrent',
                         'read_count': 3,
                         'read_size': 12,
                         'gc_content': 2.3,
@@ -2310,12 +2289,12 @@ class ReadsUtilsTest(unittest.TestCase):
                                   },
                         'ref': self.staged['kbfile_sing_sg_f']['ref'],
                         'single_genome': 'false',
-                        'strain': {u'genus': u'Deinococcus',
-                                   u'species': u'radiodurans',
-                                   u'strain': u'radiopants'
+                        'strain': {'genus': 'Deinococcus',
+                                   'species': 'radiodurans',
+                                   'strain': 'radiopants'
                                    },
-                        'source': {u'source': u'also my pants'},
-                        'sequencing_tech': u'PacBio CCS',
+                        'source': {'source': 'also my pants'},
+                        'sequencing_tech': 'PacBio CCS',
                         'read_count': 4,
                         'read_size': 13,
                         'gc_content': 2.4,
@@ -2424,11 +2403,11 @@ class ReadsUtilsTest(unittest.TestCase):
                                   },
                         'ref': self.staged['kbfile_pe_t']['ref'],
                         'single_genome': 'true',
-                        'strain': {u'genus': u'Bacillus',
-                                   u'species': u'subtilis',
-                                   u'strain': u'soilpants'
+                        'strain': {'genus': 'Bacillus',
+                                   'species': 'subtilis',
+                                   'strain': 'soilpants'
                                    },
-                        'source': {u'source': u'my other pants'},
+                        'source': {'source': 'my other pants'},
                         'sequencing_tech': 'Sanger',
                         'read_count': 5,
                         'read_size': 14,
@@ -2464,11 +2443,11 @@ class ReadsUtilsTest(unittest.TestCase):
                                   },
                         'ref': self.staged['kbfile_pe_f']['ref'],
                         'single_genome': 'false',
-                        'strain': {u'genus': u'Escheria',
-                                   u'species': u'coli',
-                                   u'strain': u'poopypants'
+                        'strain': {'genus': 'Escheria',
+                                   'species': 'coli',
+                                   'strain': 'poopypants'
                                    },
-                        'source': {u'source': u'my ex-pants'},
+                        'source': {'source': 'my ex-pants'},
                         'sequencing_tech': 'PacBio CLR',
                         'read_count': 6,
                         'read_size': 15,
@@ -2496,14 +2475,14 @@ class ReadsUtilsTest(unittest.TestCase):
         self.download_error(
             ['foo'], 'Error on ObjectSpecification #1: Illegal number ' +
             'of separators / in object reference foo',
-            exception=DFUError)
+            exception=ServerError)
 
     def test_bad_workspace_name(self):
 
         self.download_error(
             ['bad*name/foo'],
             'Error on ObjectSpecification #1: Illegal character in ' +
-            'workspace name bad*name: *', exception=DFUError)
+            'workspace name bad*name: *', exception=ServerError)
 
     def test_non_extant_workspace(self):
 
@@ -2511,14 +2490,14 @@ class ReadsUtilsTest(unittest.TestCase):
             ['Ireallyhopethisworkspacedoesntexistorthistestwillfail/foo'],
             'Object foo cannot be accessed: No workspace with name ' +
             'Ireallyhopethisworkspacedoesntexistorthistestwillfail exists',
-            exception=DFUError)
+            exception=ServerError)
 
     def test_bad_lib_name(self):
 
         self.download_error(
             [self.getWsName() + '/bad&name'],
             'Error on ObjectSpecification #1: Illegal character in object ' +
-            'name bad&name: &', exception=DFUError)
+            'name bad&name: &', exception=ServerError)
 
     def test_no_libs_param(self):
 
@@ -2535,7 +2514,7 @@ class ReadsUtilsTest(unittest.TestCase):
             'No object with name foo exists in workspace ' +
             str(self.ws_info[0]) + ' (name ' +
             self.getWsName() + ')',
-            exception=DFUError)
+            exception=ServerError)
 
     def test_no_libs(self):
 
@@ -2630,7 +2609,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'acl(s) on handles {}').format(
                 self.staged['bad_node']['ref'],
                 self.staged['bad_node']['fwd_handle']['hid']),
-            exception=DFUError)
+            exception=ServerError)
 
     def test_invalid_interleave_input(self):
 
@@ -2699,7 +2678,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         params = {'interleaved': interleave}
 
-        if (readnames is not None):
+        if readnames is not None:
             params['read_libraries'] = readnames
 
         print('Running test with {} libs. Params:'.format(
@@ -2708,13 +2687,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         with self.assertRaises(exception) as context:
             self.impl.download_reads(self.ctx, params)
-        if do_startswith:
-            self.assertTrue(str(context.exception.message).startswith(error),
-                            "Error message {} does not start with {}".format(
-                                str(context.exception.message),
-                                error))
-        else:
-            self.assertEqual(error, str(context.exception.message))
+            self.assertIn(error, str(context.exception))
 
     def download_success(self, testspecs, interleave=None):
         self.maxDiff = None
@@ -2759,7 +2732,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.export_error(
             '1000000000/10000000000/10000000',
             'Object 10000000000 cannot be accessed: No workspace with id ' +
-            '1000000000 exists', exception=WorkspaceError)
+            '1000000000 exists', exception=ServerError)
 
     def test_export_fr(self):
         self.export_success('frbasic', self.MD5_SM_F, self.MD5_SM_R)
@@ -2773,7 +2746,7 @@ class ReadsUtilsTest(unittest.TestCase):
         print('ref: ' + str(ref))
         with self.assertRaises(exception) as context:
             self.impl.export_reads(self.ctx, {'input_ref': ref})
-        self.assertEqual(error, str(context.exception.message))
+        self.assertIn(error, str(context.exception))
 
     def export_success(self, stagedname, fwdmd5, revmd5=None):
         test_name = inspect.stack()[1][3]
@@ -2785,7 +2758,7 @@ class ReadsUtilsTest(unittest.TestCase):
         headers = {'Authorization': 'OAuth ' + self.token}
         r = requests.get(node_url, headers=headers, allow_redirects=True)
         fn = r.json()['data']['file']['name']
-        self.assertEquals(fn, stagedname + '.zip')
+        self.assertEqual(fn, stagedname + '.zip')
         tempdir = tempfile.mkdtemp(dir=self.scratch)
         file_path = os.path.join(tempdir, test_name) + '.zip'
         print('zip file path: ' + file_path)
@@ -2806,15 +2779,13 @@ class ReadsUtilsTest(unittest.TestCase):
             if '.fwd.' in f or '.inter.' in f or '.single.' in f:
                 foundf = True
                 print('fwd reads: ' + f)
-                with open(os.path.join(tempdir, f)) as fl:
-                    md5 = hashlib.md5(fl.read()).hexdigest()
-                    self.assertEqual(md5, fwdmd5)
+                md5 = self.md5(os.path.join(tempdir, f))
+                self.assertEqual(md5, fwdmd5)
             if '.rev.' in f:
                 foundr = True
                 print('rev reads: ' + f)
-                with open(os.path.join(tempdir, f)) as fl:
-                    md5 = hashlib.md5(fl.read()).hexdigest()
-                    self.assertEqual(md5, revmd5)
+                md5 = self.md5(os.path.join(tempdir, f))
+                self.assertEqual(md5, revmd5)
         if not foundf:
             raise TestError('no fwd reads file')
         if revmd5 and not foundr:

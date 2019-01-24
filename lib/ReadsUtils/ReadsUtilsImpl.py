@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
 #BEGIN_HEADER
-import time
-import subprocess
 import os
-import tempfile
 import shutil
-from pprint import pformat
-from installed_clients.DataFileUtilClient import DataFileUtil
-from installed_clients.baseclient import ServerError as DFUError
-from installed_clients.kb_ea_utilsClient import kb_ea_utils
-from installed_clients.WorkspaceClient import Workspace
-from installed_clients.baseclient import ServerError as WorkspaceError
-from numbers import Number
-import six
+import subprocess
+import tempfile
+import time
 import uuid
+from numbers import Number
+from pprint import pformat
+
+import six
+
+from installed_clients.DataFileUtilClient import DataFileUtil
+from installed_clients.WorkspaceClient import Workspace
+from installed_clients.baseclient import ServerError as DFUError
+from installed_clients.baseclient import ServerError as WorkspaceError
+from installed_clients.kb_ea_utilsClient import kb_ea_utils
+
+
 #END_HEADER
 
 
@@ -32,9 +36,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.9"
-    GIT_URL = "git@github.com:Tianhao-Gu/ReadsUtils.git"
-    GIT_COMMIT_HASH = "b50243a0c1bf4312b255b7e830442bf6f7883345"
+    VERSION = "0.3.12"
+    GIT_URL = "https://github.com/kbaseapps/ReadsUtils.git"
+    GIT_COMMIT_HASH = "9d2e384fbbb123be8a57670535e18d3ec224d4b6"
 
     #BEGIN_CLASS_HEADER
 
@@ -127,8 +131,8 @@ class ReadsUtils:
 
         if revid and reads_source != 'shock':
             raise ValueError(
-                'Specified reverse reads file in shock path but missing ' +
-                'forward reads file in shock')
+                'Specified reverse reads file in shock path but missing forward reads '
+                'file in shock')
         if revfile and reads_source != 'local':
             raise ValueError(
                 'Specified local reverse file path but missing local forward file path')
@@ -186,27 +190,25 @@ class ReadsUtils:
                                       'sequencing_tech', 'strain',
                                       'source', 'read_orientation_outward']
         if any(x in params for x in parameters_should_unfilled):
-            self.log(("'source_reads_ref' was passed, making the following list of " +
-                      "parameters {} erroneous to " +
-                      "include").format(",".join(parameters_should_unfilled)))
-            raise ValueError(("'source_reads_ref' was passed, making the following list of " +
-                              "parameters : {} erroneous to " +
-                              "include").format(", ".join(parameters_should_unfilled)))
+            self.log("'source_reads_ref' was passed, making the following list of "
+                     f'parameters {",".join(parameters_should_unfilled)} erroneous to include')
+            raise ValueError("'source_reads_ref' was passed, making the following list of "
+                             f'parameters : {", ".join(parameters_should_unfilled)} erroneous to '
+                             f'include')
         try:
             source_reads_object = dfu.get_objects({'object_refs':
                                                    [source_reads_ref]})['data'][0]
         except DFUError as e:
-            self.log(('The supplied source_reads_ref {} was not able to be retrieved. ' +
-                      'Logging stacktrace from workspace exception:' +
-                      '\n{}').format(source_reads_ref, e.data))
+            self.log(f'The supplied source_reads_ref {source_reads_ref} was not able to be '
+                     f'retrieved. Logging stacktrace from workspace exception: \n{e.data}')
             raise
         # Check that it is a reads object. If not throw an eror.
         single_input, _ = self.check_reads(source_reads_object)
         if not single_input and not single_end:
             is_single_end = False
         elif single_input and not single_end:
-            raise ValueError(("The input reference reads is single end, that should not " +
-                              "give rise to a paired end object."))
+            raise ValueError("The input reference reads is single end, that should not give rise "
+                             "to a paired end object.")
         else:
             is_single_end = True
         if not source_reads_object['data'].get('sequencing_tech'):
@@ -251,9 +253,8 @@ class ReadsUtils:
         elif params[boolname] == 'false':
             params[boolname] = False
         else:
-            raise ValueError(('Illegal value for ternary parameter {}: {}. ' +
-                              'Allowed values are "true", "false", and null.')
-                             .format(boolname, params[boolname]))
+            raise ValueError(f'Illegal value for ternary parameter {boolname}: '
+                             f'{params[boolname]}. Allowed values are "true", "false", and null.')
 
     def process_params(self, params):
         if self.PARAM_IN_LIB not in params:
@@ -266,8 +267,7 @@ class ReadsUtils:
         reads = list(set(reads))
         for read_name in reads:
             if not read_name:
-                raise ValueError('Invalid workspace object name: ' +
-                                 str(read_name))
+                raise ValueError(f'Invalid workspace object name: {read_name}')
         params[self.PARAM_IN_LIB] = reads
 
         self.process_ternary(params, self.PARAM_IN_INTERLEAVED)
@@ -289,9 +289,8 @@ class ReadsUtils:
             for mod in self.MODULE_NAMES:
                 for type_ in self.TYPE_NAMES:
                     types.append(mod + '.' + type_)
-            raise ValueError(('Invalid type for object {} ({}). Supported ' +
-                              'types: {}').format(obj_ref, obj_name,
-                                                  ' '.join(types)))
+            raise ValueError(f"Invalid type for object {obj_ref} ({obj_name}). "
+                             f"Supported types: {' '.join(types)}")
         return (type_name == self.SINGLE_END_TYPE,
                 module_name == self.KBASE_FILE)
 
@@ -356,13 +355,13 @@ class ReadsUtils:
         if not fn:
             return False
         fn = fn.lower()
-        if (self._get_ext(fn, self.FASTQ_EXT)):
+        if self._get_ext(fn, self.FASTQ_EXT):
             return True
         compress_ext = self._get_ext(fn, self.COMPRESS_EXT)
         if not compress_ext:
             return False
         fn = fn[0: -len(compress_ext)]
-        if (self._get_ext(fn, self.FASTQ_EXT)):
+        if self._get_ext(fn, self.FASTQ_EXT):
             return True
         return False
 
@@ -387,17 +386,14 @@ class ReadsUtils:
                          'File type from reads Workspace object']):
             if f:
                 if not self._filename_ok(f):
-                    raise ValueError(
-                        ('{} is illegal: {}. Expected FASTQ file. Reads ' +
-                         'object {} ({}). Shock node {}')
-                        .format(n, f, obj_name, ref, handle['id']))
+                    raise ValueError(f"{n} is illegal: {f}. Expected FASTQ file. "
+                                     f"Reads object {obj_name} ({ref}). Shock node {handle['id']}")
                 ok = True
         # TODO this is untested. You have to try pretty hard to upload a file without a name to Shock. @IgnorePep8 # noqa
         if not ok:
             raise ValueError(
-                'Unable to determine file type from Shock or Workspace ' +
-                'data. Reads object {} ({}). Shock node {}'
-                .format(obj_name, ref, handle['id']))
+                f'Unable to determine file type from Shock or Workspace '
+                f'data. Reads object {obj_name} ({ref}). Shock node {handle["id"]}')
         if not fn:
             self.log('No filename available from Shock')
         else:
@@ -405,7 +401,7 @@ class ReadsUtils:
         return ret['file_path'], fn
 
     def mv(self, oldfile, newfile):
-        self.log('Moving {} to {}'.format(oldfile, newfile))
+        self.log(f'Moving {oldfile} to {newfile}')
         shutil.move(oldfile, newfile)
 
     def process_single_end(self, ref, obj_name, handle, file_type=None):
@@ -430,9 +426,9 @@ class ReadsUtils:
                         shock_filename, shock_node, f,
                         reads_source, filesource):
         r = ''
-        for i in xrange(4):
+        for i in range(4):
             l = f.readline()
-            while (l == '\n'):  # skip blank lines
+            while l == '\n':  # skip blank lines
                 l = f.readline()
             if not l:  # EOF
                 if i != 0:
@@ -517,8 +513,7 @@ class ReadsUtils:
     # https://www.biostars.org/p/19446/#117160
     def deinterleave(self, source_obj_ref, source_obj_name, shock_filename,
                      shock_node, filepath, fwdpath, revpath):
-        self.log('Deinterleaving file {} to files {} and {}'.format(
-            filepath, fwdpath, revpath))
+        self.log(f'Deinterleaving file {filepath} to files {fwdpath} and {revpath}')
         with open(filepath, 'r') as s:
             with open(fwdpath, 'w') as f, open(revpath, 'w') as r:
                 count = 0
@@ -531,11 +526,9 @@ class ReadsUtils:
                         r.write(line)
                     count += 1
         if count % 8 != 0:
-            raise ValueError('Deinterleave failed - line count ' +
-                             'is not divisible by 8. Workspace reads object ' +
-                             '{} ({}), Shock node {}, Shock filename {}.'
-                             .format(source_obj_name, source_obj_ref,
-                                     shock_node, shock_filename))
+            raise ValueError(f'Deinterleave failed - line count is not divisible by 8. '
+                             f'Workspace reads object {source_obj_name} ({source_obj_ref}), '
+                             f'Shock node {shock_node}, Shock filename {shock_filename}.')
 
     # there's got to be better way to do this than these processing methods.
     # make some input classes for starters to fix these gross method sigs
@@ -793,41 +786,33 @@ class ReadsUtils:
         if reads_source == 'shock':
             if revsource:
                 validation_error_message += (
-                    " Input Shock IDs - FWD Shock ID : " +
-                    fwdsource + ", REV Shock ID : " + revsource +
-                    ". FWD File Name : " + fwdname +
-                    ". REV File Name : " + revname +
-                    ". FWD Path : " + fwdpath +
-                    ". REV Path : " + revpath + ".")
+                    f" Input Shock IDs - FWD Shock ID : {fwdsource}, REV Shock ID : "
+                    f"{revsource}. FWD File Name : {fwdname}. REV File Name : {revname}"
+                    f". FWD Path : {fwdpath}. REV Path : {revpath}.")
             else:
-                validation_error_message += (" Input Shock ID : " +
-                                             fwdsource + ". File Name : " + fwdname + ".")
+                validation_error_message += (
+                    f" Input Shock ID : {fwdsource}. File Name : {fwdname}.")
         elif reads_source == 'web':
             if revsource:
-                validation_error_message += (" Input URLs - FWD URL : " +
-                                             fwdsource + ", REV URL : " + revsource +
-                                             ". FWD Path : " + fwdpath +
-                                             ". REV Path : " + revpath + ".")
+                validation_error_message += (f" Input URLs - FWD URL : {fwdsource}, REV URL : "
+                                             f"{revsource}. FWD Path : {fwdpath}. REV Path : "
+                                             f"{revpath}.")
             else:
-                validation_error_message += (" Input URL : " + fwdsource + ".")
+                validation_error_message += f" Input URL : {fwdsource}."
         elif reads_source == 'staging':
             if revsource:
-                validation_error_message += (" Input Staging files - FWD Staging file : " +
-                                             fwdsource +
-                                             ", REV Staging file : " +
-                                             revsource +
-                                             ". FWD Path : " + fwdpath +
-                                             ". REV Path : " + revpath + ".")
+                validation_error_message += (f" Input Staging files - FWD Staging file : "
+                                             f"{fwdsource}, REV Staging file : {revsource}."
+                                             f" FWD Path : {fwdpath}. REV Path : {revpath}.")
             else:
-                validation_error_message += (" Input Staging : " +
-                                             fwdsource + ".")
+                validation_error_message += f" Input Staging : {fwdsource}."
         elif reads_source == 'local':
             if revpath:
-                validation_error_message += (" Input Files Paths - FWD Path : " +
-                                             fwdpath + ", REV Path : " + revpath + ".")
+                validation_error_message += (f" Input Files Paths - FWD Path : {fwdpath},"
+                                             f" REV Path : {revpath}.")
         else:
             raise ValueError(
-                "Unexpected reads_source value. reads_source: %s" % reads_source)
+                f"Unexpected reads_source value. reads_source: {reads_source}")
 
         return validation_error_message
 
@@ -874,8 +859,7 @@ class ReadsUtils:
                 raise ValueError('No such file: ' + str(file_path))
 
             if os.path.splitext(file_path)[1].lower() not in self.FASTQ_EXT:
-                raise ValueError('File {} is not a FASTQ file'
-                                 .format(file_path))
+                raise ValueError(f'File {file_path} is not a FASTQ file')
             self.log('Validating FASTQ file ' + file_path)
             self.log('Checking line count')
             c = 0
@@ -902,8 +886,7 @@ class ReadsUtils:
                     shutil.copy2(t.name, file_path)
             validated = 1
             if c % 4 != 0:
-                err = ('Invalid FASTQ file, expected multiple of 4 lines, ' +
-                       'got ' + str(c))
+                err = f'Invalid FASTQ file, expected multiple of 4 lines, got {c}'
                 self.log(err)
                 validated = 0
             else:
@@ -1136,8 +1119,7 @@ class ReadsUtils:
         oi = dfu.save_objects({'id': wsid, 'objects': [so]})[0]
         self.log('save complete')
 
-        returnVal = {'obj_ref': str(oi[6]) + '/' + str(oi[0]) + '/' +
-                     str(oi[4])}
+        returnVal = {'obj_ref': f"{oi[6]}/{oi[0]}/{oi[4]}"}
         #END upload_reads
 
         # At some point might do deeper type checking...
