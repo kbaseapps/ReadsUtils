@@ -1,15 +1,19 @@
-FROM kbase/kbase:sdkbase2.latest
+FROM kbase/sdkbase2:python
 MAINTAINER KBase Developer
 # -----------------------------------------
 
 # Insert apt-get instructions here to install
 # any required dependencies for your module.
 
-# Debug tools = all below six
-RUN pip install six \
-    && pip install ipython==5.3.0 \
+RUN apt-get update \
+    && apt-get install -y g++ \
+    && apt-get install libz-dev\
     && apt-get install nano \
     && apt-get install tree
+
+# Debug tools = all below six
+RUN pip install six \
+    && pip install ipython==5.3.0
 
 RUN cd /opt \
     && git clone https://github.com/kbase/jars \
