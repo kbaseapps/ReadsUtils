@@ -36,9 +36,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.12"
-    GIT_URL = "https://github.com/kbaseapps/ReadsUtils.git"
-    GIT_COMMIT_HASH = "9d2e384fbbb123be8a57670535e18d3ec224d4b6"
+    VERSION = "0.3.13"
+    GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
+    GIT_COMMIT_HASH = "e644add24aa36536a2d488e5a814226771a9292a"
 
     #BEGIN_CLASS_HEADER
 
@@ -63,6 +63,8 @@ class ReadsUtils:
     KBASE_ASSEMBLY = 'KBaseAssembly'
     MODULE_NAMES = [KBASE_FILE, KBASE_ASSEMBLY]
     TYPE_NAMES = [SINGLE_END_TYPE, PAIRED_END_TYPE]
+
+    WINDOWS_LINE_ENDING = b'\r\n'
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') +
@@ -864,16 +866,18 @@ class ReadsUtils:
             self.log('Checking line count')
             c = 0
             blank = False
+
             # open assumes ascii, which is ok for reads
-            with open(file_path) as f:  # run & count until we hit a blank line
+            with open(file_path, 'rb') as f:  # run & count until we hit a blank line
                 for l in f:
-                    if not l.strip():
+                    if (not l.strip()) or l.endswith(self.WINDOWS_LINE_ENDING):
                         blank = True
                         break
                     c += 1
+
             if blank:
                 c = 0
-                self.log('Removing blank lines')
+                self.log('Removing blank lines and CRLF characters')
                 with open(file_path) as s, tempfile.NamedTemporaryFile(
                         mode='w', dir=self.scratch) as t:
                     for l in s:

@@ -594,6 +594,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
     def test_FASTQ_validation(self):
         self.check_fq('data/Sample1.fastq', 0, 1)
+        self.check_fq('data/sample_with_CRLF.fastq', 0, 1)
         self.check_fq('data/Sample2_interleaved_illumina.fnq', 1, 1)
         # fail on interleaved file specified as non-interleaved
         self.check_fq('data/Sample2_interleaved_illumina.fnq', 0, 0)
@@ -1480,10 +1481,10 @@ class ReadsUtilsTest(unittest.TestCase):
 
         return {'copy_file_path': fq_path}
 
-    @patch.object(DataFileUtil, "download_staging_file", 
+    @patch.object(DataFileUtil, "download_staging_file",
                                         side_effect=mock_download_staging_file)
     def test_upload_fail_bad_fastq_file_staging(self, download_staging_file):
-        self.fail_upload_reads( 
+        self.fail_upload_reads(
                 {'sequencing_tech': 'tech',
                 'wsname': self.ws_info[1],
                 'fwd_staging_file_name': 'Sample1_invalid.fastq',
@@ -1492,7 +1493,7 @@ class ReadsUtilsTest(unittest.TestCase):
                 'Invalid FASTQ file - Path: /kb/module/work/tmp/Sample1_invalid.fastq. ' +
                 'Input Staging : Sample1_invalid.fastq.')
 
-    @patch.object(DataFileUtil, "download_staging_file", 
+    @patch.object(DataFileUtil, "download_staging_file",
                                         side_effect=mock_download_staging_file)
     def test_upload_fail_invalid_paired_fastq_file_staging(self, download_staging_file):
         self.fail_upload_reads_regex(
@@ -1659,8 +1660,8 @@ class ReadsUtilsTest(unittest.TestCase):
                                'an equal number of records. Forward Path ' +
                                '/kb/module/work/tmp/small.forward.fq, ' +
                                'Reverse Path /kb/module/work/tmp/Sample5_noninterleaved.1.fastq.')
-    
-    @patch.object(DataFileUtil, "download_staging_file", 
+
+    @patch.object(DataFileUtil, "download_staging_file",
                                         side_effect=mock_download_staging_file)
     def test_bad_paired_end_staging_reads_file(self, download_staging_file):
         fwdtf = 'small.forward.fq'
@@ -1716,7 +1717,7 @@ class ReadsUtilsTest(unittest.TestCase):
             'Sample5_noninterleaved.1.missing_line.fastq, ' +
             'Shock node None, Shock filename None')
 
-    @patch.object(DataFileUtil, "download_staging_file", 
+    @patch.object(DataFileUtil, "download_staging_file",
                                         side_effect=mock_download_staging_file)
     def test_upload_fail_bad_paired_fastq_file_staging(self, download_staging_file):
         self.fail_upload_reads(
@@ -2797,7 +2798,7 @@ class ReadsUtilsTest(unittest.TestCase):
             raise TestError('found extra files in testdir {}: {}'.format(
                 os.path.abspath(tempdir), str(os.listdir(tempdir))))
 
-    @patch.object(DataFileUtil, "download_staging_file", 
+    @patch.object(DataFileUtil, "download_staging_file",
                                         side_effect=mock_download_staging_file)
     def test_upload_reads_from_staging_area(self, download_staging_file):
         params = {
@@ -2824,8 +2825,8 @@ class ReadsUtilsTest(unittest.TestCase):
                     'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
-    
-    @patch.object(DataFileUtil, "download_staging_file", 
+
+    @patch.object(DataFileUtil, "download_staging_file",
                                         side_effect=mock_download_staging_file)
     def test_upload_reads_from_staging_area_paired_ends(self, download_staging_file):
         params = {
@@ -2836,16 +2837,16 @@ class ReadsUtilsTest(unittest.TestCase):
             'wsname': self.getWsName(),
             'interleaved': 0
         }
-    
+
         ref = self.impl.upload_reads(self.ctx, params)
         self.assertTrue('obj_ref' in ref[0])
-    
+
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
                 'KBaseFile.PairedEndLibrary'), True)
-    
+
         d = obj['data']
         file_name = d["lib1"]["file"]["file_name"]
         self.assertTrue(file_name.endswith(".inter.fastq.gz"))
