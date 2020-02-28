@@ -64,8 +64,6 @@ class ReadsUtils:
     MODULE_NAMES = [KBASE_FILE, KBASE_ASSEMBLY]
     TYPE_NAMES = [SINGLE_END_TYPE, PAIRED_END_TYPE]
 
-    WINDOWS_LINE_ENDING = b'\r\n'
-
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') +
               str(time.time()) + ': ' + message)
