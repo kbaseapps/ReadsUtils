@@ -864,30 +864,19 @@ class ReadsUtils:
                 raise ValueError(f'File {file_path} is not a FASTQ file')
             self.log('Validating FASTQ file ' + file_path)
             self.log('Checking line count')
+
             c = 0
-            blank = False
-
-            # open assumes ascii, which is ok for reads
-            with open(file_path, 'rb') as f:  # run & count until we hit a blank line
-                for l in f:
-                    if (not l.strip()) or l.endswith(self.WINDOWS_LINE_ENDING):
-                        blank = True
-                        break
-                    c += 1
-
-            if blank:
-                c = 0
-                self.log('Removing blank lines and CRLF characters')
-                with open(file_path) as s, tempfile.NamedTemporaryFile(
-                        mode='w', dir=self.scratch) as t:
-                    for l in s:
-                        l = l.strip()
-                        if l:
-                            t.write(l + '\n')
-                            c += 1
-                    s.close()
-                    t.flush()
-                    shutil.copy2(t.name, file_path)
+            self.log('Removing blank lines and CRLF characters if any')
+            with open(file_path) as s, tempfile.NamedTemporaryFile(
+                    mode='w', dir=self.scratch) as t:
+                for l in s:
+                    l = l.strip()
+                    if l:
+                        t.write(l + '\n')
+                        c += 1
+                s.close()
+                t.flush()
+                shutil.copy2(t.name, file_path)
             validated = 1
             if c % 4 != 0:
                 err = f'Invalid FASTQ file, expected multiple of 4 lines, got {c}'
