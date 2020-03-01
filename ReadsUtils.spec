@@ -9,12 +9,12 @@ module ReadsUtils {
        @range (0, 1)
     */
     typedef int boolean;
-    
+
     /* A ternary. Allowed values are 'false', 'true', or null. Any other
         value is invalid.
      */
      typedef string tern;
-    
+
     /* A reference to a read library stored in the workspace service, whether
         of the KBaseAssembly or KBaseFile type. Usage of absolute references
         (e.g. 256/3/6) is strongly encouraged to avoid race conditions,
@@ -23,10 +23,10 @@ module ReadsUtils {
     typedef string read_lib;
 
     /* Input to the validateFASTQ function.
-    
+
         Required parameters:
         file_path - the path to the file to validate.
-        
+
         Optional parameters:
         interleaved - whether the file is interleaved or not. Setting this to
             true disables sequence ID checks.
@@ -35,9 +35,9 @@ module ReadsUtils {
         string file_path;
         boolean interleaved;
     } ValidateFASTQParams;
-    
+
     /* The output of the validateFASTQ function.
-        
+
         validated - whether the file validated successfully or not.
     */
     typedef structure {
@@ -46,47 +46,47 @@ module ReadsUtils {
 
     /* Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
         are accepted. Note that prior to validation the file will be altered in
-        place to remove blank lines if any exist.
+        place to remove blank lines and CRLF characters if any exist.
     */
     funcdef validateFASTQ(list<ValidateFASTQParams> params)
         returns(list<ValidateFASTQOutput> out) authentication required;
-    
+
     /* Input to the upload_reads function.
-        
+
         If local files are specified for upload, they must be uncompressed.
         Files will be gzipped prior to upload.
 
         If web files are specified for upload, a download type one of
-        ['Direct Download', 'DropBox', 'FTP', 'Google Drive'] must be specified too. 
-        The downloadable file must be uncompressed (except for FTP, .gz file is acceptable). 
+        ['Direct Download', 'DropBox', 'FTP', 'Google Drive'] must be specified too.
+        The downloadable file must be uncompressed (except for FTP, .gz file is acceptable).
 
         If staging files are specified for upload, the staging file must be uncompressed
         and must be accessible by current user.
-        
+
         Note that if a reverse read file is specified, it must be a local file
         if the forward reads file is a local file, or a shock id if not.
 
-        If a reverse web file or staging file is specified, the reverse file category must match 
+        If a reverse web file or staging file is specified, the reverse file category must match
         the forward file category.
 
         If a reverse file is specified the uploader will will automatically
         intereave the forward and reverse files and store that in shock.
         Additionally the statistics generated are on the resulting interleaved file.
-        
+
         Required parameters:
         fwd_id - the id of the shock node containing the reads data file:
             either single end reads, forward/left reads, or interleaved reads.
         - OR -
         fwd_file - a local path to the reads data file: either single end
             reads, forward/left reads, or interleaved reads.
-        - OR - 
+        - OR -
         fwd_file_url - a download link that contains reads data file:
             either single end reads, forward/left reads, or interleaved reads.
         download_type - download type ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
-        - OR - 
+        - OR -
         fwd_staging_file_name - reads data file name/ subdirectory path in staging area:
             either single end reads, forward/left reads, or interleaved reads.
-        
+
         sequencing_tech - the sequencing technology used to produce the
             reads. (If source_reads_ref is specified then sequencing_tech
             must not be specified)
@@ -95,23 +95,23 @@ module ReadsUtils {
         wsid - the id of the workspace where the reads will be saved
             (preferred).
         wsname - the name of the workspace where the reads will be saved.
-        
+
         One of:
         objid - the id of the workspace object to save over
         name - the name to which the workspace object will be saved
-            
+
         Optional parameters:
         rev_id - the shock node id containing the reverse/right reads for
             paired end, non-interleaved reads.
         - OR -
         rev_file - a local path to the reads data file containing the
-            reverse/right reads for paired end, non-interleaved reads, 
-            note the reverse file will get interleaved 
+            reverse/right reads for paired end, non-interleaved reads,
+            note the reverse file will get interleaved
             with the forward file.
-        - OR - 
+        - OR -
         rev_file_url - a download link that contains reads data file:
             reverse/right reads for paired end, non-interleaved reads.
-        - OR - 
+        - OR -
         rev_staging_file_name - reads data file name in staging area:
             reverse/right reads for paired end, non-interleaved reads.
 
@@ -132,10 +132,10 @@ module ReadsUtils {
             genetic fragments. Ignored for single end reads.
         source_reads_ref - A workspace reference to a source reads object.
             This is used to propogate user defined info from the source reads
-            object to the new reads object (used for filtering or 
-            trimming services). Note this causes a passed in 
+            object to the new reads object (used for filtering or
+            trimming services). Note this causes a passed in
             insert_size_mean, insert_size_std_dev, sequencing_tech,
-            read_orientation_outward, strain, source and/or 
+            read_orientation_outward, strain, source and/or
             single_genome to throw an error.
     */
     typedef structure {
@@ -163,9 +163,9 @@ module ReadsUtils {
         string download_type;
 
     } UploadReadsParams;
-    
+
     /* The output of the upload_reads function.
-    
+
         obj_ref - a reference to the new Workspace object in the form X/Y/Z,
             where X is the workspace ID, Y is the object ID, and Z is the
             version.
@@ -173,11 +173,11 @@ module ReadsUtils {
     typedef structure {
         string obj_ref;
     } UploadReadsOutput;
-    
+
     /* Loads a set of reads to KBase data stores. */
     funcdef upload_reads(UploadReadsParams params) returns(UploadReadsOutput)
         authentication required;
-        
+
    /* Input parameters for downloading reads objects.
         list<read_lib> read_libraries - the the workspace read library objects
             to download.
@@ -189,11 +189,11 @@ module ReadsUtils {
         list<read_lib> read_libraries;
         tern interleaved;
     } DownloadReadsParams;
-    
+
     /* Reads file information.
         Note that the file names provided are those *prior to* interleaving
         or deinterleaving the reads.
-        
+
         string fwd - the path to the forward / left reads.
         string fwd_name - the name of the forwards reads file from Shock, or
             if not available, from the Shock handle.
@@ -214,7 +214,7 @@ module ReadsUtils {
         string otype;
         string type;
     } ReadsFiles;
-    
+
     /* Information about each set of reads.
         ReadsFiles files - the reads files.
         string ref - the absolute workspace reference of the reads file, e.g
@@ -235,8 +235,8 @@ module ReadsUtils {
             genetic fragments. null if unavailable or single end reads.
         int read_count - the number of reads in the this dataset. null if
             unavailable.
-        int read_size - sequencing parameter defining the expected read length. 
-            For paired end reads, this is the expected length of the total of 
+        int read_size - sequencing parameter defining the expected read length.
+            For paired end reads, this is the expected length of the total of
             the two reads. null if unavailable.
         float gc_content - the GC content of the reads. null if
             unavailable.
@@ -249,7 +249,7 @@ module ReadsUtils {
         float qual_max - Maximum Quality Score. null if unavailable.
         float qual_mean - Mean Quality Score. null if unavailable.
         float qual_stdev - Std dev of Quality Scores. null if unavailable.
-        mapping<string, float> base_percentages - percentage of total bases being 
+        mapping<string, float> base_percentages - percentage of total bases being
             a particular nucleotide.  Null if unavailable.
      */
     typedef structure {
@@ -285,7 +285,7 @@ module ReadsUtils {
     typedef structure {
         mapping<read_lib, DownloadedReadLibrary> files;
     } DownloadReadsOutput;
-   
+
     /* Download read libraries. Reads compressed with gzip or bzip are
         automatically uncompressed.
      */

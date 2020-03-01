@@ -38,7 +38,7 @@ class ReadsUtils:
     ######################################### noqa
     VERSION = "0.3.13"
     GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
-    GIT_COMMIT_HASH = "e644add24aa36536a2d488e5a814226771a9292a"
+    GIT_COMMIT_HASH = "6882a74364922dbdacea2714f225fa57fd4b3b2f"
 
     #BEGIN_CLASS_HEADER
 
@@ -833,7 +833,7 @@ class ReadsUtils:
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
         are accepted. Note that prior to validation the file will be altered in
-        place to remove blank lines if any exist.
+        place to remove blank lines and CRLF characters if any exist.
         :param params: instance of list of type "ValidateFASTQParams" (Input
            to the validateFASTQ function. Required parameters: file_path -
            the path to the file to validate. Optional parameters: interleaved
