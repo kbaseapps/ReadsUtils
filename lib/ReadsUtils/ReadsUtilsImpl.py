@@ -36,9 +36,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.12"
-    GIT_URL = "https://github.com/kbaseapps/ReadsUtils.git"
-    GIT_COMMIT_HASH = "9d2e384fbbb123be8a57670535e18d3ec224d4b6"
+    VERSION = "0.3.13"
+    GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
+    GIT_COMMIT_HASH = "6882a74364922dbdacea2714f225fa57fd4b3b2f"
 
     #BEGIN_CLASS_HEADER
 
@@ -833,7 +833,7 @@ class ReadsUtils:
         """
         Validate a FASTQ file. The file extensions .fq, .fnq, and .fastq
         are accepted. Note that prior to validation the file will be altered in
-        place to remove blank lines if any exist.
+        place to remove blank lines and CRLF characters if any exist.
         :param params: instance of list of type "ValidateFASTQParams" (Input
            to the validateFASTQ function. Required parameters: file_path -
            the path to the file to validate. Optional parameters: interleaved
@@ -862,28 +862,19 @@ class ReadsUtils:
                 raise ValueError(f'File {file_path} is not a FASTQ file')
             self.log('Validating FASTQ file ' + file_path)
             self.log('Checking line count')
+
             c = 0
-            blank = False
-            # open assumes ascii, which is ok for reads
-            with open(file_path) as f:  # run & count until we hit a blank line
-                for l in f:
-                    if not l.strip():
-                        blank = True
-                        break
-                    c += 1
-            if blank:
-                c = 0
-                self.log('Removing blank lines')
-                with open(file_path) as s, tempfile.NamedTemporaryFile(
-                        mode='w', dir=self.scratch) as t:
-                    for l in s:
-                        l = l.strip()
-                        if l:
-                            t.write(l + '\n')
-                            c += 1
-                    s.close()
-                    t.flush()
-                    shutil.copy2(t.name, file_path)
+            self.log('Removing blank lines and CRLF characters if any')
+            with open(file_path) as s, tempfile.NamedTemporaryFile(
+                    mode='w', dir=self.scratch) as t:
+                for l in s:
+                    l = l.strip()
+                    if l:
+                        t.write(l + '\n')
+                        c += 1
+                s.close()
+                t.flush()
+                shutil.copy2(t.name, file_path)
             validated = 1
             if c % 4 != 0:
                 err = f'Invalid FASTQ file, expected multiple of 4 lines, got {c}'
