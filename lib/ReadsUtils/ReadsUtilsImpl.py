@@ -1078,7 +1078,7 @@ class ReadsUtils:
             raise ValueError(validation_error_message)
 
         self.log('validation complete, uploading files to shock')
-
+        print("@@@@@@@@@@@@()@@@@@@@@@@@@!!actual path is: ", actualpath)
         uploadedfile = dfu.file_to_shock({'file_path': actualpath,
                                           'make_handle': 1,
                                           'pack': 'gzip'})

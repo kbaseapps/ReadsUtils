@@ -754,7 +754,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         # test saving with IDs only
         ref = self.impl.upload_reads(
-            self.ctx, {'fwd_id': ret['fwd_handle'],
+            self.ctx, {'fwd_id': ret['handle']['hid'],
                        'sequencing_tech': 'seqtech2-1',
                        'wsid': self.ws_info[0],
                        'objid': obj['info'][0]})
@@ -1390,7 +1390,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
-             'fwd_id': ret['id'],
+             'fwd_id': ret['shock_id'],
              'objid': 1000000
              },
             'There is no object with id 1000000', exception=ServerError)
