@@ -102,35 +102,67 @@ class ReadsUtilsTest(unittest.TestCase):
                         allow_redirects=True)
         print('Deleted shock node ' + node_id)
 
+    # @classmethod
+    # def upload_file_to_shock(cls, file_path):
+    #     """
+    #     Use HTTP multi-part POST to save a file to a SHOCK instance.
+    #     """
+    #
+    #     header = dict()
+    #     header["Authorization"] = "Oauth {0}".format(cls.token)
+    #
+    #     if file_path is None:
+    #         raise Exception("No file given for upload to SHOCK!")
+    #
+    #     with open(os.path.abspath(file_path), 'rb') as dataFile:
+    #         files = {'upload': dataFile}
+    #         print('POSTing data')
+    #         response = requests.post(
+    #             cls.shockURL + '/node', headers=header, files=files,
+    #             stream=True, allow_redirects=True)
+    #         print('got response')
+    #
+    #     if not response.ok:
+    #         response.raise_for_status()
+    #
+    #     result = response.json()
+    #
+    #     if result['error']:
+    #         raise Exception(result['error'][0])
+    #     else:
+    #         return result["data"]
+
     @classmethod
     def upload_file_to_shock(cls, file_path):
         """
-        Use HTTP multi-part POST to save a file to a SHOCK instance.
+        Use DataFileUtil.file_to_shock() save a file to a SHOCK instance.
         """
-
-        header = dict()
-        header["Authorization"] = "Oauth {0}".format(cls.token)
 
         if file_path is None:
             raise Exception("No file given for upload to SHOCK!")
 
-        with open(os.path.abspath(file_path), 'rb') as dataFile:
-            files = {'upload': dataFile}
-            print('POSTing data')
-            response = requests.post(
-                cls.shockURL + '/node', headers=header, files=files,
-                stream=True, allow_redirects=True)
-            print('got response')
+        # copy file to where DFU can see it (can only see scratch)
+        src_file_basename = os.path.basename(file_path)
+        shared_file_path = os.path.join(cls.scratch, src_file_basename)
+        print("LOOK AT HERE!!:", "file_path:", file_path, "shared_file_path:", shared_file_path)
+        shutil.copy2(file_path, shared_file_path)
 
-        if not response.ok:
-            response.raise_for_status()
+        # Upload files to shock
+        try:
+            shock_info = cls.dfu.file_to_shock({
+                'file_path': shared_file_path,
+                'make_handle': 1
+            })
+        except Exception as e:
+            raise ValueError('Unable to store ' + file_path + str(e))
+            # traceback.format_exc() # to get the full stack trace
 
-        result = response.json()
-
-        if result['error']:
-            raise Exception(result['error'][0])
-        else:
-            return result["data"]
+        # remember shock info
+        if not hasattr(cls, 'shock_ids'):
+            cls.shock_ids = []
+        cls.shock_ids.append(shock_info['shock_id'])
+        print("!!!!shock_info", shock_info)
+        return shock_info
 
     @classmethod
     def upload_file_to_shock_and_get_handle(cls, test_file):
@@ -141,17 +173,17 @@ class ReadsUtilsTest(unittest.TestCase):
         print('loading file to shock: ' + test_file)
         node = cls.upload_file_to_shock(test_file)
         pprint(node)
-        cls.nodes_to_delete.append(node['id'])
+        cls.nodes_to_delete.append(node['shock_id'])
 
-        print('creating handle for shock id ' + node['id'])
-        handle_id = cls.hs.persist_handle({'id': node['id'],
+        print('creating handle for shock id ' + node['shock_id'])
+        handle_id = cls.hs.persist_handle({'id': node['shock_id'],
                                            'type': 'shock',
                                            'url': cls.shockURL
                                            })
         cls.handles_to_delete.append(handle_id)
 
-        md5 = node['file']['checksum']['md5']
-        return node['id'], handle_id, md5, node['file']['size']
+        md5 = node['handle']['remote_md5']
+        return node['shock_id'], handle_id, md5, node['size']
 
     @classmethod
     def upload_assembly(cls, wsobjname, object_body, fwd_reads,
@@ -653,13 +685,13 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_single_end_reads_gzip(self):
         # gzip, minimum inputs
         ret = self.upload_file_to_shock('data/Sample1.fastq.gz')
-        ref = self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
+        ref = self.impl.upload_reads(self.ctx, {'fwd_id': ret['shock_id'],
                                                 'sequencing_tech': 'seqtech',
                                                 'wsname': self.ws_info[1],
                                                 'name': 'singlereads1'})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads1']})['data'][0]
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
             'KBaseFile.SingleEndLibrary'), True)
@@ -700,7 +732,7 @@ class ReadsUtilsTest(unittest.TestCase):
     def test_single_end_reads_metagenome_objid(self):
         # single genome = 0, test saving to an object id
         ret = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
-        ref = self.impl.upload_reads(self.ctx, {'fwd_id': ret['id'],
+        ref = self.impl.upload_reads(self.ctx, {'fwd_id': ret['shock_id'],
                                                 'sequencing_tech': 'seqtech2',
                                                 'wsname': self.ws_info[1],
                                                 'name': 'singlereads2',
@@ -722,13 +754,13 @@ class ReadsUtilsTest(unittest.TestCase):
 
         # test saving with IDs only
         ref = self.impl.upload_reads(
-            self.ctx, {'fwd_id': ret['id'],
+            self.ctx, {'fwd_id': ret['fwd_handle'],
                        'sequencing_tech': 'seqtech2-1',
                        'wsid': self.ws_info[0],
                        'objid': obj['info'][0]})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads2/2']})['data'][0]
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
             'KBaseFile.SingleEndLibrary'), True)
@@ -752,7 +784,7 @@ class ReadsUtilsTest(unittest.TestCase):
         source = {'source': 'my pants'}
         ref = self.impl.upload_reads(
             self.ctx,
-            {'fwd_id': ret['id'],
+            {'fwd_id': ret['shock_id'],
              'sequencing_tech': 'seqtech3',
              'wsid': self.ws_info[0],
              'name': 'singlereads3',
@@ -764,7 +796,7 @@ class ReadsUtilsTest(unittest.TestCase):
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/singlereads3']})['data'][0]
 
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
             'KBaseFile.SingleEndLibrary'), True)
@@ -799,16 +831,16 @@ class ReadsUtilsTest(unittest.TestCase):
         ret1 = self.upload_file_to_shock('data/small.forward.fq')
         ret2 = self.upload_file_to_shock('data/small.reverse.fq')
         ref = self.impl.upload_reads(
-            self.ctx, {'fwd_id': ret1['id'],
-                       'rev_id': ret2['id'],
+            self.ctx, {'fwd_id': ret1['shock_id'],
+                       'rev_id': ret2['shock_id'],
                        'sequencing_tech': 'seqtech-pr1',
                        'wsname': self.ws_info[1],
                        'name': 'pairedreads1',
                        'interleaved': 0})
         obj = self.dfu.get_objects(
             {'object_refs': [self.ws_info[1] + '/pairedreads1']})['data'][0]
-        self.delete_shock_node(ret1['id'])
-        self.delete_shock_node(ret2['id'])
+        self.delete_shock_node(ret1['shock_id'])
+        self.delete_shock_node(ret2['shock_id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
             'KBaseFile.PairedEndLibrary'), True)
@@ -889,7 +921,7 @@ class ReadsUtilsTest(unittest.TestCase):
         # paired end interlaced with the 4 pe input set
         ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
         ref = self.impl.upload_reads(
-            self.ctx, {'fwd_id': ret['id'],
+            self.ctx, {'fwd_id': ret['shock_id'],
                        'sequencing_tech': 'seqtech-pr2',
                        'wsname': self.ws_info[1],
                        'name': 'pairedreads2',
@@ -901,7 +933,7 @@ class ReadsUtilsTest(unittest.TestCase):
         obj = self.ws.get_objects2(
             {'objects': [{'ref': self.ws_info[1] + '/pairedreads2'}]}
         )['data'][0]
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
         self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
         self.assertEqual(obj['info'][2].startswith(
             'KBaseFile.PairedEndLibrary'), True)
@@ -1362,7 +1394,7 @@ class ReadsUtilsTest(unittest.TestCase):
              'objid': 1000000
              },
             'There is no object with id 1000000', exception=ServerError)
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
 
     def test_upload_fail_non_existant_shockid(self):
         ret = self.upload_file_to_shock('data/Sample1.fastq')
@@ -1374,7 +1406,7 @@ class ReadsUtilsTest(unittest.TestCase):
              },
             'Error downloading file from shock node foo: Node not found',
             exception=ServerError)
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
 
     def test_upload_fail_non_existant_file(self):
         self.fail_upload_reads(
@@ -1453,13 +1485,13 @@ class ReadsUtilsTest(unittest.TestCase):
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
-             'fwd_id': ret['id'],
+             'fwd_id': ret['shock_id'],
              'name': 'bar'
              },
             'Invalid FASTQ file - Path: /kb/module/work/tmp/fwd/Sample1_invalid.fastq. ' +
-            'Input Shock ID : ' + ret['id'] +
+            'Input Shock ID : ' + ret['shock_id'] +
             '. File Name : Sample1_invalid.fastq.')
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
 
     def test_upload_fail_bad_fastq_file(self):
         print('*** upload_fail_bad_fastq_file***')
@@ -1577,8 +1609,8 @@ class ReadsUtilsTest(unittest.TestCase):
         self.fail_upload_reads_regex(
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
-             'fwd_id': ret1['id'],
-             'rev_id': ret2['id'],
+             'fwd_id': ret1['shock_id'],
+             'rev_id': ret2['shock_id'],
              'name': 'bar'
              },
             ('Invalid FASTQ file - Path: /kb/module/work/tmp/(.*).inter.fastq. ' +
@@ -1588,60 +1620,60 @@ class ReadsUtilsTest(unittest.TestCase):
              'REV File Name : Sample_rev.fq. ' +
              'FWD Path : /kb/module/work/tmp/fwd/Sample1_invalid.fastq. ' +
              'REV Path : /kb/module/work/tmp/rev/Sample_rev.fq.').format(
-                ret1['id'],
-                ret2['id']))
-        self.delete_shock_node(ret1['id'])
-        self.delete_shock_node(ret2['id'])
+                ret1['shock_id'],
+                ret2['shock_id']))
+        self.delete_shock_node(ret1['shock_id'])
+        self.delete_shock_node(ret2['shock_id'])
 
     def test_upload_fail_interleaved_for_single(self):
         ret = self.upload_file_to_shock('data/Sample5_interleaved.fastq')
         self.fail_upload_reads(
             {'sequencing_tech': 'tech',
              'wsname': self.ws_info[1],
-             'fwd_id': ret['id'],
+             'fwd_id': ret['shock_id'],
              'name': 'bar'
              },
             'Invalid FASTQ file - Path: /kb/module/work/tmp/fwd/Sample5_interleaved.fastq. ' +
-            'Input Shock ID : ' + ret['id'] +
+            'Input Shock ID : ' + ret['shock_id'] +
             '. File Name : Sample5_interleaved.fastq.')
-        self.delete_shock_node(ret['id'])
+        self.delete_shock_node(ret['shock_id'])
 
     def test_bad_paired_end_reads(self):
         ret1 = self.upload_file_to_shock('data/small.forward.fq')
         ret2 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
-        self.fail_upload_reads({'fwd_id': ret1['id'],
-                                'rev_id': ret2['id'],
+        self.fail_upload_reads({'fwd_id': ret1['shock_id'],
+                                'rev_id': ret2['shock_id'],
                                 'sequencing_tech': 'seqtech-pr1',
                                 'wsname': self.ws_info[1],
                                 'name': 'pairedreads1',
                                 'interleaved': 0},
                                'Interleave failed - reads files do not have ' +
                                'an equal number of records. forward Shock node ' +
-                               ret1['id'] +
+                               ret1['shock_id'] +
                                ', filename small.forward.fq, reverse Shock node ' +
-                               ret2['id'] +
+                               ret2['shock_id'] +
                                ', filename Sample5_noninterleaved.1.fastq',
                                do_startswith=True)
-        self.delete_shock_node(ret1['id'])
-        self.delete_shock_node(ret2['id'])
+        self.delete_shock_node(ret1['shock_id'])
+        self.delete_shock_node(ret2['shock_id'])
 
     def test_missing_line_paired_end_reads(self):
         ret1 = self.upload_file_to_shock(
             'data/Sample5_noninterleaved.1.missing_line.fastq')
         ret2 = self.upload_file_to_shock('data/Sample5_noninterleaved.1.fastq')
-        self.fail_upload_reads({'fwd_id': ret1['id'],
-                                'rev_id': ret2['id'],
+        self.fail_upload_reads({'fwd_id': ret1['shock_id'],
+                                'rev_id': ret2['shock_id'],
                                 'sequencing_tech': 'seqtech-pr1',
                                 'wsname': self.ws_info[1],
                                 'name': 'pairedreads1',
                                 'interleaved': 0},
                                'Reading FASTQ record failed - non-blank lines are not a ' +
                                'multiple of four. ' +
-                               'Shock node ' + ret1['id'] +
+                               'Shock node ' + ret1['shock_id'] +
                                ', Shock filename ' +
                                'Sample5_noninterleaved.1.missing_line.fastq')
-        self.delete_shock_node(ret1['id'])
-        self.delete_shock_node(ret2['id'])
+        self.delete_shock_node(ret1['shock_id'])
+        self.delete_shock_node(ret2['shock_id'])
 
     def test_bad_paired_end_reads_file(self):
         fwdtf = 'small.forward.fq'
