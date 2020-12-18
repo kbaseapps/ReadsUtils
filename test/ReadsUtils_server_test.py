@@ -102,35 +102,6 @@ class ReadsUtilsTest(unittest.TestCase):
                         allow_redirects=True)
         print('Deleted shock node ' + node_id)
 
-    # @classmethod
-    # def upload_file_to_shock(cls, file_path):
-    #     """
-    #     Use HTTP multi-part POST to save a file to a SHOCK instance.
-    #     """
-    #
-    #     header = dict()
-    #     header["Authorization"] = "Oauth {0}".format(cls.token)
-    #
-    #     if file_path is None:
-    #         raise Exception("No file given for upload to SHOCK!")
-    #
-    #     with open(os.path.abspath(file_path), 'rb') as dataFile:
-    #         files = {'upload': dataFile}
-    #         print('POSTing data')
-    #         response = requests.post(
-    #             cls.shockURL + '/node', headers=header, files=files,
-    #             stream=True, allow_redirects=True)
-    #         print('got response')
-    #
-    #     if not response.ok:
-    #         response.raise_for_status()
-    #
-    #     result = response.json()
-    #
-    #     if result['error']:
-    #         raise Exception(result['error'][0])
-    #     else:
-    #         return result["data"]
 
     @classmethod
     def upload_file_to_shock(cls, file_path):
@@ -144,7 +115,6 @@ class ReadsUtilsTest(unittest.TestCase):
         # copy file to where DFU can see it (can only see scratch)
         src_file_basename = os.path.basename(file_path)
         shared_file_path = os.path.join(cls.scratch, src_file_basename)
-        print("LOOK AT HERE!!:", "file_path:", file_path, "shared_file_path:", shared_file_path)
         shutil.copy2(file_path, shared_file_path)
 
         # Upload files to shock
@@ -155,13 +125,11 @@ class ReadsUtilsTest(unittest.TestCase):
             })
         except Exception as e:
             raise ValueError('Unable to store ' + file_path + str(e))
-            # traceback.format_exc() # to get the full stack trace
 
         # remember shock info
         if not hasattr(cls, 'shock_ids'):
             cls.shock_ids = []
         cls.shock_ids.append(shock_info['shock_id'])
-        print("!!!!shock_info", shock_info)
         return shock_info
 
     @classmethod
