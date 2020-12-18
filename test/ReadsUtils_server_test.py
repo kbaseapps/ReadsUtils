@@ -754,7 +754,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         # test saving with IDs only
         ref = self.impl.upload_reads(
-            self.ctx, {'fwd_id': ret['handle']['hid'],
+            self.ctx, {'fwd_id': ret['handle']['id'],
                        'sequencing_tech': 'seqtech2-1',
                        'wsid': self.ws_info[0],
                        'objid': obj['info'][0]})
