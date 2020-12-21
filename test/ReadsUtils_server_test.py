@@ -12,7 +12,10 @@ from os import environ
 from pprint import pprint
 from unittest.mock import patch
 from zipfile import ZipFile
-
+from pyftpdlib.authorizers import DummyAuthorizer
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import ThreadedFTPServer
+import threading
 import requests
 
 from ReadsUtils.ReadsUtilsImpl import ReadsUtils
@@ -77,7 +80,28 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.nodes_to_delete = []
         cls.handles_to_delete = []
         cls.setupTestData()
+        cls.ftp_domain = 'localhost'
+        cls.ftp_port = 21
+        thread = threading.Thread(target=cls.start_ftp_service,
+                                  args=(cls.ftp_domain, cls.ftp_port))
+        thread.daemon = True
+        thread.start()
+        time.sleep(5)
         print('\n\n=============== Starting tests ==================')
+
+    @classmethod
+    def start_ftp_service(cls, domain, port):
+
+        print('starting ftp service')
+        authorizer = DummyAuthorizer()
+        authorizer.add_anonymous(os.getcwd(), perm='elradfmwMT')
+
+        handler = FTPHandler
+        handler.authorizer = authorizer
+
+        address = (domain, port)
+        with ThreadedFTPServer(address, handler) as server:
+            server.serve_forever()
 
     @classmethod
     def tearDownClass(cls):
@@ -3023,18 +3047,19 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
 
-        ftp_connection = ftplib.FTP('ftp.uconn.edu')
+        # ftp_connection = ftplib.FTP('ftp.uconn.edu')
+        ftp_connection = ftplib.FTP(self.ftp_domain)
         ftp_connection.login('anonymous', 'anonymous@domain.com')
-        ftp_connection.cwd("/48_hour/")
+        # ftp_connection.cwd("/48_hour/")
 
         if fq_filename not in ftp_connection.nlst():
-            fh = open(os.path.join("data", fq_filename), 'rb')
-            ftp_connection.storbinary('STOR Sample1.fastq', fh)
-            fh.close()
+            with open(os.path.join("data", fq_filename), 'rb') as fh:
+                ftp_connection.storbinary('STOR {}'.format(fq_filename), fh)
 
         params = {
             'download_type': 'FTP',
-            'fwd_file_url': 'ftp://ftp.uconn.edu/48_hour/Sample1.fastq',
+            # 'fwd_file_url': 'ftp://ftp.uconn.edu/48_hour/Sample1.fastq',
+            'fwd_file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
@@ -3063,18 +3088,17 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
 
-        ftp_connection = ftplib.FTP('ftp.uconn.edu')
+        ftp_connection = ftplib.FTP(self.ftp_domain)
         ftp_connection.login('anonymous', 'anonymous@domain.com')
-        ftp_connection.cwd("/48_hour/")
 
         if fq_filename not in ftp_connection.nlst():
-            fh = open(os.path.join("data", fq_filename), 'rb')
-            ftp_connection.storbinary('STOR Sample1.fastq', fh)
-            fh.close()
+            with open(os.path.join("data", fq_filename), 'rb') as fh:
+                ftp_connection.storbinary('STOR {}'.format(fq_filename), fh)
 
         params = {
             'download_type': 'FTP',
-            'fwd_file_url': 'ftp://anonymous:anon@domain.com@ftp.uconn.edu/48_hour/Sample1.fastq',
+            # 'fwd_file_url': 'ftp://anonymous:anon@domain.com@ftp.uconn.edu/48_hour/Sample1.fastq',
+            'fwd_file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
@@ -3103,9 +3127,8 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
 
-        ftp_connection = ftplib.FTP('ftp.uconn.edu')
+        ftp_connection = ftplib.FTP(self.ftp_domain)
         ftp_connection.login('anonymous', 'anonymous@domain.com')
-        ftp_connection.cwd("/48_hour/")
 
         if fq_filename not in ftp_connection.nlst():
             fh = open(os.path.join("data", fq_filename), 'rb')
@@ -3114,7 +3137,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         params = {
             'download_type': 'FTP',
-            'fwd_file_url': 'ftp://ftp.uconn.edu/48_hour/Sample1.fastq.gz',
+            'fwd_file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq.gz'),
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
