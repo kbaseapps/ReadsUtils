@@ -1035,8 +1035,10 @@ class ReadsUtils:
         # return variables are: returnVal
         #BEGIN upload_reads
         self.log('Starting upload reads, parsing args')
+        print('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source = (
                                                     self._proc_upload_reads_params(params))
+        print("@@@@  o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source:", o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source)
         # If reads_source == 'shock', fwdsource and revsource are shock nodes
         # If reads_source == 'web', fwdsource and revsource are urls
         # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory
