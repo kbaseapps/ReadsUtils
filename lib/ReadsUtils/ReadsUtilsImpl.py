@@ -721,13 +721,13 @@ class ReadsUtils:
         download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
         user_id: current token user
         """
-
         # return values
         fwdname = None
         revname = None
         revpath = None
 
         dfu = DataFileUtil(self.callback_url)
+        print("dfu client is created")
         if reads_source == 'shock':
             # Grab files from Shock
             fileinput = [{'shock_id': fwd,
@@ -749,10 +749,12 @@ class ReadsUtils:
                         {'file_url': fwd,
                         'download_type': download_type}).get(
                                         'copy_file_path')
+            print("forward path")
             revpath = dfu.download_web_file(
                         {'file_url': rev,
                         'download_type': download_type}).get(
                                         'copy_file_path') if rev else None
+            print("reverse path")
         elif reads_source == 'staging':
             fwdpath = dfu.download_staging_file(
                         {'staging_file_subdir_path': fwd}).get(
@@ -1048,10 +1050,11 @@ class ReadsUtils:
         #                               in staging area
         # If reads_source == 'local', fwdsource and revsource are file paths
         dfu = DataFileUtil(self.callback_url)
+        print("DFU client is created")
         fwdname, revname, fwdid, revid = (None,) * 4
         ret = self._process_download(fwdsource, revsource, reads_source,
                                      params.get('download_type'), ctx['user_id'])
-        print("!!ret:", ret)
+        print("!!%%ret:", ret)
         fwdpath = ret.get('fwdpath')
         revpath = ret.get('revpath')
 
