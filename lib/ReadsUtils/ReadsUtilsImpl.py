@@ -1039,6 +1039,9 @@ class ReadsUtils:
         o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source = (
                                                     self._proc_upload_reads_params(params))
         print("@@@@  o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source:", o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source)
+        """
+        {'sequencing_tech': 'Unknown', 'single_genome': 1} 58197 test_reads_file_name.reads None KBaseFile.SingleEndLibrary True ftp://localhost/Sample1.fastq None web
+        """
         # If reads_source == 'shock', fwdsource and revsource are shock nodes
         # If reads_source == 'web', fwdsource and revsource are urls
         # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory
@@ -1048,7 +1051,7 @@ class ReadsUtils:
         fwdname, revname, fwdid, revid = (None,) * 4
         ret = self._process_download(fwdsource, revsource, reads_source,
                                      params.get('download_type'), ctx['user_id'])
-
+        print("!!ret:", ret)
         fwdpath = ret.get('fwdpath')
         revpath = ret.get('revpath')
 

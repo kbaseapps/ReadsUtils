@@ -86,7 +86,7 @@ class ReadsUtilsTest(unittest.TestCase):
                                   args=(cls.ftp_domain, cls.ftp_port))
         thread.daemon = True
         thread.start()
-        time.sleep(5)
+        time.sleep(20)
         print('\n\n=============== Starting tests ==================')
 
     @classmethod
@@ -3071,7 +3071,6 @@ class ReadsUtilsTest(unittest.TestCase):
 
         params = {
             'download_type': 'FTP',
-            # 'fwd_file_url': 'ftp://ftp.uconn.edu/48_hour/Sample1.fastq',
             'fwd_file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
@@ -3079,21 +3078,21 @@ class ReadsUtilsTest(unittest.TestCase):
         }
 
         ref = self.impl.upload_reads(self.ctx, params)
-    #     self.assertTrue('obj_ref' in ref[0])
-    #     obj = self.dfu.get_objects(
-    #         {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
-    #     self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
-    #     self.assertEqual(obj['info'][2].startswith(
-    #         'KBaseFile.SingleEndLibrary'), True)
-    #     d = obj['data']
-    #     self.assertEqual(d['sequencing_tech'], 'Unknown')
-    #     self.assertEqual(d['single_genome'], 1)
-    #     self.assertEqual('source' not in d, True)
-    #     self.assertEqual('strain' not in d, True)
-    #     self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
-    #                    'f118ee769a5e1b40ec44629994dfc3cd')
-    #     node = d['lib']['file']['id']
-    #     self.delete_shock_node(node)
+        self.assertTrue('obj_ref' in ref[0])
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
+        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+            'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['sequencing_tech'], 'Unknown')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
+                       'f118ee769a5e1b40ec44629994dfc3cd')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
 '''
     def test_upload_reads_from_web_ftp_anonymous(self):
         # copy test file to scratch area
