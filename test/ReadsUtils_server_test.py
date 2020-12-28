@@ -3076,7 +3076,9 @@ class ReadsUtilsTest(unittest.TestCase):
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
         }
-
+        dfu = DataFileUtil(self.callback_url)
+        ret1 = dfu.download_web_file(self.ctx, params)[0]
+        print("ret1:",ret1)
         ref = self.impl.upload_reads(self.ctx, params)
         self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
