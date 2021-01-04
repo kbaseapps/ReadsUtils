@@ -3069,19 +3069,19 @@ class ReadsUtilsTest(unittest.TestCase):
                 with open(os.path.join("data", fq_filename), 'rb') as fh:
                     ftp_connection.storbinary('STOR {}'.format(fq_filename), fh)
 
-        # params = {
-        #     'download_type': 'FTP',
-        #     'fwd_file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
-        #     'sequencing_tech': 'Unknown',
-        #     'name': 'test_reads_file_name.reads',
-        #     'wsname': self.getWsName()
-        # }
         params = {
             'download_type': 'FTP',
-            'file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
+            'fwd_file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
+            'sequencing_tech': 'Unknown',
+            'name': 'test_reads_file_name.reads',
+            'wsname': self.getWsName()
         }
-        ret1 = self.dfu.download_web_file(self.ctx, params)[0]
-        print("ret1:",ret1)
+        # params = {
+        #     'download_type': 'FTP',
+        #     'file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
+        # }
+        # ret1 = self.dfu.download_web_file(self.ctx, params)[0]
+        # print("ret1:",ret1)
         ref = self.impl.upload_reads(self.ctx, params)
         self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
