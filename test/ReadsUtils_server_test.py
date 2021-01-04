@@ -3078,7 +3078,7 @@ class ReadsUtilsTest(unittest.TestCase):
         # }
         params = {
             'download_type': 'FTP',
-            'file_url': 'ftp://{}/{}'.format(self.ftp_domain, fq_filename),
+            'file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
         }
         ret1 = self.dfu.download_web_file(self.ctx, params)[0]
         print("ret1:",ret1)
