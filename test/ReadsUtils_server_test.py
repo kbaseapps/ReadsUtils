@@ -1219,7 +1219,7 @@ class ReadsUtilsTest(unittest.TestCase):
             "No object with id 99999999 exists in workspace {} (name {})".format(
                 self.ws_info[0], self.ws_info[1]),
             exception=ServerError)
-
+'''
     def check_lib(self, lib, size, filename, md5):
         shock_id = lib["file"]["id"]
         print("LIB: {}".format(str(lib)))
@@ -1242,7 +1242,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         self.assertEqual(libfile['type'], 'shock')
         self.assertEqual(libfile['url'], self.shockURL)
-
+'''
     def fail_upload_reads(self, params, error, exception=ValueError, do_startswith=False):
         with self.assertRaises(exception) as context:
             self.impl.upload_reads(self.ctx, params)
@@ -3078,12 +3078,6 @@ class ReadsUtilsTest(unittest.TestCase):
             'name': 'test_reads_file_name.reads',
             'wsname': self.getWsName()
         }
-        # params = {
-        #     'download_type': 'FTP',
-        #     'file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
-        # }
-        # ret1 = self.dfu.download_web_file(self.ctx, params)[0]
-        # print("ret1:",ret1)
         ref = self.impl.upload_reads(self.ctx, params)
         self.assertTrue('obj_ref' in ref[0])
         obj = self.dfu.get_objects(
@@ -3100,7 +3094,7 @@ class ReadsUtilsTest(unittest.TestCase):
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
-'''
+
     def test_upload_reads_from_web_ftp_anonymous(self):
         # copy test file to scratch area
         fq_filename = "Sample1.fastq"
@@ -3176,7 +3170,7 @@ class ReadsUtilsTest(unittest.TestCase):
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
-
+'''
     def test_upload_reads_from_web_google_drive(self):
         url = 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/'
         url += 'view?usp=sharing'
