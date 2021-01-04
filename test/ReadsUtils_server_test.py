@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import socket
 import time
 import unittest
 from configparser import ConfigParser
@@ -80,7 +81,8 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.nodes_to_delete = []
         cls.handles_to_delete = []
         cls.setupTestData()
-        cls.ftp_domain = 'localhost'
+        # cls.ftp_domain = 'localhost'
+        cls.ftp_domain = socket.gethostbyname(socket.gethostname())
         cls.ftp_port = 21
         thread = threading.Thread(target=cls.start_ftp_service,
                                   args=(cls.ftp_domain, cls.ftp_port))
