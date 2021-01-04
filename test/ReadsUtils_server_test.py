@@ -1217,7 +1217,7 @@ class ReadsUtilsTest(unittest.TestCase):
             "No object with id 99999999 exists in workspace {} (name {})".format(
                 self.ws_info[0], self.ws_info[1]),
             exception=ServerError)
-    '''
+        
     def check_lib(self, lib, size, filename, md5):
         shock_id = lib["file"]["id"]
         print("LIB: {}".format(str(lib)))
@@ -1240,7 +1240,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
         self.assertEqual(libfile['type'], 'shock')
         self.assertEqual(libfile['url'], self.shockURL)
-    '''
+
     def fail_upload_reads(self, params, error, exception=ValueError, do_startswith=False):
         with self.assertRaises(exception) as context:
             self.impl.upload_reads(self.ctx, params)
