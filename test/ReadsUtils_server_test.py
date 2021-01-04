@@ -81,7 +81,6 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.nodes_to_delete = []
         cls.handles_to_delete = []
         cls.setupTestData()
-        # cls.ftp_domain = 'localhost'
         cls.ftp_domain = socket.gethostbyname(socket.gethostname())
         cls.ftp_port = 21
         thread = threading.Thread(target=cls.start_ftp_service,
@@ -594,7 +593,6 @@ class ReadsUtilsTest(unittest.TestCase):
             self.impl.validateFASTA(
                 self.ctx, {'file_path': filename})[0]['valid'], result)
 
-    '''
     def test_FASTA_validation(self):
         self.check_FASTA('data/sample.fa', 1)
         self.check_FASTA('data/sample.fas', 1)
@@ -3045,20 +3043,6 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib1']['file']['id']
         self.delete_shock_node(node)
 
-
-
-    '''
-    # def test_download_ftp_link_compress_file(self):
-    #
-    #     fq_filename = "file1.txt.bz"
-    #
-    #     with ftplib.FTP(self.ftp_domain) as ftp_connection:
-    #         ftp_connection.login('anonymous', 'anonymous@domain.com')
-    #
-    #         if fq_filename not in ftp_connection.nlst():
-    #             with open(os.path.join("data", fq_filename), 'rb') as fh:
-    #                 ftp_connection.storbinary('STOR {}'.format(fq_filename), fh)
-
     def test_upload_reads_from_web_ftp(self):
         # copy test file to scratch area
         fq_filename = "Sample1.fastq"
@@ -3170,7 +3154,7 @@ class ReadsUtilsTest(unittest.TestCase):
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
-'''
+
     def test_upload_reads_from_web_google_drive(self):
         url = 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/'
         url += 'view?usp=sharing'
@@ -3226,4 +3210,3 @@ class ReadsUtilsTest(unittest.TestCase):
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
-'''

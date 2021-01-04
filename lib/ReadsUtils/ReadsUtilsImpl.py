@@ -727,7 +727,6 @@ class ReadsUtils:
         revpath = None
 
         dfu = DataFileUtil(self.callback_url)
-        print("dfu client is created")
         if reads_source == 'shock':
             # Grab files from Shock
             fileinput = [{'shock_id': fwd,
@@ -749,12 +748,10 @@ class ReadsUtils:
                         {'file_url': fwd,
                         'download_type': download_type}).get(
                                         'copy_file_path')
-            print("forward path")
             revpath = dfu.download_web_file(
                         {'file_url': rev,
                         'download_type': download_type}).get(
                                         'copy_file_path') if rev else None
-            print("reverse path")
         elif reads_source == 'staging':
             fwdpath = dfu.download_staging_file(
                         {'staging_file_subdir_path': fwd}).get(
@@ -1037,24 +1034,17 @@ class ReadsUtils:
         # return variables are: returnVal
         #BEGIN upload_reads
         self.log('Starting upload reads, parsing args')
-        print('Starting upload reads, parsing args')
         o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source = (
                                                     self._proc_upload_reads_params(params))
-        print("@@@@  o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source:", o, wsid, name, objid, kbtype, single_end, fwdsource, revsource, reads_source)
-        """
-        {'sequencing_tech': 'Unknown', 'single_genome': 1} 58197 test_reads_file_name.reads None KBaseFile.SingleEndLibrary True ftp://localhost/Sample1.fastq None web
-        """
         # If reads_source == 'shock', fwdsource and revsource are shock nodes
         # If reads_source == 'web', fwdsource and revsource are urls
         # If reads_source == 'staging', fwdsource and revsource are file name/subdirectory
         #                               in staging area
         # If reads_source == 'local', fwdsource and revsource are file paths
         dfu = DataFileUtil(self.callback_url)
-        print("DFU client is created")
         fwdname, revname, fwdid, revid = (None,) * 4
         ret = self._process_download(fwdsource, revsource, reads_source,
                                      params.get('download_type'), ctx['user_id'])
-        print("!!%%ret:", ret)
         fwdpath = ret.get('fwdpath')
         revpath = ret.get('revpath')
 
