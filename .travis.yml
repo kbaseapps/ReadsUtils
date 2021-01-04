@@ -15,17 +15,17 @@ before_install:
   - docker version
 
 install:
-  - pushd ..
-  - git clone https://github.com/kbase/jars
-  - git clone https://github.com/kbase/kb_sdk
-  - cd kb_sdk
-  - make bin
-  - make sdkbase
-  - export PATH=$(pwd)/bin:$PATH
-  - source src/sh/sdk-completion.sh
-  - popd
-
+- pushd ..
+- git clone https://github.com/kbase/jars
+- docker pull kbase/kb-sdk
+- cd ..
+- docker run kbase/kb-sdk genscript > kb-sdk
+- export KBSDK=$(pwd)/kb-sdk
+- chmod a+x $KBSDK
+- cd -
+- $KBSDK version
 script:
-  - kb-sdk validate
+- $KBSDK validate
 
-after_script:
+after_success:
+- coveralls
