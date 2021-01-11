@@ -721,7 +721,6 @@ class ReadsUtils:
         download_type: one of ['Direct Download', 'FTP', 'DropBox', 'Google Drive']
         user_id: current token user
         """
-
         # return values
         fwdname = None
         revname = None
@@ -1046,7 +1045,6 @@ class ReadsUtils:
         fwdname, revname, fwdid, revid = (None,) * 4
         ret = self._process_download(fwdsource, revsource, reads_source,
                                      params.get('download_type'), ctx['user_id'])
-
         fwdpath = ret.get('fwdpath')
         revpath = ret.get('revpath')
 
@@ -1078,7 +1076,6 @@ class ReadsUtils:
             raise ValueError(validation_error_message)
 
         self.log('validation complete, uploading files to shock')
-
         uploadedfile = dfu.file_to_shock({'file_path': actualpath,
                                           'make_handle': 1,
                                           'pack': 'gzip'})
