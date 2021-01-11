@@ -149,12 +149,7 @@ class ReadsUtilsTest(unittest.TestCase):
                 'make_handle': 1
             })
         except Exception as e:
-            raise ValueError('Unable to store ' + file_path + str(e))
-
-        # remember shock info
-        if not hasattr(cls, 'shock_ids'):
-            cls.shock_ids = []
-        cls.shock_ids.append(shock_info['shock_id'])
+            raise ValueError('Unable to store file') from e
         return shock_info
 
     @classmethod
@@ -586,8 +581,18 @@ class ReadsUtilsTest(unittest.TestCase):
          'single_genome': None
          })
 
-    # FASTA/Q tests ########################################################
+    @classmethod
+    def start_local_ftp_connection(cls, fq_filename):
+        """
+        start local ftp connection
+        """
+        with ftplib.FTP(cls.ftp_domain) as ftp_connection:
+            ftp_connection.login('anonymous', 'anonymous@domain.com')
+            if fq_filename not in ftp_connection.nlst():
+                with open(os.path.join("data", fq_filename), 'rb') as fh:
+                    ftp_connection.storbinary('STOR {}'.format(fq_filename), fh)
 
+    # FASTA/Q tests ########################################################
     def check_FASTA(self, filename, result):
         self.assertEqual(
             self.impl.validateFASTA(
@@ -3048,12 +3053,7 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_filename = "Sample1.fastq"
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
-        print("self.ftp_domain:", self.ftp_domain)
-        with ftplib.FTP(self.ftp_domain) as ftp_connection:
-            ftp_connection.login('anonymous', 'anonymous@domain.com')
-            if fq_filename not in ftp_connection.nlst():
-                with open(os.path.join("data", fq_filename), 'rb') as fh:
-                    ftp_connection.storbinary('STOR {}'.format(fq_filename), fh)
+        self.start_local_ftp_connection(fq_filename)
 
         params = {
             'download_type': 'FTP',
@@ -3084,16 +3084,10 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_filename = "Sample1.fastq"
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
-
-        with ftplib.FTP(self.ftp_domain) as ftp_connection:
-            ftp_connection.login('anonymous', 'anonymous@domain.com')
-            if fq_filename not in ftp_connection.nlst():
-                with open(os.path.join("data", fq_filename), 'rb') as fh:
-                    ftp_connection.storbinary('STOR {}'.format(fq_filename), fh)
+        self.start_local_ftp_connection(fq_filename)
 
         params = {
             'download_type': 'FTP',
-            # 'fwd_file_url': 'ftp://anonymous:anon@domain.com@ftp.uconn.edu/48_hour/Sample1.fastq',
             'fwd_file_url': 'ftp://{}/{}'.format(self.ftp_domain, 'Sample1.fastq'),
             'sequencing_tech': 'Unknown',
             'name': 'test_reads_file_name.reads',
@@ -3122,13 +3116,7 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_filename = "Sample1.fastq.gz"
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
-
-        with ftplib.FTP(self.ftp_domain) as ftp_connection:
-            ftp_connection.login('anonymous', 'anonymous@domain.com')
-            if fq_filename not in ftp_connection.nlst():
-                fh = open(os.path.join("data", fq_filename), 'rb')
-                ftp_connection.storbinary('STOR Sample1.fastq.gz', fh)
-                fh.close()
+        self.start_local_ftp_connection(fq_filename)
 
         params = {
             'download_type': 'FTP',
