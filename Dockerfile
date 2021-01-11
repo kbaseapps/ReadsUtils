@@ -13,7 +13,8 @@ RUN apt-get update \
 
 # Debug tools = all below six
 RUN pip install six \
-    && pip install ipython==5.3.0
+    && pip install ipython==5.3.0 \
+    && pip install pyftpdlib==1.5.6
 
 RUN cd /opt \
     && git clone https://github.com/kbase/jars \
