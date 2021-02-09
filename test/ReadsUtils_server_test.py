@@ -582,7 +582,7 @@ class ReadsUtilsTest(unittest.TestCase):
          })
 
     @classmethod
-    def start_local_ftp_connection(cls, fq_filename):
+    def upload_file_to_local_ftp_server(cls, fq_filename):
         """
         start local ftp connection
         """
@@ -3053,7 +3053,7 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_filename = "Sample1.fastq"
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
-        self.start_local_ftp_connection(fq_filename)
+        self.upload_file_to_local_ftp_server(fq_filename)
 
         params = {
             'download_type': 'FTP',
@@ -3084,7 +3084,7 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_filename = "Sample1.fastq"
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
-        self.start_local_ftp_connection(fq_filename)
+        self.upload_file_to_local_ftp_server(fq_filename)
 
         params = {
             'download_type': 'FTP',
@@ -3116,7 +3116,7 @@ class ReadsUtilsTest(unittest.TestCase):
         fq_filename = "Sample1.fastq.gz"
         fq_path = os.path.join(self.cfg['scratch'], fq_filename)
         shutil.copy(os.path.join("data", fq_filename), fq_path)
-        self.start_local_ftp_connection(fq_filename)
+        self.upload_file_to_local_ftp_server(fq_filename)
 
         params = {
             'download_type': 'FTP',
