@@ -1,3 +1,4 @@
+# More information about codeql file can be found here:https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning
 name: "Code scanning - action"
 
 on:
