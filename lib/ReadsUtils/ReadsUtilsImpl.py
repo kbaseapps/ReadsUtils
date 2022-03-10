@@ -875,7 +875,11 @@ class ReadsUtils:
                 t.flush()
                 shutil.copy2(t.name, file_path)
             validated = 1
-            if c % 4 != 0:
+            if p.get('interleaved') and c % 8 != 0:
+                err = f'Invalid FASTQ file, an interleaved FASTQ file is expected multiple of 8 lines, got {c}'
+                self.log(err)
+                validated = 0
+            elif c % 4 != 0:
                 err = f'Invalid FASTQ file, expected multiple of 4 lines, got {c}'
                 self.log(err)
                 validated = 0
