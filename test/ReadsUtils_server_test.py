@@ -636,6 +636,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_fq('data/Sample5_noninterleaved.2.fastq', 0, 1)
         self.check_fq('data/Sample1_invalid.fastq', 0, 0)
         self.check_fq('data/Sample5_interleaved_missing_line.fastq', 1, 0)
+        self.check_fq('data/Sample6_interleaved_odd_num_reads.fastq', 1, 0)
 
     def test_FASTQ_multiple(self):
         f1 = 'data/Sample1.fastq'
