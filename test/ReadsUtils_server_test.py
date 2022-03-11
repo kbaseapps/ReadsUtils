@@ -3145,6 +3145,9 @@ class ReadsUtilsTest(unittest.TestCase):
         self.delete_shock_node(node)
 
 '''        
+    TODO : The following 2 tests are commented because currently getting google drive files is failing
+    See ticket https://kbase-jira.atlassian.net/browse/PUBLIC-1962
+    Once this ticket is resolved, please uncomment the following two tests and rerun. 
     def test_upload_reads_from_web_google_drive(self):
         url = 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/'
         url += 'view?usp=sharing'
