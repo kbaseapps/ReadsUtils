@@ -636,6 +636,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_fq('data/Sample5_noninterleaved.2.fastq', 0, 1)
         self.check_fq('data/Sample1_invalid.fastq', 0, 0)
         self.check_fq('data/Sample5_interleaved_missing_line.fastq', 1, 0)
+        self.check_fq('data/Sample6_interleaved_odd_num_reads.fastq', 1, 0)
 
     def test_FASTQ_multiple(self):
         f1 = 'data/Sample1.fastq'
@@ -3143,6 +3144,10 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
+'''        
+    TODO : The following 2 tests are commented because currently getting google drive files is failing
+    See ticket https://kbase-jira.atlassian.net/browse/PUBLIC-1962
+    Once this ticket is resolved, please uncomment the following two tests and rerun. 
     def test_upload_reads_from_web_google_drive(self):
         url = 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/'
         url += 'view?usp=sharing'
@@ -3198,3 +3203,4 @@ class ReadsUtilsTest(unittest.TestCase):
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
+'''

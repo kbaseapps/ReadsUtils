@@ -9,7 +9,7 @@ service-language:
     python
 
 module-version:
-    0.3.14
+    0.3.15
 
 owners:
     [gaprice, jkbaumohl, tgu2, ziming_yang_1]
