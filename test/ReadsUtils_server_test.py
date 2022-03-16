@@ -3144,13 +3144,10 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
-'''        
-    TODO : The following 2 tests are commented because currently getting google drive files is failing
-    See ticket https://kbase-jira.atlassian.net/browse/PUBLIC-1962
-    Once this ticket is resolved, please uncomment the following two tests and rerun. 
     def test_upload_reads_from_web_google_drive(self):
-        url = 'https://drive.google.com/file/d/0B0exSa7ebQ0qcHdNS2NEYjJOTTg/'
+        url = 'https://drive.google.com/file/d/1kDyuUrupB86arXbculE-gOkmZxtNRWtH/'
         url += 'view?usp=sharing'
+
         params = {
             'download_type': 'Google Drive',
             'fwd_file_url': url,
@@ -3178,7 +3175,7 @@ class ReadsUtilsTest(unittest.TestCase):
 
     def test_upload_reads_from_web_google_drive_different_format(self):
         url = 'https://drive.google.com/open?id='
-        url += '0B0exSa7ebQ0qcHdNS2NEYjJOTTg'
+        url += '1kDyuUrupB86arXbculE-gOkmZxtNRWtH'
         params = {
             'download_type': 'Google Drive',
             'fwd_file_url': url,
@@ -3203,4 +3200,3 @@ class ReadsUtilsTest(unittest.TestCase):
                        'f118ee769a5e1b40ec44629994dfc3cd')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
-'''
