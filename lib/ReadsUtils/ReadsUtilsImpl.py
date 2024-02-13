@@ -888,7 +888,8 @@ class ReadsUtils:
 
             if validated:
                 arguments = [self.FASTQ_EXE, '--file', file_path,
-                             '--maxErrors', '10']
+                             '--maxErrors', '10',
+                             '--minReadLen', '1']
                 if p.get('interleaved'):
                     arguments.append('--disableSeqIDCheck')
                 retcode = subprocess.call(arguments)
