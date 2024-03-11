@@ -3144,6 +3144,7 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
+    @unittest.skip("Google downloads currently fail")
     def test_upload_reads_from_web_google_drive(self):
         url = 'https://drive.google.com/file/d/1kDyuUrupB86arXbculE-gOkmZxtNRWtH/'
         url += 'view?usp=sharing'
@@ -3173,6 +3174,7 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
+    @unittest.skip("Google downloads currently fail")
     def test_upload_reads_from_web_google_drive_different_format(self):
         url = 'https://drive.google.com/open?id='
         url += '1kDyuUrupB86arXbculE-gOkmZxtNRWtH'
