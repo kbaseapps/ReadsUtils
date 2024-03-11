@@ -1,25 +1,19 @@
-FROM kbase/sdkbase2:python
+FROM kbase/sdkpython:3.8.10
 MAINTAINER KBase Developer
 # -----------------------------------------
 
 # Insert apt-get instructions here to install
 # any required dependencies for your module.
 
+RUN mkdir -p /opt/lib
+
 RUN apt-get update \
-    && apt-get install -y g++ \
-    && apt-get install libz-dev\
-    && apt-get install nano \
-    && apt-get install tree
+    && apt-get install -y g++ libz-dev wget nano tree
 
-# Debug tools = all below six
-RUN pip install six \
-    && pip install ipython==5.3.0 \
-    && pip install pyftpdlib==1.5.6
+RUN wget -O /opt/lib/FastaValidator-1.0.jar https://github.com/kbase/jars/raw/master/lib/jars/FastaValidator/FastaValidator-1.0.jar
 
-RUN cd /opt \
-    && git clone https://github.com/kbase/jars \
-    && mkdir lib \
-    && cp jars/lib/jars/FastaValidator/FastaValidator-1.0.jar lib
+RUN pip install ipython==5.3.0 pyftpdlib==1.5.6
+
 
 RUN cd /opt \
     && git clone https://github.com/statgen/libStatGen.git \

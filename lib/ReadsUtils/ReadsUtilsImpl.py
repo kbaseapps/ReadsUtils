@@ -36,9 +36,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.3.13"
-    GIT_URL = "https://github.com/Tianhao-Gu/ReadsUtils.git"
-    GIT_COMMIT_HASH = "6882a74364922dbdacea2714f225fa57fd4b3b2f"
+    VERSION = "1.0.0"
+    GIT_URL = "https://github.com/kbaseapps/ReadsUtils.git"
+    GIT_COMMIT_HASH = "e921d1fa303c14bd0298353cdf73087fdeb6f884"
 
     #BEGIN_CLASS_HEADER
 
@@ -97,7 +97,7 @@ class ReadsUtils:
         dfu = DataFileUtil(self.callback_url)
         if wsname:
             self.log('Translating workspace name to id')
-            if not isinstance(wsname, six.string_types):
+            if not isinstance(wsname, str):
                 raise ValueError('wsname must be a string')
             wsid = dfu.ws_name_to_id(wsname)
             self.log('translation done')
