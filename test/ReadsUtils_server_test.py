@@ -42,6 +42,8 @@ class ReadsUtilsTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.nodes_to_delete = []
+        cls.handles_to_delete = []
         cls.token = environ.get('KB_AUTH_TOKEN', None)
         config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
         cls.cfg = {}
@@ -78,8 +80,6 @@ class ReadsUtilsTest(unittest.TestCase):
         cls.ws_info = cls.ws.create_workspace({'workspace': wsName})
         cls.dfu = DataFileUtil(os.environ['SDK_CALLBACK_URL'], token=cls.token)
         cls.staged = {}
-        cls.nodes_to_delete = []
-        cls.handles_to_delete = []
         cls.setupTestData()
         cls.ftp_domain = socket.gethostbyname(socket.gethostname())
         cls.ftp_port = 21
@@ -112,7 +112,7 @@ class ReadsUtilsTest(unittest.TestCase):
         if hasattr(cls, 'nodes_to_delete'):
             for node in cls.nodes_to_delete:
                 cls.delete_shock_node(node)
-        if hasattr(cls, 'handles_to_delete'):
+        if cls.handles_to_delete:
             cls.hs.delete_handles(cls.hs.hids_to_handles(cls.handles_to_delete))
             print('Deleted handles ' + str(cls.handles_to_delete))
 
@@ -1234,7 +1234,8 @@ class ReadsUtilsTest(unittest.TestCase):
         print("File Input: {}".format(str(fileinput)))
         files = self.dfu.shock_to_file_mass(fileinput)
         path = files[0]["file_path"]
-        file_md5 = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        with open(path, 'rb') as f:
+            file_md5 = hashlib.md5(f.read()).hexdigest()
         libfile = lib['file']
         self.assertEqual(file_md5, md5)
         self.assertEqual(lib['size'], size)
@@ -3144,40 +3145,18 @@ class ReadsUtilsTest(unittest.TestCase):
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
-    @unittest.skip("Google downloads currently fail")
     def test_upload_reads_from_web_google_drive(self):
-        url = 'https://drive.google.com/file/d/1kDyuUrupB86arXbculE-gOkmZxtNRWtH/'
+        # in kbase org -> Testing/PublicTestData/ReadsUtils
+        url = 'https://drive.google.com/file/d/1X4pEdEhiHtQM0-8m6Nkqi82Kqkeo2_fX/'
         url += 'view?usp=sharing'
+        self._upload_reads_from_web_google_drive(url)
 
-        params = {
-            'download_type': 'Google Drive',
-            'fwd_file_url': url,
-            'sequencing_tech': 'Unknown',
-            'name': 'test_reads_file_name.reads',
-            'wsname': self.getWsName()
-        }
-
-        ref = self.impl.upload_reads(self.ctx, params)
-        self.assertTrue('obj_ref' in ref[0])
-        obj = self.dfu.get_objects(
-            {'object_refs': [self.ws_info[1] + '/test_reads_file_name.reads']})['data'][0]
-        self.assertEqual(ref[0]['obj_ref'], self.make_ref(obj['info']))
-        self.assertEqual(obj['info'][2].startswith(
-            'KBaseFile.SingleEndLibrary'), True)
-        d = obj['data']
-        self.assertEqual(d['sequencing_tech'], 'Unknown')
-        self.assertEqual(d['single_genome'], 1)
-        self.assertEqual('source' not in d, True)
-        self.assertEqual('strain' not in d, True)
-        self.check_lib(d['lib'], 2966, 'Sample1.fastq.gz',
-                       'f118ee769a5e1b40ec44629994dfc3cd')
-        node = d['lib']['file']['id']
-        self.delete_shock_node(node)
-
-    @unittest.skip("Google downloads currently fail")
     def test_upload_reads_from_web_google_drive_different_format(self):
-        url = 'https://drive.google.com/open?id='
-        url += '1kDyuUrupB86arXbculE-gOkmZxtNRWtH'
+        # in kbase org -> Testing/PublicTestData/ReadsUtils
+        url = 'https://drive.google.com/open?id=1X4pEdEhiHtQM0-8m6Nkqi82Kqkeo2_fX'
+        self._upload_reads_from_web_google_drive(url)
+
+    def _upload_reads_from_web_google_drive(self, url):
         params = {
             'download_type': 'Google Drive',
             'fwd_file_url': url,
