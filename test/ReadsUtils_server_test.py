@@ -705,7 +705,6 @@ class ReadsUtilsTest(unittest.TestCase):
         tf = 'min_Sample.fastq'
         target = os.path.join(self.scratch, tf)
         shutil.copy('data/' + tf, target)
-        read_length = 1
 
         ret = self.impl.upload_reads(
             self.ctx, {'fwd_file': target,
@@ -718,7 +717,7 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual(obj['info'][2].startswith(
             'KBaseFile.SingleEndLibrary'), True)
         d = obj['data']
-        self.assertEqual(d['read_count'], read_length)
+        self.assertEqual(d['read_count'], 1)
         self.assertEqual(d['sequencing_tech'], 'seqtech')
         self.assertEqual(d['single_genome'], 1)
         self.assertEqual('source' not in d, True)
