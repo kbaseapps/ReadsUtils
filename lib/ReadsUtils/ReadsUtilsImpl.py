@@ -36,9 +36,9 @@ class ReadsUtils:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "1.0.0"
-    GIT_URL = "https://github.com/kbaseapps/ReadsUtils.git"
-    GIT_COMMIT_HASH = "e921d1fa303c14bd0298353cdf73087fdeb6f884"
+    VERSION = "1.0.1"
+    GIT_URL = "git@github.com:kbaseapps/ReadsUtils.git"
+    GIT_COMMIT_HASH = "995829e6033ac8714c3a817c07f25c0336bd44ab"
 
     #BEGIN_CLASS_HEADER
 
@@ -63,6 +63,8 @@ class ReadsUtils:
     KBASE_ASSEMBLY = 'KBaseAssembly'
     MODULE_NAMES = [KBASE_FILE, KBASE_ASSEMBLY]
     TYPE_NAMES = [SINGLE_END_TYPE, PAIRED_END_TYPE]
+
+    MIN_READS_LENGTH = 1  # Default fastQValidator minimum read length value (--minReadLen) is 10
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') +
@@ -837,9 +839,11 @@ class ReadsUtils:
            to the validateFASTQ function. Required parameters: file_path -
            the path to the file to validate. Optional parameters: interleaved
            - whether the file is interleaved or not. Setting this to true
-           disables sequence ID checks.) -> structure: parameter "file_path"
-           of String, parameter "interleaved" of type "boolean" (A boolean -
-           0 for false, 1 for true. @range (0, 1))
+           disables sequence ID checks. min_read_length - minimum allowed
+           read length to keep in the reads object (Defaults to 1).) ->
+           structure: parameter "file_path" of String, parameter
+           "interleaved" of type "boolean" (A boolean - 0 for false, 1 for
+           true. @range (0, 1)), parameter "min_read_length" of Long
         :returns: instance of list of type "ValidateFASTQOutput" (The output
            of the validateFASTQ function. validated - whether the file
            validated successfully or not.) -> structure: parameter
@@ -888,7 +892,8 @@ class ReadsUtils:
 
             if validated:
                 arguments = [self.FASTQ_EXE, '--file', file_path,
-                             '--maxErrors', '10']
+                             '--maxErrors', '10',
+                             '--minReadLen', str((p.get('min_read_length') or self.MIN_READS_LENGTH))]
                 if p.get('interleaved'):
                     arguments.append('--disableSeqIDCheck')
                 retcode = subprocess.call(arguments)
@@ -967,15 +972,16 @@ class ReadsUtils:
            new reads object (used for filtering or trimming services). Note
            this causes a passed in insert_size_mean, insert_size_std_dev,
            sequencing_tech, read_orientation_outward, strain, source and/or
-           single_genome to throw an error.) -> structure: parameter "fwd_id"
-           of String, parameter "fwd_file" of String, parameter "wsid" of
-           Long, parameter "wsname" of String, parameter "objid" of Long,
-           parameter "name" of String, parameter "rev_id" of String,
-           parameter "rev_file" of String, parameter "sequencing_tech" of
-           String, parameter "single_genome" of type "boolean" (A boolean - 0
-           for false, 1 for true. @range (0, 1)), parameter "strain" of type
-           "StrainInfo" (Information about a strain. genetic_code - the
-           genetic code of the strain. See
+           single_genome to throw an error. min_read_length - minimum allowed
+           read length to keep in the reads object (Defaults to 1).) ->
+           structure: parameter "fwd_id" of String, parameter "fwd_file" of
+           String, parameter "wsid" of Long, parameter "wsname" of String,
+           parameter "objid" of Long, parameter "name" of String, parameter
+           "rev_id" of String, parameter "rev_file" of String, parameter
+           "sequencing_tech" of String, parameter "single_genome" of type
+           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1)),
+           parameter "strain" of type "StrainInfo" (Information about a
+           strain. genetic_code - the genetic code of the strain. See
            http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
            genus - the genus of the strain species - the species of the
            strain strain - the identifier for the strain source - information
@@ -1027,7 +1033,7 @@ class ReadsUtils:
            parameter "rev_file_url" of String, parameter
            "fwd_staging_file_name" of String, parameter
            "rev_staging_file_name" of String, parameter "download_type" of
-           String
+           String, parameter "min_read_length" of Long
         :returns: instance of type "UploadReadsOutput" (The output of the
            upload_reads function. obj_ref - a reference to the new Workspace
            object in the form X/Y/Z, where X is the workspace ID, Y is the
@@ -1069,7 +1075,8 @@ class ReadsUtils:
 
         interleaved = 1 if not single_end else 0
         file_valid = self.validateFASTQ({}, [{'file_path': actualpath,
-                                              'interleaved': interleaved}])
+                                              'interleaved': interleaved,
+                                              'min_read_length': params.get('min_read_length', self.MIN_READS_LENGTH)}])
 
         if not file_valid[0][0]['validated']:
             file_info = ret
