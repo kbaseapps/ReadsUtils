@@ -643,6 +643,10 @@ class ReadsUtilsTest(unittest.TestCase):
         self.check_fq('data/min_Sample.fastq', 0, 1, min_len=2)
         self.check_fq('data/min_Sample.fastq', 0, 0, min_len=3)
 
+        # In the file min_single_Sample.fastq, there is only one read with a length of 1.
+        self.check_fq('data/min_single_Sample.fastq', 0, 1)  # test default min_len=1
+        self.check_fq('data/min_single_Sample.fastq', 0, 0, min_len=2)
+
     def test_FASTQ_multiple(self):
         f1 = 'data/Sample1.fastq'
         f2 = 'data/Sample4_interleaved_NCBI_SRA.fastq'
@@ -698,6 +702,16 @@ class ReadsUtilsTest(unittest.TestCase):
             "Invalid FASTQ file - Path: /kb/module/test/data/min_Sample.fastq."
             )
 
+        # In the file min_single_Sample.fastq, there is only one read with a length of 1.
+        self.fail_upload_reads(
+            {'fwd_file': 'data/min_single_Sample.fastq',
+             'sequencing_tech': 'seqtech',
+             'wsname': self.ws_info[1],
+             'name': 'filereads1',
+             'min_read_length': 2},
+            "Invalid FASTQ file - Path: /kb/module/test/data/min_single_Sample.fastq."
+            )
+
     def test_upload_min_len_reads(self):
         # In the file min_Sample.fastq, there are two reads: one with a length of 2 bases and another with a length of 3 bases.
         # Setting `min_read_length` to either 1 or 2 is the only way to meet the fastQValidator criteria for this file.
@@ -724,6 +738,34 @@ class ReadsUtilsTest(unittest.TestCase):
         self.assertEqual('strain' not in d, True)
         self.check_lib(d['lib'], 109, 'min_Sample.fastq.gz',
                        '4b8ba940f1bf90695b35625c21ed4574')
+        node = d['lib']['file']['id']
+        self.delete_shock_node(node)
+
+    def test_upload_min_len_reads_single_read(self):
+        # In the file min_single_Sample.fastq, there is only one read with a length of 1.
+        # Setting `min_read_length` to 1 (default) is the only way to meet the fastQValidator criteria for this file.
+        tf = 'min_single_Sample.fastq'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+
+        ret = self.impl.upload_reads(
+            self.ctx, {'fwd_file': target,
+                       'sequencing_tech': 'seqtech',
+                       'wsname': self.ws_info[1],
+                       'name': 'filereads1'})
+        obj = self.dfu.get_objects(
+            {'object_refs': [self.ws_info[1] + '/filereads1']})['data'][0]
+        self.assertEqual(ret[0]['obj_ref'], self.make_ref(obj['info']))
+        self.assertEqual(obj['info'][2].startswith(
+            'KBaseFile.SingleEndLibrary'), True)
+        d = obj['data']
+        self.assertEqual(d['read_count'], 1)
+        self.assertEqual(d['sequencing_tech'], 'seqtech')
+        self.assertEqual(d['single_genome'], 1)
+        self.assertEqual('source' not in d, True)
+        self.assertEqual('strain' not in d, True)
+        self.check_lib(d['lib'], 95, 'min_single_Sample.fastq.gz',
+                       'a9bacab6ea7c3563c3ba90bb27fac3a4')
         node = d['lib']['file']['id']
         self.delete_shock_node(node)
 
