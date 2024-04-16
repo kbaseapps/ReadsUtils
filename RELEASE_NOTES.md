@@ -6,6 +6,7 @@
 * Added new check for the FASTQ import to make sure the line count was a multiple of 8 (since 4 lines per read) for interleaved files.
 # 1.0.0
 * A few commits, but add check to make sure interleaved has even number of reads in FastQ. Bumping version per Landml request.
-
+# 1.0.1
+* add optional `min_read_length` parameter to `upload_reads` and `validateFASTQ` methods
 
 

@@ -30,10 +30,12 @@ module ReadsUtils {
         Optional parameters:
         interleaved - whether the file is interleaved or not. Setting this to
             true disables sequence ID checks.
+        min_read_length - minimum allowed read length to keep in the reads object (Defaults to 1).
     */
     typedef structure {
         string file_path;
         boolean interleaved;
+        int min_read_length;
     } ValidateFASTQParams;
 
     /* The output of the validateFASTQ function.
@@ -137,6 +139,7 @@ module ReadsUtils {
             insert_size_mean, insert_size_std_dev, sequencing_tech,
             read_orientation_outward, strain, source and/or
             single_genome to throw an error.
+        min_read_length - minimum allowed read length to keep in the reads object (Defaults to 1).
     */
     typedef structure {
         string fwd_id;
@@ -161,6 +164,7 @@ module ReadsUtils {
         string fwd_staging_file_name;
         string rev_staging_file_name;
         string download_type;
+        int min_read_length;
 
     } UploadReadsParams;
 
